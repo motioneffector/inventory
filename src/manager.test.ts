@@ -116,11 +116,6 @@ describe('createInventoryManager()', () => {
       })
       manager.createContainer('c1', { mode: 'weight', maxWeight: 100 })
       expect(() => manager.addItem('c1', 'item1', 1)).toThrow(ValidationError)
-      try {
-        manager.addItem('c1', 'item1', 1)
-      } catch (error) {
-        expect(error).toBeInstanceOf(ValidationError)
-      }
     })
 
     it('throws ValidationError if getItemSize returns invalid shape', () => {
@@ -129,11 +124,6 @@ describe('createInventoryManager()', () => {
       })
       manager.createContainer('c1', { mode: 'grid', width: 10, height: 10 })
       expect(() => manager.addItem('c1', 'item1', 1)).toThrow(ValidationError)
-      try {
-        manager.addItem('c1', 'item1', 1)
-      } catch (error) {
-        expect(error).toBeInstanceOf(ValidationError)
-      }
     })
   })
 })

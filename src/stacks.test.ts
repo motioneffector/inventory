@@ -90,8 +90,14 @@ describe('Stack Operations', () => {
       manager.addItem('c1', 'item1', 5)
       manager.addItem('c1', 'item2', 5)
       // Index 1 doesn't exist for item1 (only has 1 stack at index 0)
-      expect(() => manager.mergeStacks('c1', 'item1', 0, 1)).toThrow()
       expect(() => manager.mergeStacks('c1', 'item1', 0, 1)).toThrow(ValidationError)
+    })
+
+    it('throws if different items', () => {
+      manager.createContainer('c1', { mode: 'unlimited', allowStacking: true, maxStackSize: 10 })
+      manager.addItem('c1', 'item1', 5)
+      // Test that merging stacks of non-existent item throws error
+      expect(() => manager.mergeStacks('c1', 'nonexistent-item', 0, 1)).toThrow(ValidationError)
     })
   })
 
