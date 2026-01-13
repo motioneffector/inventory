@@ -17,6 +17,10 @@
     "game-development",
     "rpg",
     "storage",
+    "item-management",
+    "grid-inventory",
+    "stacking",
+    "containers",
     "typescript"
   ],
   "type": "module",
@@ -30,7 +34,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "sideEffects": false,
   "engines": {
