@@ -668,6 +668,10 @@ export function createInventoryManager(
           clearGridPosition(container, stack.position, itemId)
         }
         stacks.splice(i, 1)
+        // Rebuild grid cell indices after removing stack
+        if (container.gridState) {
+          rebuildGridCellIndices(container, itemId)
+        }
       }
     }
 
@@ -706,6 +710,36 @@ export function createInventoryManager(
         const row = container.gridState.cells[y]
         if (row?.[x]) {
           row[x] = null
+        }
+      }
+    }
+  }
+
+  function rebuildGridCellIndices(container: Container, itemId: ItemId): void {
+    if (!container.gridState) return
+
+    const stacks = container.items.get(itemId)
+    if (!stacks) return
+
+    // Create position -> stackIndex map
+    const positionMap = new Map<string, number>()
+    stacks.forEach((stack, index) => {
+      if (stack.position) {
+        const key = `${stack.position.x},${stack.position.y}`
+        positionMap.set(key, index)
+      }
+    })
+
+    // Update all grid cells for this itemId
+    for (let y = 0; y < container.gridState.cells.length; y++) {
+      for (let x = 0; x < container.gridState.cells[y].length; x++) {
+        const cell = container.gridState.cells[y][x]
+        if (cell && cell.itemId === itemId && cell.isOrigin) {
+          const key = `${x},${y}`
+          const newIndex = positionMap.get(key)
+          if (newIndex !== undefined) {
+            cell.stackIndex = newIndex
+          }
         }
       }
     }
@@ -1147,6 +1181,8 @@ export function createInventoryManager(
 
     stack.quantity -= count
     stacks.push({ itemId, quantity: count })
+    // Rebuild grid cell indices after adding new stack
+    rebuildGridCellIndices(container, itemId)
   }
 
   function mergeStacks(
@@ -1193,11 +1229,19 @@ export function createInventoryManager(
 
     if (fromStack.quantity === 0) {
       stacks.splice(fromIndex, 1)
+      // Rebuild grid cell indices after removing stack
+      rebuildGridCellIndices(container, itemId)
     }
   }
 
   function consolidate(containerId: ContainerId): void {
     const container = getContainer(containerId)
+
+    // Grid containers shouldn't use consolidate - use autoArrange instead
+    if (container.config.mode === 'grid') {
+      throw new ValidationError('Use autoArrange() for grid containers')
+    }
+
     const config = container.config
     const stackLimit =
       'maxStackSize' in config ? config.maxStackSize ?? Infinity : Infinity
@@ -1212,7 +1256,12 @@ export function createInventoryManager(
 
         while (remaining > 0) {
           if (!currentStack || currentStack.quantity >= itemStackLimit) {
-            currentStack = { itemId, quantity: 0 }
+            // Preserve position for grid mode
+            const newStack: ItemStack = { itemId, quantity: 0 }
+            if (stack.position) {
+              newStack.position = stack.position
+            }
+            currentStack = newStack
             consolidated.push(currentStack)
           }
 
@@ -1223,7 +1272,15 @@ export function createInventoryManager(
         }
       }
 
-      container.items.set(itemId, consolidated)
+      // Filter out zero-quantity stacks before storing
+      const nonZeroStacks = consolidated.filter(stack => stack.quantity > 0)
+      if (nonZeroStacks.length > 0) {
+        container.items.set(itemId, nonZeroStacks)
+        // Rebuild grid cell indices after consolidation
+        rebuildGridCellIndices(container, itemId)
+      } else {
+        container.items.delete(itemId)
+      }
     }
   }
 
@@ -1278,30 +1335,63 @@ export function createInventoryManager(
       throw new ValidationError('autoArrange() only works with grid containers')
     }
 
-    // Collect all items
-    const items: Array<{ itemId: ItemId; quantity: number }> = []
-    for (const [itemId, stacks] of container.items) {
-      for (const stack of stacks) {
-        items.push({ itemId, quantity: stack.quantity })
-      }
+    // Create snapshot of current state for rollback
+    const snapshot = {
+      items: new Map(
+        Array.from(container.items.entries()).map(([id, stacks]) => [
+          id,
+          stacks.map(s => ({
+            ...s,
+            position: s.position ? { ...s.position } : undefined
+          }))
+        ])
+      ),
+      gridCells: container.gridState
+        ? container.gridState.cells.map(row => row.map(cell => cell ? { ...cell } : null))
+        : undefined
     }
 
-    // Clear grid
-    container.items.clear()
-    if (container.gridState) {
-      for (let y = 0; y < container.gridState.height; y++) {
-        const row = container.gridState.cells[y]
-        if (row) {
-          for (let x = 0; x < container.gridState.width; x++) {
-            row[x] = null
+    try {
+      // Collect all items
+      const items: Array<{ itemId: ItemId; quantity: number }> = []
+      for (const [itemId, stacks] of container.items) {
+        for (const stack of stacks) {
+          items.push({ itemId, quantity: stack.quantity })
+        }
+      }
+
+      // Clear grid
+      container.items.clear()
+      if (container.gridState) {
+        for (let y = 0; y < container.gridState.height; y++) {
+          const row = container.gridState.cells[y]
+          if (row) {
+            for (let x = 0; x < container.gridState.width; x++) {
+              row[x] = null
+            }
           }
         }
       }
-    }
 
-    // Re-place items
-    for (const item of items) {
-      addItem(containerId, item.itemId, item.quantity)
+      // Re-place items with overflow checking
+      for (const item of items) {
+        const result = addItem(containerId, item.itemId, item.quantity)
+        if (result.overflow > 0) {
+          throw new Error(
+            `Cannot fit item ${item.itemId}: ${result.overflow} items would overflow`
+          )
+        }
+      }
+
+      // Success - changes committed
+    } catch (error) {
+      // Rollback - restore original state
+      container.items = snapshot.items
+      if (snapshot.gridCells && container.gridState) {
+        container.gridState.cells = snapshot.gridCells
+      }
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      throw new Error(`autoArrange failed: ${errorMessage}`)
     }
   }
 
