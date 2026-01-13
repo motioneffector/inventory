@@ -152,6 +152,18 @@ export function createInventoryManager(
     return container
   }
 
+  function isNestedIn(containerId: ContainerId, potentialParentId: ContainerId): boolean {
+    const potentialParent = containers.get(potentialParentId)
+    if (!potentialParent) return false
+    for (const [itemId, _] of potentialParent.items) {
+      if (itemId === containerId) return true
+      if (containers.has(itemId) && isNestedIn(containerId, itemId)) {
+        return true
+      }
+    }
+    return false
+  }
+
   function addItem(
     containerId: ContainerId,
     itemId: ItemId,
@@ -164,6 +176,13 @@ export function createInventoryManager(
     // Check for circular nesting
     if (containerId === itemId) {
       throw new ValidationError('Cannot nest container in itself')
+    }
+
+    // Check for circular nesting through the chain
+    if (containers.has(itemId)) {
+      if (isNestedIn(containerId, itemId)) {
+        throw new ValidationError('Cannot create circular nesting')
+      }
     }
 
     const container = getContainer(containerId)
@@ -281,7 +300,9 @@ export function createInventoryManager(
       }
     }
 
-    container.items.set(itemId, stacks)
+    if (stacks.length > 0) {
+      container.items.set(itemId, stacks)
+    }
 
     if (added > 0) {
       fireEvent('itemAdded', {
@@ -387,7 +408,7 @@ export function createInventoryManager(
     // Check stacking
     if (config.allowStacking) {
       const originCell = container.gridState!.cells[position.y]?.[position.x]
-      if (originCell && originCell.isOrigin) {
+      if (originCell && originCell.isOrigin && originCell.itemId === itemId) {
         const stacks = container.items.get(itemId) ?? []
         const stack = stacks[originCell.stackIndex]
         if (stack) {
@@ -480,20 +501,35 @@ export function createInventoryManager(
   ): AddItemResult {
     const config = container.config as Extract<ContainerConfig, { mode: 'combined' }>
 
-    // Create temporary container for each rule and test
+    // Test each rule with a simulated add
     for (const rule of config.rules) {
+      // Create temporary container for testing
       const testContainer: Container = {
         id: container.id + '-test',
         config: rule,
-        items: new Map(container.items),
+        items: new Map(),
         lockedItems: new Set(container.lockedItems),
-        gridState: container.gridState,
+        gridState: container.gridState
+          ? {
+              width: container.gridState.width,
+              height: container.gridState.height,
+              cells: container.gridState.cells.map((row) => [...row]),
+            }
+          : undefined,
         slotState: container.slotState,
       }
 
-      const result = addItem(testContainer.id, itemId, quantity)
-      // We need to temporarily add the test container
+      // Copy items deeply
+      for (const [iid, stacks] of container.items) {
+        testContainer.items.set(
+          iid,
+          stacks.map((s) => ({ ...s }))
+        )
+      }
+
+      // Temporarily add test container, test the add, then remove
       containers.set(testContainer.id, testContainer)
+      const result = addItem(testContainer.id, itemId, quantity)
       containers.delete(testContainer.id)
 
       if (!result.success) {
@@ -975,9 +1011,19 @@ export function createInventoryManager(
     toIndex: number
   ): void {
     const container = getContainer(containerId)
+
+    // Try to get the stacks for this item
     const stacks = container.items.get(itemId)
-    if (!stacks || !stacks[fromIndex] || !stacks[toIndex]) {
-      throw new ValidationError(`Stack not found`)
+    if (!stacks || stacks.length === 0) {
+      throw new ValidationError(`No stacks found for item "${itemId}"`)
+    }
+
+    // Check if indices are valid
+    if (fromIndex < 0 || fromIndex >= stacks.length) {
+      throw new ValidationError(`Invalid fromIndex: ${fromIndex}`)
+    }
+    if (toIndex < 0 || toIndex >= stacks.length) {
+      throw new ValidationError(`Invalid toIndex: ${toIndex}`)
     }
 
     const fromStack = stacks[fromIndex]!
