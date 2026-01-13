@@ -127,4 +127,106 @@ describe('Stack Operations', () => {
       expect(manager.getQuantity('c1', 'item')).toBe(25)
     })
   })
+
+  describe('getStacks()', () => {
+    it('returns individual stacks', () => {
+      manager.createContainer('c1', {
+        mode: 'unlimited',
+        allowStacking: true,
+        maxStackSize: 10,
+      })
+      manager.addItem('c1', 'item', 15)
+
+      const stacks = manager.getStacks('c1', 'item')
+      expect(stacks).toHaveLength(2)
+      expect(stacks[0]?.quantity).toBe(10)
+      expect(stacks[1]?.quantity).toBe(5)
+    })
+
+    it('verifies splitStack creates two separate stacks', () => {
+      manager.createContainer('c1', {
+        mode: 'unlimited',
+        allowStacking: true,
+        maxStackSize: 10,
+      })
+      manager.addItem('c1', 'item', 10)
+
+      const stacksBefore = manager.getStacks('c1', 'item')
+      expect(stacksBefore).toHaveLength(1)
+      expect(stacksBefore[0]?.quantity).toBe(10)
+
+      manager.splitStack('c1', 'item', 0, 4)
+
+      const stacksAfter = manager.getStacks('c1', 'item')
+      expect(stacksAfter).toHaveLength(2)
+      expect(stacksAfter[0]?.quantity).toBe(6)
+      expect(stacksAfter[1]?.quantity).toBe(4)
+    })
+
+    it('verifies mergeStacks combines stacks respecting maxStackSize', () => {
+      manager.createContainer('c1', {
+        mode: 'unlimited',
+        allowStacking: true,
+        maxStackSize: 10,
+      })
+
+      // Create 15 items = 2 stacks [10, 5]
+      manager.addItem('c1', 'item', 15)
+
+      let stacks = manager.getStacks('c1', 'item')
+      expect(stacks).toHaveLength(2)
+
+      // Merge second into first (will hit limit at 10)
+      manager.mergeStacks('c1', 'item', 1, 0)
+
+      stacks = manager.getStacks('c1', 'item')
+      // After merging: first stack is at max (10), second stack has remainder (5)
+      expect(stacks).toHaveLength(2)
+      expect(stacks[0]?.quantity).toBe(10)
+      expect(stacks[1]?.quantity).toBe(5)
+    })
+
+    it('confirms maxStackSize is enforced when adding items', () => {
+      manager.createContainer('c1', {
+        mode: 'unlimited',
+        allowStacking: true,
+        maxStackSize: 10,
+      })
+
+      manager.addItem('c1', 'item', 25)
+
+      const stacks = manager.getStacks('c1', 'item')
+      expect(stacks).toHaveLength(3)
+      expect(stacks[0]?.quantity).toBe(10)
+      expect(stacks[1]?.quantity).toBe(10)
+      expect(stacks[2]?.quantity).toBe(5)
+
+      // Verify no stack exceeds limit
+      expect(stacks.every((s) => s.quantity <= 10)).toBe(true)
+    })
+
+    it('returns empty array for non-existent item', () => {
+      manager.createContainer('c1', { mode: 'unlimited' })
+      const stacks = manager.getStacks('c1', 'nonexistent')
+      expect(stacks).toEqual([])
+    })
+
+    it('returns a copy to prevent external modification', () => {
+      manager.createContainer('c1', {
+        mode: 'unlimited',
+        allowStacking: true,
+        maxStackSize: 20,
+      })
+      manager.addItem('c1', 'item', 10)
+
+      const stacks1 = manager.getStacks('c1', 'item')
+      const stacks2 = manager.getStacks('c1', 'item')
+
+      // Modifying returned array shouldn't affect internal state
+      stacks1[0]!.quantity = 999
+
+      expect(stacks2[0]?.quantity).toBe(10)
+      expect(manager.getQuantity('c1', 'item')).toBe(10)
+    })
+  })
 })

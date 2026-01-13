@@ -101,6 +101,13 @@ export type ItemEntry = {
   slot?: string
 }
 
+// Individual item stack (internal representation)
+export type ItemStack = {
+  itemId: ItemId
+  quantity: number
+  position?: GridPosition
+}
+
 // Container contents
 export type ContainerContents = ItemEntry[]
 
@@ -188,6 +195,7 @@ export interface InventoryManager {
 
   // Queries
   getContents(containerId: ContainerId, options?: { deep?: boolean }): ContainerContents
+  getStacks(containerId: ContainerId, itemId: ItemId): ItemStack[]
   hasItem(containerId: ContainerId, itemId: ItemId): boolean
   getQuantity(containerId: ContainerId, itemId: ItemId): number
   canAdd(containerId: ContainerId, itemId: ItemId, quantity: number): CanAddResult

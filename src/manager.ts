@@ -770,6 +770,16 @@ export function createInventoryManager(
     return contents
   }
 
+  function getStacks(containerId: ContainerId, itemId: ItemId): ItemStack[] {
+    const container = getContainer(containerId)
+    const stacks = container.items.get(itemId)
+    if (!stacks) {
+      return []
+    }
+    // Return a shallow copy to prevent external modification
+    return stacks.map((stack) => ({ ...stack }))
+  }
+
   function hasItem(containerId: ContainerId, itemId: ItemId): boolean {
     const container = getContainer(containerId)
     return container.items.has(itemId)
@@ -1403,6 +1413,7 @@ export function createInventoryManager(
     removeItem,
     transfer,
     getContents,
+    getStacks,
     hasItem,
     getQuantity,
     canAdd,
