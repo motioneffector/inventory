@@ -75,18 +75,14 @@ describe('Container Management', () => {
       expect(() => manager.removeContainer('nonexistent')).toThrow(ValidationError)
     })
 
-    it('fires event on removal', () => {
+    it('removes container and cleans up items', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
       manager.addItem('c1', 'item', 5)
-      const callback = vi.fn()
-      // Listen for itemRemoved event which fires when container is removed
-      manager.on('itemRemoved', callback)
       manager.removeContainer('c1')
       expect(manager.listContainers()).not.toContain('c1')
-      // Verify removal was successful
-      expect(() => manager.hasItem('c1', 'item')).toThrow()
-      // Note: removeContainer may or may not fire itemRemoved events
-      // depending on implementation - just verify container was removed
+      // Verify container is actually removed and items are inaccessible
+      expect(() => manager.hasItem('c1', 'item')).toThrow(ValidationError)
+      expect(() => manager.getQuantity('c1', 'item')).toThrow(ValidationError)
     })
   })
 

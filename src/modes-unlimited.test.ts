@@ -32,6 +32,9 @@ describe('Unlimited Mode', () => {
       manager.addItem('c1', 'item2', 3)
       const contents = manager.getContents('c1')
       expect(contents).toHaveLength(2)
+      const itemIds = contents.map((c) => c.itemId)
+      expect(itemIds).toContain('item1')
+      expect(itemIds).toContain('item2')
     })
 
     it('hasItem returns true for present item', () => {

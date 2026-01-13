@@ -11,37 +11,32 @@ describe('Stack Operations', () => {
   })
 
   describe('splitStack()', () => {
-    it('splits stack at index into two', () => {
+    it('splits stack at index into two stacks', () => {
       manager.createContainer('c1', { mode: 'unlimited', allowStacking: true, maxStackSize: 10 })
       manager.addItem('c1', 'item', 10)
-      // splitStack implementation may not work with consolidated stacks
-      // Just verify it doesn't error and preserves total quantity
       manager.splitStack('c1', 'item', 0, 4)
-      expect(manager.getQuantity('c1', 'item')).toBe(10)
-      // Verify we still have the items
-      expect(manager.hasItem('c1', 'item')).toBe(true)
+      const stacks = manager.getStacks('c1', 'item')
+      expect(stacks).toHaveLength(2)
+      expect(stacks[0]?.quantity).toBe(6)
+      expect(stacks[1]?.quantity).toBe(4)
     })
 
-    it('original stack reduced', () => {
+    it('original stack is reduced by split amount', () => {
       manager.createContainer('c1', { mode: 'unlimited', allowStacking: true, maxStackSize: 10 })
       manager.addItem('c1', 'item', 10)
       manager.splitStack('c1', 'item', 0, 4)
-      // Verify total quantity is preserved
+      const stacks = manager.getStacks('c1', 'item')
+      expect(stacks[0]?.quantity).toBe(6)
       expect(manager.getQuantity('c1', 'item')).toBe(10)
-      // Verify items are still accessible
-      const contents = manager.getContents('c1')
-      const totalQty = contents.filter((c) => c.itemId === 'item').reduce((sum, c) => sum + c.quantity, 0)
-      expect(totalQty).toBe(10)
     })
 
-    it('new stack created with split amount', () => {
+    it('new stack created with exact split amount', () => {
       manager.createContainer('c1', { mode: 'unlimited', allowStacking: true, maxStackSize: 10 })
       manager.addItem('c1', 'item', 10)
       manager.splitStack('c1', 'item', 0, 4)
-      // Verify total quantity and contents
-      expect(manager.getQuantity('c1', 'item')).toBe(10)
-      const contents = manager.getContents('c1')
-      expect(contents.some((c) => c.itemId === 'item')).toBe(true)
+      const stacks = manager.getStacks('c1', 'item')
+      expect(stacks[1]?.quantity).toBe(4)
+      expect(stacks[1]?.itemId).toBe('item')
     })
 
     it('throws if insufficient quantity', () => {
@@ -55,47 +50,45 @@ describe('Stack Operations', () => {
   describe('mergeStacks()', () => {
     it('merges two stacks of same item', () => {
       manager.createContainer('c1', { mode: 'unlimited', allowStacking: true, maxStackSize: 10 })
-      // First split to create two stacks
       manager.addItem('c1', 'item', 10)
       manager.splitStack('c1', 'item', 0, 3)
-      // Now try to merge them back - but may not have 2 stacks yet
-      // Just verify quantity is preserved
-      expect(manager.getQuantity('c1', 'item')).toBe(10)
-      // Verify items are accessible
-      expect(manager.hasItem('c1', 'item')).toBe(true)
+      const stacksBefore = manager.getStacks('c1', 'item')
+      expect(stacksBefore).toHaveLength(2)
+      manager.mergeStacks('c1', 'item', 1, 0)
+      const stacksAfter = manager.getStacks('c1', 'item')
+      expect(stacksAfter).toHaveLength(1)
+      expect(stacksAfter[0]?.quantity).toBe(10)
     })
 
-    it('respects maxStackSize', () => {
+    it('respects maxStackSize when merging', () => {
       manager.createContainer('c1', { mode: 'unlimited', allowStacking: true, maxStackSize: 10 })
       manager.addItem('c1', 'item', 8)
       manager.addItem('c1', 'item', 5)
-      // May consolidate into one stack > maxStackSize (implementation bug)
-      // Just verify total quantity is correct
+      const stacks = manager.getStacks('c1', 'item')
+      expect(stacks).toHaveLength(2)
+      expect(stacks[0]?.quantity).toBeLessThanOrEqual(10)
+      expect(stacks[1]?.quantity).toBeLessThanOrEqual(10)
       expect(manager.getQuantity('c1', 'item')).toBe(13)
-      // Verify we have the items
-      expect(manager.hasItem('c1', 'item')).toBe(true)
     })
 
-    it('leaves remainder in source if over max', () => {
+    it('leaves remainder in source stack when merge exceeds max', () => {
       manager.createContainer('c1', { mode: 'unlimited', allowStacking: true, maxStackSize: 10 })
       manager.addItem('c1', 'item', 8)
       manager.addItem('c1', 'item', 5)
-      // Just verify quantity is preserved
-      expect(manager.getQuantity('c1', 'item')).toBe(13)
-      const contents = manager.getContents('c1')
-      const stacks = contents.filter((c) => c.itemId === 'item')
-      // Verify items exist
-      expect(stacks.length).toBeGreaterThan(0)
-      // Verify total is correct
-      const total = stacks.reduce((sum, s) => sum + s.quantity, 0)
-      expect(total).toBe(13)
+      const stacks = manager.getStacks('c1', 'item')
+      expect(stacks).toHaveLength(2)
+      expect(stacks[0]?.quantity + stacks[1]?.quantity).toBe(13)
+      manager.mergeStacks('c1', 'item', 1, 0)
+      const stacksAfter = manager.getStacks('c1', 'item')
+      expect(stacksAfter).toHaveLength(2)
+      expect(stacksAfter[0]?.quantity).toBe(10)
+      expect(stacksAfter[1]?.quantity).toBe(3)
     })
 
-    it('throws if different items', () => {
+    it('throws for invalid stack indices', () => {
       manager.createContainer('c1', { mode: 'unlimited', allowStacking: true, maxStackSize: 10 })
       manager.addItem('c1', 'item1', 5)
       manager.addItem('c1', 'item2', 5)
-      // Test that mergeStacks with invalid indices throws
       // Index 1 doesn't exist for item1 (only has 1 stack at index 0)
       expect(() => manager.mergeStacks('c1', 'item1', 0, 1)).toThrow()
       expect(() => manager.mergeStacks('c1', 'item1', 0, 1)).toThrow(ValidationError)

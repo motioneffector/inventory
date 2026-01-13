@@ -12,36 +12,40 @@ describe('Serialization', () => {
   })
 
   describe('serialize()', () => {
-    it('returns JSON-compatible object', () => {
+    it('returns object with containers array', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
       manager.addItem('c1', 'item', 5)
       const data = manager.serialize()
-      const json = JSON.stringify(data)
-      expect(json).toBeDefined()
-      expect(typeof json).toBe('string')
-      expect(json.length).toBeGreaterThan(0)
+      expect(data).toBeDefined()
+      expect(Array.isArray(data.containers)).toBe(true)
+      expect(data.containers.length).toBe(1)
+      expect(data.containers[0]?.id).toBe('c1')
     })
 
-    it('includes all containers', () => {
+    it('includes all containers with correct count', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
       manager.createContainer('c2', { mode: 'count', maxCount: 5 })
       const data = manager.serialize()
-      expect(data).toBeDefined()
       expect(data.containers).toBeDefined()
       expect(data.containers.length).toBe(2)
+      const containerIds = data.containers.map(c => c.id)
+      expect(containerIds).toContain('c1')
+      expect(containerIds).toContain('c2')
     })
 
-    it('includes all items', () => {
+    it('includes all items with exact count', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
       manager.addItem('c1', 'item1', 5)
       manager.addItem('c1', 'item2', 3)
       const data = manager.serialize()
-      expect(data).toBeDefined()
       expect(data.containers).toBeDefined()
-      const c1Data = data.containers.find((c: any) => c.id === 'c1')
+      const c1Data = data.containers.find(c => c.id === 'c1')
       expect(c1Data).toBeDefined()
-      expect(c1Data.items).toBeDefined()
-      expect(c1Data.items.length).toBeGreaterThanOrEqual(2)
+      expect(c1Data?.items).toBeDefined()
+      expect(Array.isArray(c1Data?.items)).toBe(true)
+      const itemIds = c1Data?.items.map((item: any) => item.itemId)
+      expect(itemIds).toContain('item1')
+      expect(itemIds).toContain('item2')
     })
 
     it('includes grid positions', () => {
