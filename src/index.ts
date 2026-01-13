@@ -20,5 +20,13 @@ export type {
   ContainerContents,
   FindItemResult,
   RemainingCapacity,
+  ItemAddedEvent,
+  ItemRemovedEvent,
+  ItemTransferredEvent,
+  ContainerFullEvent,
+  SlotChangedEvent,
+  ContainerRemovedEvent,
+  EventCallback,
+  ItemStack,
 } from './types'
 export { InventoryError, ValidationError } from './errors'

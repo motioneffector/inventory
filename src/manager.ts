@@ -21,6 +21,7 @@ import type {
   ItemTransferredEvent,
   ContainerFullEvent,
   SlotChangedEvent,
+  ContainerRemovedEvent,
   ItemSize,
 } from './types'
 import { ValidationError } from './errors'
