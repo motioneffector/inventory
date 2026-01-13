@@ -46,12 +46,16 @@ describe('Queries', () => {
       const itemIds = contents.map((c) => c.itemId)
       // Should include the nested container itself
       expect(itemIds).toContain('nested')
+      // Should also include items from within nested container
+      expect(itemIds).toContain('inner-item')
       // Verify the nested container entry has correct quantity
       const nestedEntry = contents.find((c) => c.itemId === 'nested')
       expect(nestedEntry).toBeDefined()
       expect(nestedEntry?.quantity).toBe(1)
-      // NOTE: Deep traversal of nested container contents is not yet implemented
-      // When implemented, should also verify inner-item appears in contents
+      // Verify the inner item has correct quantity
+      const innerEntry = contents.find((c) => c.itemId === 'inner-item')
+      expect(innerEntry).toBeDefined()
+      expect(innerEntry?.quantity).toBe(3)
     })
   })
 
@@ -160,9 +164,9 @@ describe('Queries', () => {
       expect(Number.isFinite(shallowWeight)).toBe(true)
       // Verify shallow weight includes nested container (weight=1)
       expect(shallowWeight).toBe(1)
-      // NOTE: Deep weight calculation for nested containers not yet implemented
-      // Currently returns same as shallow weight
-      expect(deepWeight).toBe(shallowWeight)
+      // Verify deep weight includes nested container + its contents (1 + 10 = 11)
+      expect(deepWeight).toBe(11)
+      expect(deepWeight).toBeGreaterThan(shallowWeight)
     })
   })
 

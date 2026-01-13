@@ -160,6 +160,10 @@ export type SlotChangedEvent = {
   newItem: ItemId | null
 }
 
+export type ContainerRemovedEvent = {
+  containerId: ContainerId
+}
+
 export type EventCallback<T> = (event: T) => void
 
 // Inventory manager options
@@ -247,6 +251,7 @@ export interface InventoryManager {
   on(event: 'itemTransferred', callback: EventCallback<ItemTransferredEvent>): () => void
   on(event: 'containerFull', callback: EventCallback<ContainerFullEvent>): () => void
   on(event: 'slotChanged', callback: EventCallback<SlotChangedEvent>): () => void
+  on(event: 'containerRemoved', callback: EventCallback<ContainerRemovedEvent>): () => void
 
   // Serialization
   serialize(): unknown

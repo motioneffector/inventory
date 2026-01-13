@@ -47,8 +47,9 @@ describe('Nested Containers', () => {
       expect(Number.isFinite(shallowWeight)).toBe(true)
       // Verify shallow weight includes nested-bag container (weight=2)
       expect(shallowWeight).toBe(2)
-      // NOTE: Deep weight calculation not yet implemented, returns same as shallow
-      expect(deepWeight).toBe(shallowWeight)
+      // Verify deep weight includes both container and its contents (2 + 5 = 7)
+      expect(deepWeight).toBe(7)
+      expect(deepWeight).toBeGreaterThan(shallowWeight)
     })
   })
 
@@ -64,17 +65,21 @@ describe('Nested Containers', () => {
       const itemIds = contents.map((c) => c.itemId)
       // Should contain the nested container
       expect(itemIds).toContain('nested-bag')
+      // Should also contain the inner item from deep traversal
+      expect(itemIds).toContain('inner-item')
       // Verify the nested container entry
       const nestedBag = contents.find((c) => c.itemId === 'nested-bag')
       expect(nestedBag).toBeDefined()
       expect(nestedBag?.quantity).toBe(1)
+      // Verify the inner item from nested container
+      const innerItem = contents.find((c) => c.itemId === 'inner-item')
+      expect(innerItem).toBeDefined()
+      expect(innerItem?.quantity).toBe(3)
       // Each entry should have required properties
       contents.forEach((item) => {
         expect(item.itemId).toBeDefined()
         expect(typeof item.quantity).toBe('number')
       })
-      // NOTE: Deep traversal into nested containers not yet implemented
-      // When implemented, should also verify inner-item appears in contents
     })
 
     it('findItem with deep option searches containers', () => {

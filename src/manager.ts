@@ -66,6 +66,7 @@ export function createInventoryManager(
     itemTransferred: [] as EventCallback<ItemTransferredEvent>[],
     containerFull: [] as EventCallback<ContainerFullEvent>[],
     slotChanged: [] as EventCallback<SlotChangedEvent>[],
+    containerRemoved: [] as EventCallback<ContainerRemovedEvent>[],
   }
 
   let transactionSnapshot: unknown = null
@@ -136,6 +137,7 @@ export function createInventoryManager(
     if (!containers.has(id)) {
       throw new ValidationError(`Container "${id}" does not exist`)
     }
+    fireEvent('containerRemoved', { containerId: id })
     containers.delete(id)
   }
 
@@ -750,10 +752,11 @@ export function createInventoryManager(
     }
   }
 
-  function getContents(containerId: ContainerId, _options?: { deep?: boolean }): ContainerContents {
+  function getContents(containerId: ContainerId, options?: { deep?: boolean }): ContainerContents {
     const container = getContainer(containerId)
     const contents: ContainerContents = []
 
+    // Add direct items first
     for (const [itemId, stacks] of container.items) {
       const totalQuantity = stacks.reduce((sum, stack) => sum + stack.quantity, 0)
       const firstStack = stacks[0]
@@ -765,6 +768,19 @@ export function createInventoryManager(
         entry.position = firstStack.position
       }
       contents.push(entry)
+    }
+
+    // If deep option enabled, recursively add nested container contents
+    if (options?.deep) {
+      // Create a copy to iterate over to avoid modifying array during iteration
+      const directContents = [...contents]
+      for (const entry of directContents) {
+        if (containers.has(entry.itemId)) {
+          // This item is a nested container, get its contents recursively
+          const nestedContents = getContents(entry.itemId, { deep: true })
+          contents.push(...nestedContents)
+        }
+      }
     }
 
     return contents
@@ -842,10 +858,18 @@ export function createInventoryManager(
     return { canAdd: false, maxAddable: 0, reason: 'unsupported_mode' }
   }
 
-  function findItem(itemId: ItemId, _options?: { deep?: boolean }): FindItemResult[] {
+  function findItem(itemId: ItemId, options?: { deep?: boolean }): FindItemResult[] {
     const results: FindItemResult[] = []
+    const visited = new Set<ContainerId>()
 
-    for (const container of containers.values()) {
+    function searchContainer(containerId: ContainerId): void {
+      if (visited.has(containerId)) return
+      visited.add(containerId)
+
+      const container = containers.get(containerId)
+      if (!container) return
+
+      // Check direct contents of this container
       const quantity = getTotalQuantity(container, itemId)
       if (quantity > 0) {
         results.push({
@@ -853,14 +877,52 @@ export function createInventoryManager(
           quantity,
         })
       }
+
+      // If deep option enabled, search inside nested containers
+      if (options?.deep) {
+        for (const [nestedId] of container.items) {
+          if (containers.has(nestedId)) {
+            // Recursively search this nested container
+            searchContainer(nestedId)
+          }
+        }
+      }
+    }
+
+    // Search all top-level containers
+    for (const container of containers.values()) {
+      searchContainer(container.id)
     }
 
     return results
   }
 
-  function getTotalWeight(containerId: ContainerId, _options?: { deep?: boolean }): number {
+  function getTotalWeight(containerId: ContainerId, options?: { deep?: boolean }): number {
     const container = getContainer(containerId)
-    return getTotalWeightInternal(container)
+
+    if (!options?.deep) {
+      // Shallow: use existing logic
+      return getTotalWeightInternal(container)
+    }
+
+    // Deep weight calculation: recursively include nested container contents
+    let weight = 0
+    for (const [itemId, stacks] of container.items) {
+      const quantity = stacks.reduce((sum, stack) => sum + stack.quantity, 0)
+
+      if (containers.has(itemId)) {
+        // This is a nested container: recursively get weight of its contents
+        const nestedWeight = getTotalWeight(itemId, { deep: true })
+        // Add container's own weight plus its contents' weight
+        const containerWeight = validateItemWeight(itemId)
+        weight += (containerWeight + nestedWeight) * quantity
+      } else {
+        // Regular item: use callback weight
+        const itemWeight = validateItemWeight(itemId)
+        weight += itemWeight * quantity
+      }
+    }
+    return weight
   }
 
   function getTotalWeightInternal(container: Container): number {
@@ -1248,6 +1310,7 @@ export function createInventoryManager(
     | EventCallback<ItemTransferredEvent>
     | EventCallback<ContainerFullEvent>
     | EventCallback<SlotChangedEvent>
+    | EventCallback<ContainerRemovedEvent>
 
   function on(
     event: 'itemAdded',
@@ -1270,7 +1333,11 @@ export function createInventoryManager(
     callback: EventCallback<SlotChangedEvent>
   ): () => void
   function on(
-    event: 'itemAdded' | 'itemRemoved' | 'itemTransferred' | 'containerFull' | 'slotChanged',
+    event: 'containerRemoved',
+    callback: EventCallback<ContainerRemovedEvent>
+  ): () => void
+  function on(
+    event: 'itemAdded' | 'itemRemoved' | 'itemTransferred' | 'containerFull' | 'slotChanged' | 'containerRemoved',
     callback: AllEventCallbacks
   ): () => void {
     const listeners = eventListeners[event] as AllEventCallbacks[]
@@ -1289,6 +1356,7 @@ export function createInventoryManager(
     itemTransferred: ItemTransferredEvent
     containerFull: ContainerFullEvent
     slotChanged: SlotChangedEvent
+    containerRemoved: ContainerRemovedEvent
   }
 
   function fireEvent<K extends keyof EventData>(event: K, data: EventData[K]): void {

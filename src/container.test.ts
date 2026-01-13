@@ -75,6 +75,19 @@ describe('Container Management', () => {
       expect(() => manager.removeContainer('nonexistent')).toThrow(ValidationError)
     })
 
+    it('fires event on removal', () => {
+      manager.createContainer('c1', { mode: 'unlimited' })
+      const callback = vi.fn()
+      manager.on('containerRemoved', callback)
+      manager.removeContainer('c1')
+      expect(callback).toHaveBeenCalled()
+      expect(callback).toHaveBeenCalledWith(
+        expect.objectContaining({
+          containerId: 'c1',
+        })
+      )
+    })
+
     it('removes container and cleans up items', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
       manager.addItem('c1', 'item', 5)
