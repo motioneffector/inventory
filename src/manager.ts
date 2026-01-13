@@ -261,10 +261,9 @@ export function createInventoryManager(
   ): AddItemResult {
     const config = container.config as Extract<ContainerConfig, { mode: 'count' }>
     const stacks = container.items.get(itemId) ?? []
-    const stackLimit = Math.min(
-      config.maxStackSize ?? Infinity,
-      getItemStackLimit(itemId)
-    )
+    const stackLimit = config.allowStacking
+      ? Math.min(config.maxStackSize ?? Infinity, getItemStackLimit(itemId))
+      : 1
 
     let remaining = quantity
     let added = 0
@@ -291,8 +290,11 @@ export function createInventoryManager(
     const availableSlots = config.maxCount - currentStackCount
 
     if (remaining > 0 && availableSlots > 0) {
-      const newStacks = Math.min(availableSlots, Math.ceil(remaining / stackLimit))
-      for (let i = 0; i < newStacks && remaining > 0; i++) {
+      // Calculate how many stacks we need
+      const stacksNeeded = Math.ceil(remaining / stackLimit)
+      const stacksToCreate = Math.min(stacksNeeded, availableSlots)
+
+      for (let i = 0; i < stacksToCreate && remaining > 0; i++) {
         const toAdd = Math.min(stackLimit, remaining)
         stacks.push({ itemId, quantity: toAdd })
         remaining -= toAdd
