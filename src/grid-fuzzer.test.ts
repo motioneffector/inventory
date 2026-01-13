@@ -311,13 +311,24 @@ function executeOperation(
     }
 
     case FuzzOperation.CONSOLIDATE: {
-      manager.consolidate('grid1')
-      return { operation, result: { success: true } }
+      try {
+        manager.consolidate('grid1')
+        return { operation, result: { success: true } }
+      } catch (error) {
+        // consolidate throws for grid containers - this is expected behavior
+        return { operation, result: { success: false, error: String(error) } }
+      }
     }
 
     case FuzzOperation.AUTO_ARRANGE: {
-      manager.autoArrange('grid1')
-      return { operation, result: { success: true } }
+      try {
+        manager.autoArrange('grid1')
+        return { operation, result: { success: true } }
+      } catch (error) {
+        // autoArrange may throw if items don't fit - this is expected behavior
+        // State should be rolled back, so this is safe
+        return { operation, result: { success: false, error: String(error) } }
+      }
     }
 
     default:
@@ -825,8 +836,17 @@ describe('Grid Inventory Fuzzer', () => {
       const rng = new SeededRandom(SEED)
 
       const manager = createInventoryManager({
-        getItemSize: () => ({ width: 1, height: 1 }),
-        getItemWeight: () => 1,
+        getItemSize: (itemId): ItemSize => {
+          const templateId = itemId.substring(0, itemId.lastIndexOf('-'))
+          const template = ITEM_TEMPLATES.find((t) => t.id === templateId)
+          if (!template) return { width: 1, height: 1 }
+          return { width: template.width, height: template.height }
+        },
+        getItemWeight: (itemId): number => {
+          const templateId = itemId.substring(0, itemId.lastIndexOf('-'))
+          const template = ITEM_TEMPLATES.find((t) => t.id === templateId)
+          return template?.weight || 1
+        },
         getItemStackLimit: () => 10,
       })
 
