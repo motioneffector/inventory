@@ -39,7 +39,8 @@ describe('Nested Containers', () => {
       manager.addItem('nested-bag', 'item', 5)
       manager.addItem('parent', 'nested-bag', 1)
       const weight = manager.getTotalWeight('parent', { deep: true })
-      expect(weight).toBeGreaterThan(0)
+      // At minimum, should include the nested-bag container weight (2)
+      expect(weight).toBeGreaterThanOrEqual(2)
     })
   })
 
@@ -48,15 +49,23 @@ describe('Nested Containers', () => {
       manager.createContainer('parent', { mode: 'unlimited' })
       manager.createContainer('nested-bag', { mode: 'unlimited' })
       manager.addItem('nested-bag', 'inner-item', 3)
+      // Actually nest the container
+      manager.addItem('parent', 'nested-bag', 1)
       const contents = manager.getContents('parent', { deep: true })
       expect(contents).toBeDefined()
+      // Deep traversal should work without error
+      expect(Array.isArray(contents)).toBe(true)
     })
 
     it('findItem with deep searches nested', () => {
       manager.createContainer('parent', { mode: 'unlimited' })
       manager.createContainer('nested-bag', { mode: 'unlimited' })
       manager.addItem('nested-bag', 'inner-item', 3)
+      // Actually nest the container
+      manager.addItem('parent', 'nested-bag', 1)
       const results = manager.findItem('inner-item', { deep: true })
+      // Deep search should work without error and find the item in nested-bag
+      expect(Array.isArray(results)).toBe(true)
       expect(results.length).toBeGreaterThan(0)
     })
   })

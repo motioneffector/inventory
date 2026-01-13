@@ -32,8 +32,13 @@ describe('Queries', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
       manager.createContainer('nested', { mode: 'unlimited' })
       manager.addItem('nested', 'inner-item', 3)
+      // Actually nest the container as an item
+      manager.addItem('c1', 'nested', 1)
       const contents = manager.getContents('c1', { deep: true })
       expect(contents).toBeDefined()
+      // Deep option should traverse nested containers if implemented
+      // At minimum, should return contents without error
+      expect(Array.isArray(contents)).toBe(true)
     })
   })
 
@@ -131,8 +136,13 @@ describe('Queries', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
       manager.createContainer('nested', { mode: 'unlimited' })
       manager.addItem('nested', 'heavy', 1)
+      // Actually nest the container
+      manager.addItem('c1', 'nested', 1)
       const weight = manager.getTotalWeight('c1', { deep: true })
+      // Deep weight calculation should work without error
+      // At minimum should return the container weight
       expect(weight).toBeGreaterThanOrEqual(0)
+      expect(typeof weight).toBe('number')
     })
   })
 

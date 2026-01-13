@@ -291,8 +291,12 @@ describe('transfer()', () => {
       mgr.createContainer('c1', { mode: 'grid', width: 5, height: 5 })
       mgr.createContainer('c2', { mode: 'slots', slots: ['slot1'] })
       mgr.addItem('c1', 'item', 1)
-      // Note: This might not work as slots hold single items, but test should still work
-      expect(mgr.hasItem('c1', 'item')).toBe(true)
+      // Transfer from grid to slots - slots use setSlot, not addItem
+      // So this transfer may not work directly, but we can verify the attempt
+      const result = mgr.transfer('c1', 'c2', 'item', 1)
+      // Verify items remain consistent (either transferred or stayed in source)
+      const totalItems = mgr.getQuantity('c1', 'item') + mgr.getQuantity('c2', 'item')
+      expect(totalItems).toBe(1)
     })
   })
 })

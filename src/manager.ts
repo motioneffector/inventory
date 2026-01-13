@@ -68,7 +68,6 @@ export function createInventoryManager(
     slotChanged: [] as EventCallback<SlotChangedEvent>[],
   }
 
-  let inTransaction = false
   let transactionSnapshot: unknown = null
 
   const getItemWeight = options?.getItemWeight ?? (() => 1)
@@ -155,7 +154,7 @@ export function createInventoryManager(
   function isNestedIn(containerId: ContainerId, potentialParentId: ContainerId): boolean {
     const potentialParent = containers.get(potentialParentId)
     if (!potentialParent) return false
-    for (const [itemId, _] of potentialParent.items) {
+    for (const itemId of potentialParent.items.keys()) {
       if (itemId === containerId) return true
       if (containers.has(itemId) && isNestedIn(containerId, itemId)) {
         return true
@@ -370,15 +369,58 @@ export function createInventoryManager(
     position?: GridPosition
   ): AddItemResult {
     const config = container.config as Extract<ContainerConfig, { mode: 'grid' }>
-    const size = validateItemSize(itemId)
+    // Validate size early to catch errors
+    validateItemSize(itemId)
 
     if (position) {
       return addItemGridAt(container, itemId, quantity, position)
     }
 
     // Auto-place
+    // If stacking is disabled, place each item separately
+    if (!config.allowStacking) {
+      let added = 0
+      let overflow = quantity
+
+      for (let i = 0; i < quantity; i++) {
+        const placements = findPlacements(container.id, itemId)
+        if (placements.length === 0) {
+          fireEvent('containerFull', {
+            containerId: container.id,
+            itemId,
+            overflow,
+          })
+          if (added === 0) {
+            return { success: false, added: 0, overflow, reason: 'no_space' }
+          }
+          return { success: true, added, overflow }
+        }
+
+        const placement = placements[0]
+        if (!placement) {
+          if (added === 0) {
+            return { success: false, added: 0, overflow, reason: 'no_space' }
+          }
+          return { success: true, added, overflow }
+        }
+        const result = addItemGridAt(container, itemId, 1, placement)
+        if (!result.success) {
+          if (added === 0) {
+            return { success: false, added: 0, overflow, reason: result.reason ?? 'no_space' }
+          }
+          return { success: true, added, overflow }
+        }
+        added++
+        overflow--
+      }
+
+      return { success: true, added, overflow: 0 }
+    }
+
+    // With stacking enabled, place all at once
     const placements = findPlacements(container.id, itemId)
-    if (placements.length === 0) {
+    const firstPlacement = placements[0]
+    if (!firstPlacement) {
       fireEvent('containerFull', {
         containerId: container.id,
         itemId,
@@ -387,7 +429,7 @@ export function createInventoryManager(
       return { success: false, added: 0, overflow: quantity, reason: 'no_space' }
     }
 
-    return addItemGridAt(container, itemId, quantity, placements[0]!)
+    return addItemGridAt(container, itemId, quantity, firstPlacement)
   }
 
   function addItemGridAt(
@@ -402,14 +444,9 @@ export function createInventoryManager(
       ? { width: size.height, height: size.width }
       : size
 
-    // Check if item fits
-    if (!canPlaceAtPosition(container, itemId, position)) {
-      return { success: false, added: 0, overflow: quantity, reason: 'no_space' }
-    }
-
-    // Check stacking
-    if (config.allowStacking) {
-      const originCell = container.gridState!.cells[position.y]?.[position.x]
+    // Check stacking first
+    if (config.allowStacking && container.gridState) {
+      const originCell = container.gridState.cells[position.y]?.[position.x]
       if (originCell && originCell.isOrigin && originCell.itemId === itemId) {
         const stacks = container.items.get(itemId) ?? []
         const stack = stacks[originCell.stackIndex]
@@ -434,6 +471,11 @@ export function createInventoryManager(
       }
     }
 
+    // Check if item fits in empty space
+    if (!canPlaceAtPosition(container, itemId, position)) {
+      return { success: false, added: 0, overflow: quantity, reason: 'no_space' }
+    }
+
     // Place new item
     const stacks = container.items.get(itemId) ?? []
     const stackIndex = stacks.length
@@ -441,14 +483,19 @@ export function createInventoryManager(
     container.items.set(itemId, stacks)
 
     // Update grid
-    for (let dy = 0; dy < height; dy++) {
-      for (let dx = 0; dx < width; dx++) {
-        const y = position.y + dy
-        const x = position.x + dx
-        container.gridState!.cells[y]![x] = {
-          itemId,
-          stackIndex,
-          isOrigin: dy === 0 && dx === 0,
+    if (container.gridState) {
+      for (let dy = 0; dy < height; dy++) {
+        for (let dx = 0; dx < width; dx++) {
+          const y = position.y + dy
+          const x = position.x + dx
+          const row = container.gridState.cells[y]
+          if (row) {
+            row[x] = {
+              itemId,
+              stackIndex,
+              isOrigin: dy === 0 && dx === 0,
+            }
+          }
         }
       }
     }
@@ -511,14 +558,20 @@ export function createInventoryManager(
         config: rule,
         items: new Map(),
         lockedItems: new Set(container.lockedItems),
-        gridState: container.gridState
-          ? {
-              width: container.gridState.width,
-              height: container.gridState.height,
-              cells: container.gridState.cells.map((row) => [...row]),
-            }
-          : undefined,
-        slotState: container.slotState,
+      }
+
+      // Copy grid state if present
+      if (container.gridState) {
+        testContainer.gridState = {
+          width: container.gridState.width,
+          height: container.gridState.height,
+          cells: container.gridState.cells.map((row) => [...row]),
+        }
+      }
+
+      // Copy slot state if present
+      if (container.slotState) {
+        testContainer.slotState = container.slotState
       }
 
       // Copy items deeply
@@ -540,12 +593,21 @@ export function createInventoryManager(
           itemId,
           overflow: quantity,
         })
-        return result
+        return {
+          success: false,
+          added: result.added,
+          overflow: result.overflow,
+          reason: result.reason ?? 'rule_failed',
+        }
       }
     }
 
     // All rules passed, do actual add using first rule
-    return addItemImpl(container, config.rules[0]!, itemId, quantity)
+    const firstRule = config.rules[0]
+    if (!firstRule) {
+      return { success: false, added: 0, overflow: quantity, reason: 'no_rules' }
+    }
+    return addItemImpl(container, firstRule, itemId, quantity)
   }
 
   function addItemImpl(
@@ -590,7 +652,8 @@ export function createInventoryManager(
     let removed = 0
 
     for (let i = stacks.length - 1; i >= 0 && remaining > 0; i--) {
-      const stack = stacks[i]!
+      const stack = stacks[i]
+      if (!stack) continue
       const toRemove = Math.min(stack.quantity, remaining)
       stack.quantity -= toRemove
       remaining -= toRemove
@@ -637,8 +700,9 @@ export function createInventoryManager(
       for (let dx = 0; dx < width; dx++) {
         const y = position.y + dy
         const x = position.x + dx
-        if (container.gridState.cells[y]?.[x]) {
-          container.gridState.cells[y]![x] = null
+        const row = container.gridState.cells[y]
+        if (row?.[x]) {
+          row[x] = null
         }
       }
     }
@@ -686,19 +750,21 @@ export function createInventoryManager(
     }
   }
 
-  function getContents(containerId: ContainerId, options?: { deep?: boolean }): ContainerContents {
+  function getContents(containerId: ContainerId, _options?: { deep?: boolean }): ContainerContents {
     const container = getContainer(containerId)
     const contents: ContainerContents = []
 
     for (const [itemId, stacks] of container.items) {
       const totalQuantity = stacks.reduce((sum, stack) => sum + stack.quantity, 0)
       const firstStack = stacks[0]
-      contents.push({
+      const entry: ItemEntry = {
         itemId,
         quantity: totalQuantity,
-        position: firstStack?.position,
-        slot: undefined, // Will be filled for slot containers
-      })
+      }
+      if (firstStack?.position) {
+        entry.position = firstStack.position
+      }
+      contents.push(entry)
     }
 
     return contents
@@ -723,13 +789,13 @@ export function createInventoryManager(
   function canAdd(
     containerId: ContainerId,
     itemId: ItemId,
-    quantity: number
+    _quantity: number
   ): CanAddResult {
     const container = getContainer(containerId)
     const config = container.config
 
     if (config.mode === 'unlimited') {
-      return { canAdd: true, maxAddable: Infinity, reason: undefined }
+      return { canAdd: true, maxAddable: Infinity }
     }
 
     if (config.mode === 'count') {
@@ -741,7 +807,7 @@ export function createInventoryManager(
       if (availableSlots <= 0) {
         return { canAdd: false, maxAddable: 0, reason: 'count_exceeded' }
       }
-      return { canAdd: true, maxAddable: Infinity, reason: undefined }
+      return { canAdd: true, maxAddable: Infinity }
     }
 
     if (config.mode === 'weight') {
@@ -752,7 +818,7 @@ export function createInventoryManager(
       if (maxAddable === 0) {
         return { canAdd: false, maxAddable: 0, reason: 'weight_exceeded' }
       }
-      return { canAdd: true, maxAddable, reason: undefined }
+      return { canAdd: true, maxAddable }
     }
 
     if (config.mode === 'grid') {
@@ -760,13 +826,13 @@ export function createInventoryManager(
       if (placements.length === 0) {
         return { canAdd: false, maxAddable: 0, reason: 'no_space' }
       }
-      return { canAdd: true, maxAddable: placements.length, reason: undefined }
+      return { canAdd: true, maxAddable: placements.length }
     }
 
     return { canAdd: false, maxAddable: 0, reason: 'unsupported_mode' }
   }
 
-  function findItem(itemId: ItemId, options?: { deep?: boolean }): FindItemResult[] {
+  function findItem(itemId: ItemId, _options?: { deep?: boolean }): FindItemResult[] {
     const results: FindItemResult[] = []
 
     for (const container of containers.values()) {
@@ -782,7 +848,7 @@ export function createInventoryManager(
     return results
   }
 
-  function getTotalWeight(containerId: ContainerId, options?: { deep?: boolean }): number {
+  function getTotalWeight(containerId: ContainerId, _options?: { deep?: boolean }): number {
     const container = getContainer(containerId)
     return getTotalWeightInternal(container)
   }
@@ -818,9 +884,9 @@ export function createInventoryManager(
       return { type: 'weight', remaining: config.maxWeight - currentWeight }
     }
 
-    if (config.mode === 'grid') {
+    if (config.mode === 'grid' && container.gridState) {
       let occupiedCells = 0
-      for (const row of container.gridState!.cells) {
+      for (const row of container.gridState.cells) {
         for (const cell of row) {
           if (cell !== null) occupiedCells++
         }
@@ -829,9 +895,9 @@ export function createInventoryManager(
       return { type: 'cells', remaining: totalCells - occupiedCells }
     }
 
-    if (config.mode === 'slots') {
+    if (config.mode === 'slots' && container.slotState) {
       const emptySlots: string[] = []
-      for (const [slot, itemId] of container.slotState!.slots) {
+      for (const [slot, itemId] of container.slotState.slots) {
         if (itemId === null) emptySlots.push(slot)
       }
       return { type: 'slots', empty: emptySlots }
@@ -857,7 +923,7 @@ export function createInventoryManager(
       const row: GridCell[] = []
       for (let x = 0; x < container.gridState.width; x++) {
         const cell = container.gridState.cells[y]?.[x]
-        if (cell === null) {
+        if (cell === null || cell === undefined) {
           row.push(null)
         } else {
           const stacks = container.items.get(cell.itemId)
@@ -925,8 +991,9 @@ export function createInventoryManager(
     const config = container.config as Extract<ContainerConfig, { mode: 'slots' }>
 
     // Check filter
-    if (itemId !== null && config.slotFilters?.[slot]) {
-      if (!config.slotFilters[slot]!(itemId)) {
+    const slotFilter = config.slotFilters?.[slot]
+    if (itemId !== null && slotFilter) {
+      if (!slotFilter(itemId)) {
         throw new ValidationError(`Item "${itemId}" cannot be equipped in slot "${slot}"`)
       }
     }
@@ -976,13 +1043,14 @@ export function createInventoryManager(
       return { canAdd: false, maxAddable: 0, reason: 'slot_not_found' }
     }
 
-    if (config.slotFilters?.[slot]) {
-      if (!config.slotFilters[slot]!(itemId)) {
+    const slotFilter = config.slotFilters?.[slot]
+    if (slotFilter) {
+      if (!slotFilter(itemId)) {
         return { canAdd: false, maxAddable: 0, reason: 'slot_filter_failed' }
       }
     }
 
-    return { canAdd: true, maxAddable: 1, reason: undefined }
+    return { canAdd: true, maxAddable: 1 }
   }
 
   function splitStack(
@@ -993,11 +1061,13 @@ export function createInventoryManager(
   ): void {
     const container = getContainer(containerId)
     const stacks = container.items.get(itemId)
-    if (!stacks || !stacks[fromIndex]) {
+    if (!stacks) {
       throw new ValidationError(`Stack not found`)
     }
-
-    const stack = stacks[fromIndex]!
+    const stack = stacks[fromIndex]
+    if (!stack) {
+      throw new ValidationError(`Stack not found`)
+    }
     if (stack.quantity < count) {
       throw new ValidationError(`Insufficient quantity in stack`)
     }
@@ -1022,14 +1092,17 @@ export function createInventoryManager(
 
     // Check if indices are valid
     if (fromIndex < 0 || fromIndex >= stacks.length) {
-      throw new ValidationError(`Invalid fromIndex: ${fromIndex}`)
+      throw new ValidationError(`Invalid fromIndex: ${String(fromIndex)}`)
     }
     if (toIndex < 0 || toIndex >= stacks.length) {
-      throw new ValidationError(`Invalid toIndex: ${toIndex}`)
+      throw new ValidationError(`Invalid toIndex: ${String(toIndex)}`)
     }
 
-    const fromStack = stacks[fromIndex]!
-    const toStack = stacks[toIndex]!
+    const fromStack = stacks[fromIndex]
+    const toStack = stacks[toIndex]
+    if (!fromStack || !toStack) {
+      throw new ValidationError(`Stack not found`)
+    }
 
     if (fromStack.itemId !== toStack.itemId) {
       throw new ValidationError(`Cannot merge different items`)
@@ -1093,16 +1166,13 @@ export function createInventoryManager(
 
   function transaction(fn: () => void): void {
     transactionSnapshot = serialize()
-    inTransaction = true
 
     try {
       fn()
-      inTransaction = false
       transactionSnapshot = null
     } catch (error) {
       // Rollback
       deserialize(transactionSnapshot)
-      inTransaction = false
       transactionSnapshot = null
       throw error
     }
@@ -1145,9 +1215,14 @@ export function createInventoryManager(
 
     // Clear grid
     container.items.clear()
-    for (let y = 0; y < container.gridState!.height; y++) {
-      for (let x = 0; x < container.gridState!.width; x++) {
-        container.gridState!.cells[y]![x] = null
+    if (container.gridState) {
+      for (let y = 0; y < container.gridState.height; y++) {
+        const row = container.gridState.cells[y]
+        if (row) {
+          for (let x = 0; x < container.gridState.width; x++) {
+            row[x] = null
+          }
+        }
       }
     }
 
@@ -1156,6 +1231,13 @@ export function createInventoryManager(
       addItem(containerId, item.itemId, item.quantity)
     }
   }
+
+  type AllEventCallbacks =
+    | EventCallback<ItemAddedEvent>
+    | EventCallback<ItemRemovedEvent>
+    | EventCallback<ItemTransferredEvent>
+    | EventCallback<ContainerFullEvent>
+    | EventCallback<SlotChangedEvent>
 
   function on(
     event: 'itemAdded',
@@ -1177,34 +1259,66 @@ export function createInventoryManager(
     event: 'slotChanged',
     callback: EventCallback<SlotChangedEvent>
   ): () => void
-  function on(event: string, callback: EventCallback<any>): () => void {
-    const listeners = eventListeners[event as keyof typeof eventListeners]
-    if (listeners) {
-      listeners.push(callback)
-      return () => {
-        const index = listeners.indexOf(callback)
-        if (index !== -1) {
-          listeners.splice(index, 1)
-        }
+  function on(
+    event: 'itemAdded' | 'itemRemoved' | 'itemTransferred' | 'containerFull' | 'slotChanged',
+    callback: AllEventCallbacks
+  ): () => void {
+    const listeners = eventListeners[event] as AllEventCallbacks[]
+    listeners.push(callback)
+    return () => {
+      const index = listeners.indexOf(callback)
+      if (index !== -1) {
+        listeners.splice(index, 1)
       }
     }
-    return () => {}
   }
 
-  function fireEvent<T>(event: keyof typeof eventListeners, data: T): void {
-    const listeners = eventListeners[event]
+  type EventData = {
+    itemAdded: ItemAddedEvent
+    itemRemoved: ItemRemovedEvent
+    itemTransferred: ItemTransferredEvent
+    containerFull: ContainerFullEvent
+    slotChanged: SlotChangedEvent
+  }
+
+  function fireEvent<K extends keyof EventData>(event: K, data: EventData[K]): void {
+    const listeners = eventListeners[event] as Array<(data: EventData[K]) => void>
     for (const listener of listeners) {
       listener(data)
     }
   }
 
-  function serialize(): unknown {
-    const data: any = {
-      containers: [] as any[],
-    }
+  type SerializedStack = {
+    quantity: number
+    position?: GridPosition | undefined
+  }
+
+  type SerializedItem = {
+    itemId: string
+    stacks: SerializedStack[]
+  }
+
+  type SerializedSlotState = {
+    slots: Array<[string, string | null]>
+  }
+
+  type SerializedContainer = {
+    id: string
+    config: ContainerConfig
+    items: SerializedItem[]
+    lockedItems: string[]
+    slotState?: SerializedSlotState | undefined
+  }
+
+  type SerializedData = {
+    containers: SerializedContainer[]
+  }
+
+  function serialize(): SerializedData {
+    const serializedContainers: SerializedContainer[] = []
 
     for (const container of containers.values()) {
-      data.containers.push({
+      serializedContainers.push({
         id: container.id,
         config: container.config,
         items: Array.from(container.items.entries()).map(([itemId, stacks]) => ({
@@ -1223,11 +1337,11 @@ export function createInventoryManager(
       })
     }
 
-    return data
+    return { containers: serializedContainers }
   }
 
   function deserialize(data: unknown): void {
-    const d = data as any
+    const d = data as SerializedData
 
     // Clear current state
     containers.clear()

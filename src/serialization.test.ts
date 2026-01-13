@@ -18,6 +18,8 @@ describe('Serialization', () => {
       const data = manager.serialize()
       const json = JSON.stringify(data)
       expect(json).toBeDefined()
+      expect(typeof json).toBe('string')
+      expect(json.length).toBeGreaterThan(0)
     })
 
     it('includes all containers', () => {
@@ -25,6 +27,8 @@ describe('Serialization', () => {
       manager.createContainer('c2', { mode: 'count', maxCount: 5 })
       const data = manager.serialize()
       expect(data).toBeDefined()
+      expect(data.containers).toBeDefined()
+      expect(data.containers.length).toBe(2)
     })
 
     it('includes all items', () => {
@@ -33,6 +37,11 @@ describe('Serialization', () => {
       manager.addItem('c1', 'item2', 3)
       const data = manager.serialize()
       expect(data).toBeDefined()
+      expect(data.containers).toBeDefined()
+      const c1Data = data.containers.find((c: any) => c.id === 'c1')
+      expect(c1Data).toBeDefined()
+      expect(c1Data.items).toBeDefined()
+      expect(c1Data.items.length).toBeGreaterThanOrEqual(2)
     })
 
     it('includes grid positions', () => {
@@ -40,6 +49,14 @@ describe('Serialization', () => {
       manager.addItemAt('c1', 'item', { x: 2, y: 3 })
       const data = manager.serialize()
       expect(data).toBeDefined()
+      const c1Data = data.containers.find((c: any) => c.id === 'c1')
+      expect(c1Data).toBeDefined()
+      // Grid data should be serialized - verify it can be restored
+      const newManager = createInventoryManager({
+        getItemSize: () => ({ width: 1, height: 1 }),
+      })
+      newManager.deserialize(data)
+      expect(newManager.hasItem('c1', 'item')).toBe(true)
     })
 
     it('includes slot assignments', () => {
@@ -47,6 +64,12 @@ describe('Serialization', () => {
       manager.setSlot('c1', 'head', 'helmet')
       const data = manager.serialize()
       expect(data).toBeDefined()
+      const c1Data = data.containers.find((c: any) => c.id === 'c1')
+      expect(c1Data).toBeDefined()
+      // Slots should be serialized - verify it can be restored
+      const newManager = createInventoryManager()
+      newManager.deserialize(data)
+      expect(newManager.getSlot('c1', 'head')).toBe('helmet')
     })
 
     it('includes locked items', () => {
@@ -55,6 +78,13 @@ describe('Serialization', () => {
       manager.lockItem('c1', 'item')
       const data = manager.serialize()
       expect(data).toBeDefined()
+      const c1Data = data.containers.find((c: any) => c.id === 'c1')
+      expect(c1Data).toBeDefined()
+      // Locked items should be preserved through serialization
+      // Verify by deserializing and checking lock state
+      const newManager = createInventoryManager()
+      newManager.deserialize(data)
+      expect(() => newManager.removeItem('c1', 'item', 1)).toThrow()
     })
   })
 
@@ -109,6 +139,8 @@ describe('Serialization', () => {
       manager.addItem('c1', 'item', 5)
       const data = manager.serializeContainer('c1')
       expect(data).toBeDefined()
+      expect(data.id).toBe('c1')
+      expect(data.items).toBeDefined()
     })
 
     it('can restore with deserialize', () => {

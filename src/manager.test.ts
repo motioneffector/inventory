@@ -39,16 +39,51 @@ describe('createInventoryManager()', () => {
 
     it('returns object with all expected methods', () => {
       const manager = createInventoryManager()
+      // Container management
       expect(manager.createContainer).toBeDefined()
       expect(manager.removeContainer).toBeDefined()
       expect(manager.listContainers).toBeDefined()
+      // Basic operations
       expect(manager.addItem).toBeDefined()
       expect(manager.removeItem).toBeDefined()
       expect(manager.transfer).toBeDefined()
+      // Query methods
       expect(manager.getContents).toBeDefined()
       expect(manager.hasItem).toBeDefined()
       expect(manager.getQuantity).toBeDefined()
       expect(manager.canAdd).toBeDefined()
+      expect(manager.findItem).toBeDefined()
+      expect(manager.getTotalWeight).toBeDefined()
+      expect(manager.getRemainingCapacity).toBeDefined()
+      expect(manager.isEmpty).toBeDefined()
+      // Grid-specific methods
+      expect(manager.getGrid).toBeDefined()
+      expect(manager.findPlacements).toBeDefined()
+      expect(manager.addItemAt).toBeDefined()
+      // Slots-specific methods
+      expect(manager.setSlot).toBeDefined()
+      expect(manager.getSlot).toBeDefined()
+      expect(manager.getAllSlots).toBeDefined()
+      expect(manager.canEquip).toBeDefined()
+      expect(manager.clearSlot).toBeDefined()
+      // Locking
+      expect(manager.lockItem).toBeDefined()
+      expect(manager.unlockItem).toBeDefined()
+      // Stack operations
+      expect(manager.splitStack).toBeDefined()
+      expect(manager.mergeStacks).toBeDefined()
+      expect(manager.consolidate).toBeDefined()
+      // Sorting
+      expect(manager.sort).toBeDefined()
+      expect(manager.autoArrange).toBeDefined()
+      // Events
+      expect(manager.on).toBeDefined()
+      // Transactions
+      expect(manager.transaction).toBeDefined()
+      // Serialization
+      expect(manager.serialize).toBeDefined()
+      expect(manager.deserialize).toBeDefined()
+      expect(manager.serializeContainer).toBeDefined()
     })
   })
 
