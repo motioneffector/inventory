@@ -85,6 +85,8 @@ describe('Container Management', () => {
       expect(manager.listContainers()).not.toContain('c1')
       // Verify removal was successful
       expect(() => manager.hasItem('c1', 'item')).toThrow()
+      // Note: removeContainer may or may not fire itemRemoved events
+      // depending on implementation - just verify container was removed
     })
   })
 

@@ -40,8 +40,13 @@ describe('Nested Containers', () => {
       manager.addItem('parent', 'nested-bag', 1)
       const weight = manager.getTotalWeight('parent', { deep: true })
       // Should at minimum include the nested-bag container weight (2)
-      // Deep weight calculation may not fully traverse nested contents yet
       expect(weight).toBeGreaterThanOrEqual(2)
+      // Verify it's a valid number
+      expect(typeof weight).toBe('number')
+      expect(Number.isFinite(weight)).toBe(true)
+      // Shallow weight should be less than or equal to deep weight
+      const shallowWeight = manager.getTotalWeight('parent', { deep: false })
+      expect(weight).toBeGreaterThanOrEqual(shallowWeight)
     })
   })
 
@@ -56,6 +61,16 @@ describe('Nested Containers', () => {
       expect(contents).toBeDefined()
       // Deep traversal should work without error
       expect(Array.isArray(contents)).toBe(true)
+      // Should at minimum contain the nested-bag container
+      const itemIds = contents.map((c) => c.itemId)
+      expect(itemIds).toContain('nested-bag')
+      // Verify we got some results
+      expect(contents.length).toBeGreaterThanOrEqual(1)
+      // Verify each item has required properties
+      contents.forEach((item) => {
+        expect(item.itemId).toBeDefined()
+        expect(typeof item.quantity).toBe('number')
+      })
     })
 
     it('findItem with deep searches nested', () => {
@@ -67,8 +82,14 @@ describe('Nested Containers', () => {
       const results = manager.findItem('inner-item', { deep: true })
       // Should at minimum not error and return results
       expect(Array.isArray(results)).toBe(true)
-      // Deep search may or may not traverse nested containers yet
-      // Key is findItem works without errors
+      // Should find the inner-item in the nested container
+      expect(results.length).toBeGreaterThanOrEqual(1)
+      // Verify the result contains the nested-bag container
+      const nestedResult = results.find((r) => r.containerId === 'nested-bag')
+      expect(nestedResult).toBeDefined()
+      if (nestedResult) {
+        expect(nestedResult.quantity).toBe(3)
+      }
     })
   })
 
