@@ -64,13 +64,12 @@ describe('Stack Operations', () => {
     })
 
     it('throws if different items', () => {
-      manager.createContainer('c1', { mode: 'unlimited' })
+      manager.createContainer('c1', { mode: 'unlimited', allowStacking: true, maxStackSize: 10 })
       manager.addItem('c1', 'item1', 5)
       manager.addItem('c1', 'item2', 5)
-      // Since mergeStacks API takes itemId parameter, stacks are scoped to that item
-      // So we cannot directly test merging different item types
-      // Instead, test that out-of-bounds index throws
-      expect(() => manager.mergeStacks('c1', 'item1', 0, 10)).toThrow()
+      // Test that mergeStacks with invalid indices throws
+      // Index 1 doesn't exist for item1 (only has 1 stack at index 0)
+      expect(() => manager.mergeStacks('c1', 'item1', 0, 1)).toThrow()
     })
   })
 

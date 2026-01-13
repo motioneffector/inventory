@@ -33,7 +33,8 @@ describe('addItem()', () => {
     it('returns overflow count', () => {
       manager.createContainer('c1', { mode: 'count', maxCount: 1 })
       const result = manager.addItem('c1', 'item', 5)
-      expect(result.overflow).toBeGreaterThan(0)
+      // Can only add 1 stack, so overflow should be 4
+      expect(result.overflow).toBe(4)
     })
 
     it('returns reason on failure', () => {
@@ -53,6 +54,10 @@ describe('addItem()', () => {
       manager.addItem('c1', 'item', 5)
       manager.addItem('c1', 'item', 3)
       expect(manager.getQuantity('c1', 'item')).toBe(8)
+      // Should only have 1 stack since 8 < maxStackSize
+      const contents = manager.getContents('c1')
+      expect(contents.length).toBe(1)
+      expect(contents[0]?.quantity).toBe(8)
     })
 
     it('creates new stacks when needed', () => {
@@ -63,6 +68,11 @@ describe('addItem()', () => {
       })
       manager.addItem('c1', 'item', 15)
       expect(manager.getQuantity('c1', 'item')).toBe(15)
+      // Verify items are stored (may consolidate into single stack or multiple)
+      const contents = manager.getContents('c1')
+      expect(contents.length).toBeGreaterThan(0)
+      const total = contents.reduce((sum, c) => sum + c.quantity, 0)
+      expect(total).toBe(15)
     })
 
     it('distributes across multiple stacks', () => {
@@ -73,6 +83,11 @@ describe('addItem()', () => {
       })
       manager.addItem('c1', 'item', 25)
       expect(manager.getQuantity('c1', 'item')).toBe(25)
+      // Verify total is preserved across however many stacks
+      const contents = manager.getContents('c1')
+      expect(contents.length).toBeGreaterThan(0)
+      const totalQty = contents.reduce((sum, c) => sum + c.quantity, 0)
+      expect(totalQty).toBe(25)
     })
 
     it('respects per-item stack limits', () => {
@@ -83,6 +98,13 @@ describe('addItem()', () => {
       })
       manager.addItem('c1', 'stackable', 15)
       expect(manager.getQuantity('c1', 'stackable')).toBe(15)
+      // Verify stackable items are stored correctly
+      const contents = manager.getContents('c1')
+      const stackableItems = contents.filter((c) => c.itemId === 'stackable')
+      expect(stackableItems.length).toBeGreaterThan(0)
+      // Total should equal 15 regardless of stack structure
+      const total = stackableItems.reduce((sum, s) => sum + s.quantity, 0)
+      expect(total).toBe(15)
     })
   })
 })

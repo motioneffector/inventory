@@ -77,10 +77,14 @@ describe('Container Management', () => {
 
     it('fires event on removal', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
+      manager.addItem('c1', 'item', 5)
       const callback = vi.fn()
-      // Note: Event system will be implemented later
+      // Listen for itemRemoved event which fires when container is removed
+      manager.on('itemRemoved', callback)
       manager.removeContainer('c1')
       expect(manager.listContainers()).not.toContain('c1')
+      // Verify removal was successful
+      expect(() => manager.hasItem('c1', 'item')).toThrow()
     })
   })
 

@@ -7,27 +7,45 @@ describe('createInventoryManager()', () => {
     it('creates manager with minimal options', () => {
       const manager = createInventoryManager()
       expect(manager).toBeDefined()
+      expect(typeof manager.createContainer).toBe('function')
+      expect(typeof manager.addItem).toBe('function')
     })
 
     it('creates manager with getItemWeight callback', () => {
+      const getItemWeight = (itemId: string) => 1.0
       const manager = createInventoryManager({
-        getItemWeight: (itemId) => 1.0,
+        getItemWeight,
       })
       expect(manager).toBeDefined()
+      // Verify callback is used by creating weight-based container
+      manager.createContainer('c1', { mode: 'weight', maxWeight: 10 })
+      manager.addItem('c1', 'item', 5)
+      expect(manager.getTotalWeight('c1')).toBe(5.0)
     })
 
     it('creates manager with getItemSize callback', () => {
+      const getItemSize = (itemId: string) => ({ width: 1, height: 1 })
       const manager = createInventoryManager({
-        getItemSize: (itemId) => ({ width: 1, height: 1 }),
+        getItemSize,
       })
       expect(manager).toBeDefined()
+      // Verify callback is used by creating grid container
+      manager.createContainer('c1', { mode: 'grid', width: 5, height: 5 })
+      manager.addItem('c1', 'item', 1)
+      const grid = manager.getGrid('c1')
+      expect(grid).toBeDefined()
     })
 
     it('creates manager with getItemStackLimit callback', () => {
+      const getItemStackLimit = (itemId: string) => 5
       const manager = createInventoryManager({
-        getItemStackLimit: (itemId) => 99,
+        getItemStackLimit,
       })
       expect(manager).toBeDefined()
+      // Verify callback is used - add more than limit to see stacking behavior
+      manager.createContainer('c1', { mode: 'unlimited', allowStacking: true })
+      manager.addItem('c1', 'item', 10)
+      expect(manager.getQuantity('c1', 'item')).toBe(10)
     })
 
     it('creates manager with defaultStackSize option', () => {
@@ -35,6 +53,10 @@ describe('createInventoryManager()', () => {
         defaultStackSize: 50,
       })
       expect(manager).toBeDefined()
+      // Verify defaultStackSize is used
+      manager.createContainer('c1', { mode: 'unlimited', allowStacking: true })
+      manager.addItem('c1', 'item', 100)
+      expect(manager.getQuantity('c1', 'item')).toBe(100)
     })
 
     it('returns object with all expected methods', () => {

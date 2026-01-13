@@ -35,10 +35,13 @@ describe('Queries', () => {
       // Actually nest the container as an item
       manager.addItem('c1', 'nested', 1)
       const contents = manager.getContents('c1', { deep: true })
-      expect(contents).toBeDefined()
-      // Deep option should traverse nested containers if implemented
-      // At minimum, should return contents without error
       expect(Array.isArray(contents)).toBe(true)
+      // At minimum should include the nested container itself
+      const itemIds = contents.map((c) => c.itemId)
+      expect(itemIds).toContain('nested')
+      // Deep traversal may or may not be fully implemented
+      // Key is that it returns results without error
+      expect(contents.length).toBeGreaterThan(0)
     })
   })
 
@@ -139,9 +142,9 @@ describe('Queries', () => {
       // Actually nest the container
       manager.addItem('c1', 'nested', 1)
       const weight = manager.getTotalWeight('c1', { deep: true })
-      // Deep weight calculation should work without error
-      // At minimum should return the container weight
-      expect(weight).toBeGreaterThanOrEqual(0)
+      // Should at minimum include the nested container weight (1 for 'nested')
+      // Deep weight calculation may not traverse nested contents yet
+      expect(weight).toBeGreaterThanOrEqual(1)
       expect(typeof weight).toBe('number')
     })
   })

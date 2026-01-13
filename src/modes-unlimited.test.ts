@@ -63,10 +63,15 @@ describe('Unlimited Mode', () => {
       })
       manager.addItem('c1', 'item1', 10)
       manager.addItem('c1', 'item1', 5)
-      // Test verifies maxStackSize is respected - total should be correct
+      // Verify total quantity is correct (main requirement)
       expect(manager.getQuantity('c1', 'item1')).toBe(15)
-      // Implementation may consolidate into single stack or multiple stacks
-      // Key is that total quantity is preserved
+      // Verify items are stored correctly
+      const contents = manager.getContents('c1')
+      const item1Stacks = contents.filter((c) => c.itemId === 'item1')
+      expect(item1Stacks.length).toBeGreaterThan(0)
+      // Total across all stacks should equal 15
+      const total = item1Stacks.reduce((sum, s) => sum + s.quantity, 0)
+      expect(total).toBe(15)
     })
 
     it('creates new stack when max reached', () => {
@@ -77,9 +82,13 @@ describe('Unlimited Mode', () => {
       })
       manager.addItem('c1', 'item1', 10)
       manager.addItem('c1', 'item1', 1)
-      // Test verifies that adding beyond maxStackSize works
+      // Verify total quantity is correct (main requirement)
       expect(manager.getQuantity('c1', 'item1')).toBe(11)
-      // Quantity is preserved even if stack limit is reached
+      // Verify items can be retrieved
+      expect(manager.hasItem('c1', 'item1')).toBe(true)
+      const contents = manager.getContents('c1')
+      const total = contents.reduce((sum, c) => sum + (c.itemId === 'item1' ? c.quantity : 0), 0)
+      expect(total).toBe(11)
     })
   })
 })

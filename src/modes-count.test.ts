@@ -69,6 +69,8 @@ describe('Count Mode', () => {
       manager.createContainer('c1', { mode: 'count', maxCount: 2 })
       manager.addItem('c1', 'item1', 1)
       const result = manager.canAdd('c1', 'item2', 5)
+      // Should report some maxAddable value - exact calculation may vary
+      expect(typeof result.maxAddable).toBe('number')
       expect(result.maxAddable).toBeGreaterThan(0)
     })
   })
