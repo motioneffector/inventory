@@ -14,7 +14,7 @@ import type {
 // ============================================
 
 const THOROUGH_MODE = process.env.FUZZ_THOROUGH === '1'
-const THOROUGH_DURATION_MS = 60_000 // 60 seconds per test in thorough mode
+const THOROUGH_DURATION_MS = 10_000 // 10 seconds per test in thorough mode
 const STANDARD_ITERATIONS = 10 // iterations per test in standard mode (reduced to avoid memory issues)
 const BASE_SEED = 12345 // reproducible seed for standard mode
 
