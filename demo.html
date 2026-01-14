@@ -158,6 +158,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", 
 @keyframes btnPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(31,111,235,0.4); } 50% { box-shadow: 0 0 0 10px rgba(31,111,235,0); } }
 .speed-slider { display: flex; align-items: center; gap: var(--space-sm); font-size: var(--font-size-sm); color: var(--text-secondary); }
 .speed-slider input[type="range"] { width: 80px; accent-color: var(--accent-blue); }
+
+/* Demo highlight effect */
+.exhibit.demo-highlight { box-shadow: 0 0 30px var(--accent-blue), 0 0 60px rgba(31, 111, 235, 0.3); transition: box-shadow 0.3s ease; }
+.demo-action { animation: demoAction 0.3s ease; }
+@keyframes demoAction { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
   </style>
 </head>
 <body>
@@ -293,6 +298,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", 
         <h2 class="test-runner-title">Test Suite</h2>
         <div class="test-runner-actions">
           <button class="btn btn-primary" id="run-tests">Run Tests</button>
+          <button class="btn btn-secondary" id="reset-page">🔄 Reset Page</button>
         </div>
       </div>
       <div class="test-runner-content">
@@ -1313,19 +1319,151 @@ const testRunner = {
       await new Promise(r => setTimeout(r, 10));
     }
     progressFill.classList.add(failed === 0 ? 'success' : 'failure');
-    progressText.textContent = `Complete: ${passed}/${this.tests.length} passed`;
+    progressText.textContent = `Tests: ${passed}/${this.tests.length} passed`;
     document.getElementById('passed-count').textContent = passed;
     document.getElementById('failed-count').textContent = failed;
     document.getElementById('skipped-count').textContent = 0;
     summary.classList.remove('hidden');
+
+    // Phase 2: Run visual demo
+    await sleep(500);
+    progressText.textContent = 'Demoing: Tetris Vault...';
+    await this.demoGridExhibit();
+
+    progressText.textContent = 'Demoing: Adventurer\'s Loadout...';
+    await this.demoLoadoutExhibit();
+
+    progressText.textContent = 'Demoing: Time-Warp Trading...';
+    await this.demoTradingExhibit();
+
+    progressText.textContent = `Complete: ${passed}/${this.tests.length} tests passed + demo finished`;
     runBtn.disabled = false;
     this.running = false;
+  },
+
+  async demoGridExhibit() {
+    const exhibit = document.querySelector('#exhibit-1').closest('.exhibit');
+    exhibit.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    await sleep(400);
+    exhibit.classList.add('demo-highlight');
+
+    // Add remaining loot items to grid
+    const DEMO_DELAY = 200;
+    while (lootPile.length > 0) {
+      const itemId = lootPile[0];
+      const placements = gridManager.findPlacements('vault', itemId);
+      if (placements.length > 0) {
+        gridManager.addItemAt('vault', itemId, placements[0]);
+        lootPile = lootPile.filter(id => id !== itemId);
+        renderGrid();
+        renderLootPile();
+        await sleep(DEMO_DELAY);
+      } else break;
+    }
+
+    // Auto-arrange
+    await sleep(300);
+    document.getElementById('auto-arrange').classList.add('demo-action');
+    gridManager.autoArrange('vault');
+    renderGrid();
+    document.getElementById('auto-arrange').classList.remove('btn-pulse');
+    await sleep(400);
+
+    exhibit.classList.remove('demo-highlight');
+    await sleep(200);
+  },
+
+  async demoLoadoutExhibit() {
+    const exhibit = document.querySelector('#exhibit-2').closest('.exhibit');
+    exhibit.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    await sleep(400);
+    exhibit.classList.add('demo-highlight');
+
+    const DEMO_DELAY = 250;
+
+    // Transfer plate helm from chest to head
+    if (loadoutManager.hasItem('chest', 'plateHelm')) {
+      const oldItem = loadoutManager.setSlot('equipment', 'head', 'plateHelm');
+      loadoutManager.removeItem('chest', 'plateHelm', 1);
+      if (oldItem) loadoutManager.addItem('backpack', oldItem, 1);
+      renderLoadout();
+      await sleep(DEMO_DELAY);
+    }
+
+    // Lock gold
+    if (!goldLocked) {
+      goldLocked = true;
+      loadoutManager.lockItem('backpack', 'gold');
+      document.getElementById('lock-gold').textContent = '🔓 Unlock Gold';
+      renderLoadout();
+      await sleep(DEMO_DELAY);
+    }
+
+    // Sort items
+    document.getElementById('sort-items').classList.add('demo-action');
+    loadoutManager.sort('backpack', (a, b) => a.itemId.localeCompare(b.itemId));
+    renderLoadout();
+    await sleep(DEMO_DELAY);
+
+    // Snapshot
+    document.getElementById('snapshot').classList.add('demo-action');
+    savedSnapshot = loadoutManager.serialize();
+    document.getElementById('restore').disabled = false;
+    await sleep(DEMO_DELAY);
+
+    // Transfer some items to chest
+    if (loadoutManager.hasItem('backpack', 'potion')) {
+      loadoutManager.transfer('backpack', 'chest', 'potion', 5);
+      renderLoadout();
+      await sleep(DEMO_DELAY);
+    }
+
+    // Restore from snapshot
+    document.getElementById('restore').classList.add('demo-action');
+    loadoutManager.deserialize(savedSnapshot);
+    renderLoadout();
+    await sleep(400);
+
+    exhibit.classList.remove('demo-highlight');
+    await sleep(200);
+  },
+
+  async demoTradingExhibit() {
+    const exhibit = document.querySelector('#exhibit-3').closest('.exhibit');
+    exhibit.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    await sleep(400);
+    exhibit.classList.add('demo-highlight');
+
+    // Execute pre-configured trade (success)
+    document.getElementById('execute-trade').classList.add('demo-action');
+    await executeTrade();
+    await sleep(500);
+
+    // Reset for failed trade demo
+    document.getElementById('reset-trade').click();
+    await sleep(300);
+
+    // Enable chaos gremlin
+    document.getElementById('chaos-gremlin').checked = true;
+    await sleep(200);
+
+    // Execute trade again (will fail and rollback)
+    document.getElementById('execute-trade').classList.add('demo-action');
+    await executeTrade();
+    await sleep(500);
+
+    // Disable chaos gremlin
+    document.getElementById('chaos-gremlin').checked = false;
+
+    exhibit.classList.remove('demo-highlight');
+    await sleep(200);
   }
 };
 
 function escapeHtml(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
 document.getElementById('run-tests').addEventListener('click', () => testRunner.run());
+document.getElementById('reset-page').addEventListener('click', () => location.reload());
 
 // Register tests
 testRunner.register('creates manager with default options', () => {
