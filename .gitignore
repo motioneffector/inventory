@@ -5,16 +5,9 @@ coverage/
 .DS_Store
 *.local
 .claude/
-
-# Internal build documentation
-PROMPT_*.md
-TESTS.md
-PLAN.md
-BUILD_STATUS.md
-COMPLETION_SUMMARY.md
-PHASE_*.md
-STATUS.md
-TEST_AUDIT_REPORT.md
-BUILD_REPORT.md
 *.patch
-FUZZERS.md
+
+# Ignore all root markdown files except README and CHANGELOG
+/*.md
+!README.md
+!CHANGELOG.md
