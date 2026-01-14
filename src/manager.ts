@@ -78,8 +78,11 @@ export function createInventoryManager(
 
   function validateItemWeight(itemId: ItemId): number {
     const weight = getItemWeight(itemId)
-    if (typeof weight !== 'number' || isNaN(weight)) {
-      throw new ValidationError(`getItemWeight must return a valid number for item "${itemId}"`)
+    if (typeof weight !== 'number' || isNaN(weight) || weight < 0) {
+      throw new ValidationError(`getItemWeight must return a valid non-negative number for item "${itemId}"`)
+    }
+    if (weight === 0) {
+      throw new ValidationError(`getItemWeight must return a positive number for item "${itemId}" (zero weight not allowed)`)
     }
     return weight
   }
@@ -116,6 +119,18 @@ export function createInventoryManager(
     }
 
     if (config.mode === 'grid') {
+      // Prevent memory exhaustion from extremely large grid dimensions
+      const MAX_GRID_DIMENSION = 10000
+      const MAX_GRID_CELLS = 1000000
+      if (config.width <= 0 || config.height <= 0) {
+        throw new ValidationError('Grid dimensions must be positive')
+      }
+      if (config.width > MAX_GRID_DIMENSION || config.height > MAX_GRID_DIMENSION) {
+        throw new ValidationError(`Grid dimensions cannot exceed ${MAX_GRID_DIMENSION}`)
+      }
+      if (config.width * config.height > MAX_GRID_CELLS) {
+        throw new ValidationError(`Grid cannot exceed ${MAX_GRID_CELLS} total cells`)
+      }
       container.gridState = {
         width: config.width,
         height: config.height,
@@ -1147,7 +1162,15 @@ export function createInventoryManager(
     if (!container.slotState) {
       throw new ValidationError('Container is not in slots mode')
     }
-    return Object.fromEntries(container.slotState.slots)
+    // Prevent prototype pollution by filtering dangerous keys
+    const FORBIDDEN_KEYS = ['__proto__', 'constructor', 'prototype']
+    const result: Record<string, ItemId | null> = {}
+    for (const [key, value] of container.slotState.slots) {
+      if (!FORBIDDEN_KEYS.includes(key)) {
+        result[key] = value
+      }
+    }
+    return result
   }
 
   function clearSlot(containerId: ContainerId, slot: string): void {
@@ -1526,37 +1549,96 @@ export function createInventoryManager(
   }
 
   function deserialize(data: unknown): void {
+    // Validate basic structure
+    if (!data || typeof data !== 'object') {
+      throw new ValidationError('Invalid serialized data: must be an object')
+    }
+
     const d = data as SerializedData
+
+    if (!Array.isArray(d.containers)) {
+      throw new ValidationError('Invalid serialized data: containers must be an array')
+    }
+
+    // Forbidden keys for prototype pollution prevention
+    const FORBIDDEN_KEYS = ['__proto__', 'constructor', 'prototype']
 
     // Clear current state
     containers.clear()
 
     // Restore containers
     for (const containerData of d.containers) {
+      // Validate container data structure
+      if (!containerData || typeof containerData !== 'object') {
+        throw new ValidationError('Invalid container data in serialized data')
+      }
+      if (typeof containerData.id !== 'string' || FORBIDDEN_KEYS.includes(containerData.id)) {
+        throw new ValidationError('Invalid or dangerous container ID in serialized data')
+      }
+      if (!containerData.config || typeof containerData.config !== 'object') {
+        throw new ValidationError('Invalid container config in serialized data')
+      }
+
       createContainer(containerData.id, containerData.config)
       const container = getContainer(containerData.id)
 
       // Restore items
-      for (const itemData of containerData.items) {
-        for (const stackData of itemData.stacks) {
-          if (stackData.position) {
-            addItemAt(container.id, itemData.itemId, stackData.position, stackData.quantity)
-          } else {
-            addItem(container.id, itemData.itemId, stackData.quantity)
+      if (Array.isArray(containerData.items)) {
+        for (const itemData of containerData.items) {
+          if (!itemData || typeof itemData !== 'object') {
+            throw new ValidationError('Invalid item data in serialized data')
+          }
+          if (typeof itemData.itemId !== 'string' || FORBIDDEN_KEYS.includes(itemData.itemId)) {
+            throw new ValidationError('Invalid or dangerous item ID in serialized data')
+          }
+          if (!Array.isArray(itemData.stacks)) {
+            throw new ValidationError('Invalid stacks data in serialized data')
+          }
+
+          for (const stackData of itemData.stacks) {
+            if (!stackData || typeof stackData !== 'object') {
+              throw new ValidationError('Invalid stack data in serialized data')
+            }
+            if (typeof stackData.quantity !== 'number' || stackData.quantity < 0) {
+              throw new ValidationError('Invalid stack quantity in serialized data')
+            }
+
+            if (stackData.position) {
+              addItemAt(container.id, itemData.itemId, stackData.position, stackData.quantity)
+            } else {
+              addItem(container.id, itemData.itemId, stackData.quantity)
+            }
           }
         }
       }
 
       // Restore locked items
-      for (const itemId of containerData.lockedItems) {
-        lockItem(container.id, itemId)
+      if (Array.isArray(containerData.lockedItems)) {
+        for (const itemId of containerData.lockedItems) {
+          if (typeof itemId !== 'string' || FORBIDDEN_KEYS.includes(itemId)) {
+            throw new ValidationError('Invalid or dangerous locked item ID in serialized data')
+          }
+          lockItem(container.id, itemId)
+        }
       }
 
       // Restore slot state
-      if (containerData.slotState) {
-        for (const [slot, itemId] of containerData.slotState.slots) {
-          if (itemId !== null) {
-            setSlot(container.id, slot, itemId)
+      if (containerData.slotState && typeof containerData.slotState === 'object') {
+        if (Array.isArray(containerData.slotState.slots)) {
+          for (const slotEntry of containerData.slotState.slots) {
+            if (!Array.isArray(slotEntry) || slotEntry.length !== 2) {
+              throw new ValidationError('Invalid slot entry in serialized data')
+            }
+            const [slot, itemId] = slotEntry
+            if (typeof slot !== 'string' || FORBIDDEN_KEYS.includes(slot)) {
+              throw new ValidationError('Invalid or dangerous slot name in serialized data')
+            }
+            if (itemId !== null) {
+              if (typeof itemId !== 'string' || FORBIDDEN_KEYS.includes(itemId)) {
+                throw new ValidationError('Invalid or dangerous item ID in slot data')
+              }
+              setSlot(container.id, slot, itemId)
+            }
           }
         }
       }
