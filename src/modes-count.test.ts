@@ -70,9 +70,43 @@ describe('Count Mode', () => {
       manager.addItem('c1', 'item1', 1)
       const result = manager.canAdd('c1', 'item2', 5)
       // Count mode limits stacks, not quantity per stack
-      // With 1 slot remaining, maxAddable is Infinity (limited only by maxStackSize)
+      // With 1 slot remaining and no stacking enabled (default), maxAddable is 1
       expect(result.canAdd).toBe(true)
-      expect(result.maxAddable).toBe(Infinity)
+      expect(result.maxAddable).toBe(1)
+    })
+
+    it('canAdd reports maxAddable with stacking enabled', () => {
+      manager.createContainer('c1', {
+        mode: 'count',
+        maxCount: 2,
+        allowStacking: true,
+        maxStackSize: 10,
+      })
+      manager.addItem('c1', 'item1', 1)
+      const result = manager.canAdd('c1', 'item2', 5)
+      // With 1 slot remaining and stacking enabled with maxStackSize 10
+      expect(result.canAdd).toBe(true)
+      expect(result.maxAddable).toBe(10)
+    })
+
+    it('canAdd calculates maxAddable considering existing partial stacks', () => {
+      manager.createContainer('c1', {
+        mode: 'count',
+        maxCount: 3,
+        allowStacking: true,
+        maxStackSize: 10,
+      })
+      // Add 7 of item1 (creates 1 stack with 7 items, room for 3 more)
+      manager.addItem('c1', 'item1', 7)
+      // Add 1 of item2 (uses 1 slot)
+      manager.addItem('c1', 'item2', 1)
+
+      const result = manager.canAdd('c1', 'item1', 100)
+      // 1 existing partial stack with room for 3 more
+      // 1 available slot that can hold 10 items
+      // Total: 3 + 10 = 13
+      expect(result.canAdd).toBe(true)
+      expect(result.maxAddable).toBe(13)
     })
   })
 

@@ -865,10 +865,26 @@ export function createInventoryManager(
         0
       )
       const availableSlots = config.maxCount - currentStackCount
-      if (availableSlots <= 0) {
+
+      // Calculate stack limit for this item
+      const stackLimit = config.allowStacking
+        ? Math.min(config.maxStackSize ?? Infinity, getItemStackLimit(itemId))
+        : 1
+
+      // Calculate room in existing stacks of this item
+      const existingStacks = container.items.get(itemId) ?? []
+      let roomInExistingStacks = 0
+      for (const stack of existingStacks) {
+        roomInExistingStacks += Math.max(0, stackLimit - stack.quantity)
+      }
+
+      // Calculate maxAddable: room in existing stacks + (new slots × stack limit)
+      const maxAddable = roomInExistingStacks + availableSlots * stackLimit
+
+      if (maxAddable === 0) {
         return { canAdd: false, maxAddable: 0, reason: 'count_exceeded' }
       }
-      return { canAdd: true, maxAddable: Infinity }
+      return { canAdd: true, maxAddable }
     }
 
     if (config.mode === 'weight') {
