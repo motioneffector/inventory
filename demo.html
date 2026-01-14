@@ -3,2825 +3,1672 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>@motioneffector/inventory - Interactive Demo</title>
+  <title>@motioneffector/inventory - Demo</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 16px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif; font-size: 1rem; line-height: 1.5; color: #e6edf3; background: #0d1117; min-height: 100vh; }
+:root {
+  --bg-primary: #0d1117; --bg-secondary: #161b22; --bg-tertiary: #21262d; --bg-hover: #30363d;
+  --border-default: #30363d; --border-muted: #21262d;
+  --text-primary: #e6edf3; --text-secondary: #8b949e; --text-muted: #6e7681; --text-link: #58a6ff;
+  --accent-blue: #1f6feb; --accent-blue-hover: #388bfd; --accent-green: #238636; --accent-green-bright: #3fb950;
+  --accent-red: #da3633; --accent-red-bright: #f85149; --accent-yellow: #d29922; --accent-yellow-bright: #e3b341; --accent-purple: #8957e5;
+  --space-xs: 4px; --space-sm: 8px; --space-md: 16px; --space-lg: 24px; --space-xl: 32px; --space-xxl: 48px;
+  --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px; --radius-xl: 12px;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-size-xs: 0.75rem; --font-size-sm: 0.875rem; --font-size-md: 1rem; --font-size-lg: 1.25rem; --font-size-xl: 1.5rem; --font-size-xxl: 2rem;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3); --shadow-md: 0 4px 8px rgba(0,0,0,0.3); --shadow-lg: 0 8px 16px rgba(0,0,0,0.4);
+  --transition-fast: 0.1s ease; --transition-normal: 0.2s ease; --transition-slow: 0.3s ease;
+}
+.page { max-width: 1200px; margin: 0 auto; padding: var(--space-xl); }
+.header { margin-bottom: var(--space-xxl); padding-bottom: var(--space-xl); border-bottom: 1px solid var(--border-default); }
+.header-title { font-size: var(--font-size-xxl); font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-sm); }
+.header-description { font-size: var(--font-size-lg); color: var(--text-secondary); margin-bottom: var(--space-lg); }
+.header-links { display: flex; gap: var(--space-md); }
+.header-link { display: inline-flex; align-items: center; gap: var(--space-xs); color: var(--text-link); text-decoration: none; font-size: var(--font-size-sm); padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-md); transition: background var(--transition-fast); }
+.header-link:hover { background: var(--bg-tertiary); text-decoration: underline; }
+.exhibits { display: flex; flex-direction: column; gap: var(--space-xxl); }
+.exhibit { background: var(--bg-secondary); border: 1px solid var(--border-default); border-radius: var(--radius-xl); overflow: hidden; }
+.exhibit-header { padding: var(--space-lg); border-bottom: 1px solid var(--border-default); }
+.exhibit-title { font-size: var(--font-size-xl); font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-xs); }
+.exhibit-description { font-size: var(--font-size-md); color: var(--text-secondary); }
+.exhibit-content { padding: var(--space-lg); }
+.exhibit-interactive { background: var(--bg-primary); border: 1px solid var(--border-muted); border-radius: var(--radius-lg); min-height: 200px; padding: var(--space-lg); margin-bottom: var(--space-lg); }
+.exhibit-controls { display: flex; flex-wrap: wrap; gap: var(--space-sm); padding: var(--space-md); background: var(--bg-tertiary); border-radius: var(--radius-md); margin-bottom: var(--space-lg); align-items: center; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); font-size: var(--font-size-sm); font-weight: 500; border-radius: var(--radius-md); border: 1px solid transparent; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+.btn-primary:hover:not(:disabled) { background: var(--accent-blue-hover); border-color: var(--accent-blue-hover); }
+.btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); border-color: var(--border-default); }
+.btn-secondary:hover:not(:disabled) { background: var(--bg-hover); }
+.btn-danger { background: var(--accent-red); color: white; border-color: var(--accent-red); }
+.btn-danger:hover:not(:disabled) { background: var(--accent-red-bright); }
+.btn-success { background: var(--accent-green); color: white; border-color: var(--accent-green); }
+.btn-success:hover:not(:disabled) { background: var(--accent-green-bright); }
+.toggle { display: inline-flex; align-items: center; gap: var(--space-sm); cursor: pointer; font-size: var(--font-size-sm); }
+.toggle-switch { position: relative; width: 40px; height: 22px; background: var(--bg-hover); border-radius: 11px; transition: background var(--transition-normal); }
+.toggle-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: var(--text-primary); border-radius: 50%; transition: transform var(--transition-normal); }
+.toggle input { display: none; }
+.toggle input:checked + .toggle-switch { background: var(--accent-blue); }
+.toggle input:checked + .toggle-switch::after { transform: translateX(18px); }
+.toggle-label { color: var(--text-secondary); }
+.test-runner { margin-top: var(--space-xxl); background: var(--bg-secondary); border: 1px solid var(--border-default); border-radius: var(--radius-xl); overflow: hidden; }
+.test-runner-header { padding: var(--space-lg); border-bottom: 1px solid var(--border-default); display: flex; align-items: center; justify-content: space-between; }
+.test-runner-title { font-size: var(--font-size-xl); font-weight: 600; }
+.test-runner-actions { display: flex; gap: var(--space-sm); }
+.test-runner-content { padding: var(--space-lg); }
+.test-progress { margin-bottom: var(--space-lg); }
+.test-progress-bar { height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; margin-bottom: var(--space-sm); }
+.test-progress-fill { height: 100%; background: var(--accent-blue); border-radius: 4px; transition: width var(--transition-fast); width: 0%; }
+.test-progress-fill.success { background: var(--accent-green); }
+.test-progress-fill.failure { background: var(--accent-red); }
+.test-progress-text { font-size: var(--font-size-sm); color: var(--text-secondary); }
+.test-output { background: var(--bg-primary); border: 1px solid var(--border-muted); border-radius: var(--radius-md); max-height: 400px; overflow-y: auto; font-family: var(--font-mono); font-size: var(--font-size-sm); }
+.test-output-empty { padding: var(--space-xl); text-align: center; color: var(--text-muted); }
+.test-item { padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--border-muted); display: flex; align-items: flex-start; gap: var(--space-sm); }
+.test-item:last-child { border-bottom: none; }
+.test-icon { flex-shrink: 0; font-size: var(--font-size-md); }
+.test-icon.pass { color: var(--accent-green-bright); }
+.test-icon.fail { color: var(--accent-red-bright); }
+.test-name { color: var(--text-primary); }
+.test-error { color: var(--accent-red-bright); font-size: var(--font-size-xs); margin-top: var(--space-xs); }
+.test-summary { margin-top: var(--space-lg); padding: var(--space-md); background: var(--bg-tertiary); border-radius: var(--radius-md); font-size: var(--font-size-sm); display: flex; gap: var(--space-lg); }
+.test-summary-item { display: flex; align-items: center; gap: var(--space-xs); }
+.test-summary-item.passed { color: var(--accent-green-bright); }
+.test-summary-item.failed { color: var(--accent-red-bright); }
+.test-summary-item.skipped { color: var(--text-muted); }
+.hidden { display: none; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-default); }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-    }
+/* Grid exhibit */
+.grid-container { display: flex; gap: var(--space-lg); flex-wrap: wrap; }
+.grid-panel { background: var(--bg-tertiary); border-radius: var(--radius-md); padding: var(--space-md); }
+.grid-cells { display: grid; gap: 2px; background: var(--bg-hover); padding: 2px; border-radius: var(--radius-sm); }
+.grid-cell { width: 36px; height: 36px; background: var(--bg-secondary); border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all var(--transition-fast); position: relative; }
+.grid-cell.occupied { background: var(--bg-tertiary); }
+.grid-cell.valid-drop { background: rgba(35,134,54,0.3); box-shadow: inset 0 0 0 2px var(--accent-green); }
+.grid-cell.invalid-drop { background: rgba(218,54,51,0.3); box-shadow: inset 0 0 0 2px var(--accent-red); }
+.loot-pile { min-width: 150px; }
+.loot-pile-title { font-size: var(--font-size-sm); font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-sm); }
+.loot-item { display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm); background: var(--bg-secondary); border-radius: var(--radius-sm); margin-bottom: var(--space-xs); cursor: grab; transition: all var(--transition-fast); border: 1px solid transparent; }
+.loot-item:hover { background: var(--bg-hover); border-color: var(--border-default); }
+.loot-item.highlight { animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(31,111,235,0.4); } 50% { box-shadow: 0 0 0 8px rgba(31,111,235,0); } }
+.loot-item-icon { font-size: 20px; }
+.loot-item-info { font-size: var(--font-size-xs); color: var(--text-secondary); }
+.capacity-bar { margin-top: var(--space-md); height: 8px; background: var(--bg-hover); border-radius: 4px; overflow: hidden; }
+.capacity-fill { height: 100%; background: var(--accent-blue); transition: width var(--transition-normal); }
 
-    .container {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-      padding: 30px;
-      margin-bottom: 20px;
-    }
+/* Loadout exhibit */
+.loadout-container { display: grid; grid-template-columns: 200px 1fr 200px; gap: var(--space-lg); }
+@media (max-width: 900px) { .loadout-container { grid-template-columns: 1fr; } }
+.character-panel, .backpack-panel, .chest-panel { background: var(--bg-tertiary); border-radius: var(--radius-md); padding: var(--space-md); }
+.panel-title { font-size: var(--font-size-sm); font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-md); text-align: center; }
+.equipment-slots { display: flex; flex-direction: column; align-items: center; gap: var(--space-sm); }
+.equipment-slot { width: 50px; height: 50px; background: var(--bg-secondary); border: 2px dashed var(--border-default); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; transition: all var(--transition-fast); position: relative; }
+.equipment-slot:hover { border-color: var(--accent-blue); }
+.equipment-slot.filled { border-style: solid; border-color: var(--accent-green); background: var(--bg-tertiary); }
+.equipment-slot.invalid { animation: shake 0.3s; border-color: var(--accent-red); }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.slot-label { position: absolute; bottom: -18px; font-size: var(--font-size-xs); color: var(--text-muted); }
+.slot-row { display: flex; gap: var(--space-md); }
+.weight-bar { margin-bottom: var(--space-md); }
+.weight-bar-track { height: 20px; background: var(--bg-hover); border-radius: 10px; overflow: hidden; position: relative; }
+.weight-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-green), var(--accent-green-bright)); transition: width 0.4s ease, background 0.3s ease; border-radius: 10px; }
+.weight-bar-fill.warning { background: linear-gradient(90deg, var(--accent-yellow), var(--accent-yellow-bright)); }
+.weight-bar-fill.danger { background: linear-gradient(90deg, var(--accent-red), var(--accent-red-bright)); }
+.weight-bar-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: var(--font-size-xs); font-weight: 600; color: var(--text-primary); text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+.inventory-list { display: flex; flex-direction: column; gap: var(--space-xs); max-height: 300px; overflow-y: auto; }
+.inventory-item { display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm); background: var(--bg-secondary); border-radius: var(--radius-sm); cursor: grab; transition: all var(--transition-fast); }
+.inventory-item:hover { background: var(--bg-hover); }
+.inventory-item.locked { cursor: not-allowed; }
+.inventory-item.locked::after { content: '🔒'; margin-left: auto; font-size: 12px; }
+.inventory-item.nested { margin-left: var(--space-md); border-left: 2px solid var(--border-default); }
+.inventory-item.highlight { box-shadow: 0 0 0 2px var(--accent-blue); animation: pulse 2s infinite; }
+.item-icon { font-size: 18px; }
+.item-name { font-size: var(--font-size-sm); flex: 1; }
+.item-qty { font-size: var(--font-size-xs); color: var(--text-muted); }
 
-    h1 {
-      color: #2d3748;
-      margin-top: 0;
-      font-size: 2.5rem;
-      text-align: center;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    h2 {
-      color: #4a5568;
-      border-bottom: 3px solid #667eea;
-      padding-bottom: 10px;
-      margin-top: 0;
-    }
-
-    h3 {
-      color: #718096;
-      margin-top: 20px;
-    }
-
-    section {
-      margin: 20px 0;
-      padding: 25px;
-      border: 2px solid #e2e8f0;
-      border-radius: 8px;
-      background: #f7fafc;
-      transition: all 0.3s ease;
-    }
-
-    section:hover {
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-      border-color: #667eea;
-    }
-
-    .test-pass {
-      color: #38a169;
-      font-weight: 600;
-    }
-
-    .test-fail {
-      color: #e53e3e;
-      font-weight: bold;
-    }
-
-    .test-output {
-      background: #2d3748;
-      color: #e2e8f0;
-      padding: 20px;
-      font-family: 'Monaco', 'Courier New', monospace;
-      white-space: pre-wrap;
-      max-height: 500px;
-      overflow-y: auto;
-      border-radius: 8px;
-      font-size: 13px;
-      line-height: 1.6;
-      box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
-    }
-
-    button {
-      padding: 12px 24px;
-      margin: 6px 4px;
-      cursor: pointer;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 600;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-
-    button:active {
-      transform: translateY(0);
-    }
-
-    .run-all {
-      background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-      color: white;
-      font-size: 16px;
-      padding: 14px 32px;
-    }
-
-    .clear-btn {
-      background: #cbd5e0;
-      color: #2d3748;
-    }
-
-    .primary-btn {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-
-    .danger-btn {
-      background: #fc8181;
-      color: white;
-    }
-
-    .summary {
-      font-size: 20px;
-      font-weight: bold;
-      margin: 15px 0;
-      padding: 15px;
-      border-radius: 8px;
-      background: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    input[type="text"],
-    input[type="number"],
-    select {
-      padding: 10px;
-      margin: 5px;
-      border: 2px solid #cbd5e0;
-      border-radius: 6px;
-      font-size: 14px;
-      transition: border-color 0.2s ease;
-    }
-
-    input:focus,
-    select:focus {
-      outline: none;
-      border-color: #667eea;
-    }
-
-    .grid-display {
-      display: inline-grid;
-      gap: 2px;
-      background: #2d3748;
-      padding: 10px;
-      border-radius: 8px;
-      margin: 10px 0;
-    }
-
-    .grid-cell {
-      width: 40px;
-      height: 40px;
-      background: #e2e8f0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: bold;
-      border-radius: 4px;
-      transition: all 0.2s ease;
-      position: relative;
-    }
-
-    .grid-cell.occupied {
-      color: white;
-      cursor: grab;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-    }
-
-    .grid-cell.occupied:active {
-      cursor: grabbing;
-    }
-
-    .grid-cell.drag-over {
-      background: #bee3f8;
-      box-shadow: inset 0 0 0 3px #4299e1;
-    }
-
-    .grid-cell.dragging {
-      opacity: 0.5;
-      cursor: grabbing;
-    }
-
-    /* Drag Preview Styles */
-    .drag-preview {
-      position: fixed;
-      pointer-events: none;
-      z-index: 10000;
-      display: grid;
-      gap: 2px;
-      opacity: 0.8;
-      transition: none;
-    }
-
-    .drag-preview-cell {
-      width: 40px;
-      height: 40px;
-      border-radius: 4px;
-      border: 2px solid rgba(0,0,0,0.3);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      transition: all 0.15s ease;
-    }
-
-    .preview-valid {
-      background: rgba(72, 187, 120, 0.7) !important;
-      border-color: #38a169;
-    }
-
-    .preview-invalid {
-      background: rgba(252, 129, 129, 0.7) !important;
-      border-color: #e53e3e;
-    }
-
-    .preview-adjusted {
-      background: rgba(66, 153, 225, 0.7) !important;
-      border-color: #3182ce;
-    }
-
-    .preview-rotated {
-      animation: flashRotate 0.3s ease-out;
-    }
-
-    @keyframes flashRotate {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-    }
-
-    .preview-valid, .preview-invalid, .preview-adjusted {
-      transition: background 0.2s ease, border-color 0.2s ease;
-    }
-
-    .output-box {
-      background: white;
-      border: 2px solid #cbd5e0;
-      border-radius: 8px;
-      padding: 15px;
-      margin: 10px 0;
-      min-height: 60px;
-      font-family: 'Monaco', 'Courier New', monospace;
-      font-size: 13px;
-    }
-
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      margin: 15px 0;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 600;
-      margin: 2px;
-    }
-
-    .badge-success {
-      background: #c6f6d5;
-      color: #22543d;
-    }
-
-    .badge-error {
-      background: #fed7d7;
-      color: #742a2a;
-    }
-
-    .badge-info {
-      background: #bee3f8;
-      color: #2c5282;
-    }
-
-    .progress-bar {
-      width: 100%;
-      height: 8px;
-      background: #e2e8f0;
-      border-radius: 4px;
-      overflow: hidden;
-      margin: 10px 0;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #48bb78, #38a169);
-      transition: width 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .test-output > div {
-      animation: fadeIn 0.3s ease;
-    }
+/* Trading exhibit */
+.trading-container { display: grid; grid-template-columns: 1fr auto 1fr; gap: var(--space-lg); align-items: start; }
+@media (max-width: 800px) { .trading-container { grid-template-columns: 1fr; } }
+.trader-panel { background: var(--bg-tertiary); border-radius: var(--radius-md); padding: var(--space-md); }
+.trade-table { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--space-lg); }
+.trade-icon { font-size: 48px; margin-bottom: var(--space-md); }
+.trade-zone { width: 120px; height: 100px; background: var(--bg-secondary); border: 2px dashed var(--border-default); border-radius: var(--radius-md); display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-xs); padding: var(--space-sm); position: relative; }
+.trade-zone-label { position: absolute; bottom: -20px; font-size: var(--font-size-xs); color: var(--text-muted); }
+.trader-inventory { display: flex; flex-direction: column; gap: var(--space-xs); }
+.trader-item { display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm); background: var(--bg-secondary); border-radius: var(--radius-sm); cursor: pointer; transition: all var(--transition-fast); }
+.trader-item:hover { background: var(--bg-hover); }
+.trader-item.selected { background: rgba(31,111,235,0.2); box-shadow: inset 0 0 0 2px var(--accent-blue); }
+.trader-item-price { margin-left: auto; font-size: var(--font-size-xs); color: var(--accent-yellow-bright); }
+.trade-summary { margin-top: var(--space-lg); padding: var(--space-md); background: var(--bg-secondary); border-radius: var(--radius-md); }
+.trade-offer { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm); font-size: var(--font-size-sm); }
+.trade-net { font-weight: 600; color: var(--accent-green-bright); }
+.trade-net.negative { color: var(--accent-red-bright); }
+.flying-item { position: fixed; font-size: 24px; pointer-events: none; z-index: 1000; transition: all 0.5s ease; }
+.gremlin { position: fixed; font-size: 48px; z-index: 1001; animation: gremlinAppear 0.3s ease; }
+@keyframes gremlinAppear { 0% { transform: scale(0) rotate(-180deg); } 100% { transform: scale(1) rotate(0deg); } }
+.rewind-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(137,87,229,0.1); pointer-events: none; z-index: 999; }
+.btn-pulse { animation: btnPulse 2s infinite; }
+@keyframes btnPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(31,111,235,0.4); } 50% { box-shadow: 0 0 0 10px rgba(31,111,235,0); } }
+.speed-slider { display: flex; align-items: center; gap: var(--space-sm); font-size: var(--font-size-sm); color: var(--text-secondary); }
+.speed-slider input[type="range"] { width: 80px; accent-color: var(--accent-blue); }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🎒 @motioneffector/inventory</h1>
-    <p style="text-align: center; color: #718096; font-size: 18px;">
-      A flexible inventory system with multiple container modes, stacking, transfers, and advanced features.
-    </p>
-  </div>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Flexible inventory management for games - from simple backpacks to Tetris-style grids</p>
+      <nav class="header-links">
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link" target="_blank">📦 npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link" target="_blank">💻 GitHub</a>
+        <a href="https://github.com/motioneffector/inventory/wiki" class="header-link" target="_blank">📖 Manual</a>
+      </nav>
+    </header>
 
-  <div class="container">
-    <section id="test-runner">
-      <h2>🧪 Automated Test Suite</h2>
-      <p>Run comprehensive tests covering all features of the inventory system.</p>
-      <div class="controls">
-        <button class="run-all" onclick="runAllTests()">▶️ Run All Tests</button>
-        <button class="clear-btn" onclick="clearResults()">Clear Results</button>
-      </div>
-      <div class="progress-bar">
-        <div class="progress-fill" id="progress" style="width: 0%"></div>
-      </div>
-      <div class="summary" id="summary"></div>
-      <div class="test-output" id="test-output"></div>
-    </section>
-  </div>
-
-  <div class="container">
-    <h2>🎮 Interactive Demos</h2>
-
-    <section>
-      <h3>1. Container Creation & Basic Operations</h3>
-      <p>Create different types of containers and add items.</p>
-      <div class="controls">
-        <select id="containerType">
-          <option value="unlimited">Unlimited</option>
-          <option value="count">Count (Max 5 stacks)</option>
-          <option value="weight">Weight (Max 50 units)</option>
-          <option value="grid">Grid (5x5)</option>
-          <option value="slots">Slots (head, body, legs)</option>
-        </select>
-        <button class="primary-btn" onclick="createDemoContainer()">Create Container</button>
-        <input type="text" id="addItemId" placeholder="Item ID" value="sword">
-        <input type="number" id="addItemQty" placeholder="Quantity" value="1" min="1">
-        <button class="primary-btn" onclick="addDemoItem()">Add Item</button>
-      </div>
-      <div class="output-box" id="container-output">Create a container to get started...</div>
-    </section>
-
-    <section>
-      <h3>2. Grid System with Visual Display</h3>
-      <p>Colorful grid-based inventory with multi-cell items. <strong>Setup auto-populates the grid, then drag any cell to rearrange!</strong></p>
-      <div class="controls">
-        <button class="primary-btn" onclick="setupGridDemo()">🎲 Setup Grid with Random Items</button>
-        <button class="clear-btn" onclick="clearGrid()">Clear Grid</button>
-      </div>
-      <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 6px;">
-        <strong>Configuration:</strong><br>
-        <label style="display: block; margin: 5px 0;">
-          <input type="checkbox" id="tier1-rotation" onchange="toggleRotationExists()">
-          <strong>Tier 1:</strong> Rotation exists (library level)
-        </label>
-        <label style="display: block; margin: 5px 0;">
-          <input type="checkbox" id="tier2-smart" checked onchange="toggleSmartPlacement()">
-          <strong>Tier 2:</strong> Smart placement enabled
-        </label>
-        <label style="display: block; margin: 5px 0;">
-          <input type="checkbox" id="tier3-smart-rotate" checked onchange="toggleSmartRotation()">
-          <strong>Tier 3:</strong> Smart placement may rotate
-          <span id="tier3-disabled" style="color: #999; display: none;">(requires Tier 1 & 2)</span>
-        </label>
-        <p style="font-size: 11px; color: #718096; margin: 5px 0 0 0;">
-          ⌨️ Press R or SPACE while dragging to manually rotate (when Tier 1 enabled)
-        </p>
-      </div>
-      <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 6px;">
-        <strong>Manual Add:</strong>
-        <input type="text" id="gridItemId" placeholder="Item name" value="sword" style="width: 120px;">
-        <select id="gridItemSize">
-          <option value="1x1">1x1</option>
-          <option value="2x2">2x2</option>
-          <option value="1x2">1x2</option>
-          <option value="3x1">3x1</option>
-        </select>
-        <button class="primary-btn" onclick="addToGrid()">Add Custom Item</button>
-      </div>
-      <div id="grid-container"></div>
-      <div class="output-box" id="grid-output">Click "Setup Grid with Random Items" to begin...</div>
-    </section>
-
-    <section>
-      <h3>3. Item Transfer Between Containers</h3>
-      <p>Transfer items from one container to another with capacity checks.</p>
-      <div class="controls">
-        <button class="primary-btn" onclick="setupTransferDemo()">Setup Transfer Demo</button>
-        <input type="text" id="transferItemId" placeholder="Item ID" value="potion">
-        <input type="number" id="transferQty" placeholder="Quantity" value="5" min="1">
-        <button class="primary-btn" onclick="performTransfer()">Transfer A → B</button>
-      </div>
-      <div class="output-box" id="transfer-output">Setup transfer demo to begin...</div>
-    </section>
-
-    <section>
-      <h3>4. Slot System (Equipment)</h3>
-      <p>Equipment slots with filters - only specific items allowed in each slot.</p>
-      <div class="controls">
-        <button class="primary-btn" onclick="setupSlotsDemo()">Setup Slots Demo</button>
-        <select id="equipSlot">
-          <option value="head">Head</option>
-          <option value="body">Body</option>
-          <option value="legs">Legs</option>
-        </select>
-        <select id="equipItem">
-          <option value="helmet">Helmet</option>
-          <option value="armor">Armor</option>
-          <option value="boots">Boots</option>
-          <option value="sword">Sword (invalid)</option>
-        </select>
-        <button class="primary-btn" onclick="equipItem()">Equip Item</button>
-        <button class="danger-btn" onclick="unequipAll()">Unequip All</button>
-      </div>
-      <div class="output-box" id="slots-output">Setup slots demo to begin...</div>
-    </section>
-
-    <section>
-      <h3>5. Stacking & Consolidation</h3>
-      <p>Stack management with split, merge, and consolidate operations.</p>
-      <div class="controls">
-        <button class="primary-btn" onclick="setupStackDemo()">Setup Stack Demo</button>
-        <button class="primary-btn" onclick="addMultipleStacks()">Add Multiple Stacks</button>
-        <button class="primary-btn" onclick="consolidateStacks()">Consolidate</button>
-      </div>
-      <div class="output-box" id="stack-output">Setup stack demo to begin...</div>
-    </section>
-
-    <section>
-      <h3>6. Events & Real-time Updates</h3>
-      <p>Listen to inventory events like item added, removed, transferred, etc.</p>
-      <div class="controls">
-        <button class="primary-btn" onclick="setupEventsDemo()">Setup Events Demo</button>
-        <button class="primary-btn" onclick="triggerEvents()">Trigger Some Events</button>
-        <button class="clear-btn" onclick="clearEventLog()">Clear Log</button>
-      </div>
-      <div class="test-output" id="events-output" style="max-height: 200px;">Setup events demo to begin...</div>
-    </section>
-
-    <section>
-      <h3>7. Serialization & State Persistence</h3>
-      <p>Save and restore complete inventory state.</p>
-      <div class="controls">
-        <button class="primary-btn" onclick="setupSerializationDemo()">Setup Demo</button>
-        <button class="primary-btn" onclick="serializeState()">Serialize State</button>
-        <button class="primary-btn" onclick="deserializeState()">Restore State</button>
-        <button class="danger-btn" onclick="clearAllContainers()">Clear All</button>
-      </div>
-      <div class="output-box" id="serialization-output">Setup serialization demo to begin...</div>
-    </section>
-  </div>
-
-  <script>
-    // ============================================
-    // INLINED LIBRARY CODE (from dist/index.js)
-    // ============================================
-    class At extends Error {
-      constructor(g) {
-        super(g), this.name = "InventoryError";
-      }
-    }
-    class u extends At {
-      constructor(g, p) {
-        super(g), this.field = p, this.name = "ValidationError";
-      }
-    }
-    function xt(w) {
-      const g = /* @__PURE__ */ new Map(), p = {
-        itemAdded: [],
-        itemRemoved: [],
-        itemTransferred: [],
-        containerFull: [],
-        slotChanged: [],
-        containerRemoved: []
-      };
-      let C = null;
-      const j = (w == null ? void 0 : w.getItemWeight) ?? (() => 1), U = (w == null ? void 0 : w.getItemSize) ?? (() => ({ width: 1, height: 1 })), b = (w == null ? void 0 : w.getItemStackLimit) ?? (() => (w == null ? void 0 : w.defaultStackSize) ?? 99);
-      function A(e) {
-        const t = j(e);
-        if (typeof t != "number" || isNaN(t))
-          throw new u(`getItemWeight must return a valid number for item "${e}"`);
-        return t;
-      }
-      function x(e) {
-        const t = U(e);
-        if (typeof t != "object" || typeof t.width != "number" || typeof t.height != "number" || t.width <= 0 || t.height <= 0)
-          throw new u("getItemSize must return {width, height} with positive numbers");
-        return t;
-      }
-      function T(e, t) {
-        if (g.has(e))
-          throw new u(`Container "${e}" already exists`);
-        if (!["unlimited", "count", "weight", "grid", "slots", "combined"].includes(t.mode))
-          throw new u(`Invalid container mode: "${t.mode}"`);
-        const o = {
-          id: e,
-          config: t,
-          items: /* @__PURE__ */ new Map(),
-          lockedItems: /* @__PURE__ */ new Set()
-        };
-        t.mode === "grid" && (o.gridState = {
-          width: t.width,
-          height: t.height,
-          cells: Array.from(
-            { length: t.height },
-            () => Array.from({ length: t.width }, () => null)
-          )
-        }), t.mode === "slots" && (o.slotState = {
-          slots: new Map(t.slots.map((s) => [s, null]))
-        }), g.set(e, o);
-      }
-      function V(e) {
-        if (!g.has(e))
-          throw new u(`Container "${e}" does not exist`);
-        S("containerRemoved", { containerId: e }), g.delete(e);
-      }
-      function B() {
-        return Array.from(g.keys());
-      }
-      function f(e) {
-        const t = g.get(e);
-        if (!t)
-          throw new u(`Container "${e}" does not exist`);
-        return t;
-      }
-      function F(e, t) {
-        const n = g.get(t);
-        if (!n) return !1;
-        for (const o of n.items.keys())
-          if (o === e || g.has(o) && F(e, o))
-            return !0;
-        return !1;
-      }
-      function v(e, t, n) {
-        if (n === 0)
-          return { success: !0, added: 0, overflow: 0 };
-        if (e === t)
-          throw new u("Cannot nest container in itself");
-        if (g.has(t) && F(e, t))
-          throw new u("Cannot create circular nesting");
-        const o = f(e), s = o.config;
-        return s.mode === "unlimited" ? L(o, t, n) : s.mode === "count" ? H(o, t, n) : s.mode === "weight" ? J(o, t, n) : s.mode === "grid" ? E(o, t, n) : s.mode === "combined" ? K(o, t, n) : { success: !1, added: 0, overflow: n, reason: "unsupported_mode" };
-      }
-      function L(e, t, n) {
-        const o = e.config, s = e.items.get(t) ?? [], i = Math.min(
-          o.maxStackSize ?? 1 / 0,
-          b(t)
-        );
-        let r = n;
-        if (o.allowStacking) {
-          for (const c of s)
-            if (c.quantity < i) {
-              const a = i - c.quantity, d = Math.min(a, r);
-              if (c.quantity += d, r -= d, r === 0) break;
-            }
-          for (; r > 0; ) {
-            const c = Math.min(i, r);
-            s.push({ itemId: t, quantity: c }), r -= c;
-          }
-        } else
-          for (let c = 0; c < n; c++)
-            s.push({ itemId: t, quantity: 1 });
-        return e.items.set(t, s), S("itemAdded", {
-          containerId: e.id,
-          itemId: t,
-          quantity: n,
-          newTotal: y(e, t)
-        }), { success: !0, added: n, overflow: 0 };
-      }
-      function H(e, t, n) {
-        const o = e.config, s = e.items.get(t) ?? [], i = o.allowStacking ? Math.min(o.maxStackSize ?? 1 / 0, b(t)) : 1;
-        let r = n, c = 0;
-        if (o.allowStacking) {
-          for (const l of s)
-            if (l.quantity < i) {
-              const h = i - l.quantity, m = Math.min(h, r);
-              if (l.quantity += m, r -= m, c += m, r === 0) break;
-            }
-        }
-        const a = Array.from(e.items.values()).reduce(
-          (l, h) => l + h.length,
-          0
-        ), d = o.maxCount - a;
-        if (r > 0 && d > 0) {
-          const l = Math.ceil(r / i), h = Math.min(l, d);
-          for (let m = 0; m < h && r > 0; m++) {
-            const k = Math.min(i, r);
-            s.push({ itemId: t, quantity: k }), r -= k, c += k;
-          }
-        }
-        return s.length > 0 && e.items.set(t, s), c > 0 && S("itemAdded", {
-          containerId: e.id,
-          itemId: t,
-          quantity: c,
-          newTotal: y(e, t)
-        }), r > 0 ? (S("containerFull", {
-          containerId: e.id,
-          itemId: t,
-          overflow: r
-        }), { success: !1, added: c, overflow: r, reason: "count_exceeded" }) : { success: !0, added: c, overflow: 0 };
-      }
-      function J(e, t, n) {
-        const o = e.config, s = A(t), i = M(e), r = o.maxWeight - i, c = Math.floor(r / s);
-        if (c === 0)
-          return S("containerFull", {
-            containerId: e.id,
-            itemId: t,
-            overflow: n
-          }), { success: !1, added: 0, overflow: n, reason: "weight_exceeded" };
-        const a = Math.min(n, c), d = L(e, t, a);
-        if (a < n) {
-          const l = n - a;
-          return S("containerFull", {
-            containerId: e.id,
-            itemId: t,
-            overflow: l
-          }), { success: !1, added: a, overflow: l, reason: "weight_exceeded" };
-        }
-        return d;
-      }
-      function E(e, t, n, o) {
-        const s = e.config;
-        if (x(t), o)
-          return _(e, t, n, o);
-        if (!s.allowStacking) {
-          let c = 0, a = n;
-          for (let d = 0; d < n; d++) {
-            const l = I(e.id, t);
-            if (l.length === 0)
-              return S("containerFull", {
-                containerId: e.id,
-                itemId: t,
-                overflow: a
-              }), c === 0 ? { success: !1, added: 0, overflow: a, reason: "no_space" } : { success: !0, added: c, overflow: a };
-            const h = l[0];
-            if (!h)
-              return c === 0 ? { success: !1, added: 0, overflow: a, reason: "no_space" } : { success: !0, added: c, overflow: a };
-            const m = _(e, t, 1, h);
-            if (!m.success)
-              return c === 0 ? { success: !1, added: 0, overflow: a, reason: m.reason ?? "no_space" } : { success: !0, added: c, overflow: a };
-            c++, a--;
-          }
-          return { success: !0, added: c, overflow: 0 };
-        }
-        const r = I(e.id, t)[0];
-        return r ? _(e, t, n, r) : (S("containerFull", {
-          containerId: e.id,
-          itemId: t,
-          overflow: n
-        }), { success: !1, added: 0, overflow: n, reason: "no_space" });
-      }
-      function _(e, t, n, o) {
-        var l;
-        const s = e.config, i = x(t), { width: r, height: c } = o.rotated ? { width: i.height, height: i.width } : i;
-        if (s.allowStacking && e.gridState) {
-          const h = (l = e.gridState.cells[o.y]) == null ? void 0 : l[o.x];
-          if (h && h.isOrigin && h.itemId === t) {
-            const k = (e.items.get(t) ?? [])[h.stackIndex];
-            if (k)
-              return Math.min(
-                s.maxStackSize ?? 1 / 0,
-                b(t)
-              ) - k.quantity >= n ? (k.quantity += n, S("itemAdded", {
-                containerId: e.id,
-                itemId: t,
-                quantity: n,
-                newTotal: y(e, t)
-              }), { success: !0, added: n, overflow: 0 }) : { success: !1, added: 0, overflow: n, reason: "stack_full" };
-          }
-        }
-        if (!z(e, t, o))
-          return { success: !1, added: 0, overflow: n, reason: "no_space" };
-        const a = e.items.get(t) ?? [], d = a.length;
-        if (a.push({ itemId: t, quantity: n, position: o }), e.items.set(t, a), e.gridState)
-          for (let h = 0; h < c; h++)
-            for (let m = 0; m < r; m++) {
-              const k = o.y + h, Q = o.x + m, $ = e.gridState.cells[k];
-              $ && ($[Q] = {
-                itemId: t,
-                stackIndex: d,
-                isOrigin: h === 0 && m === 0
-              });
-            }
-        return S("itemAdded", {
-          containerId: e.id,
-          itemId: t,
-          quantity: n,
-          newTotal: y(e, t)
-        }), { success: !0, added: n, overflow: 0 };
-      }
-      function z(e, t, n) {
-        var r;
-        if (!e.gridState) return !1;
-        const o = x(t), { width: s, height: i } = n.rotated ? { width: o.height, height: o.width } : o;
-        if (n.x < 0 || n.y < 0 || n.x + s > e.gridState.width || n.y + i > e.gridState.height)
-          return !1;
-        for (let c = 0; c < i; c++)
-          for (let a = 0; a < s; a++)
-            if (((r = e.gridState.cells[n.y + c]) == null ? void 0 : r[n.x + a]) !== null)
-              return !1;
-        return !0;
-      }
-      function K(e, t, n) {
-        const o = e.config;
-        for (const i of o.rules) {
-          const r = {
-            id: e.id + "-test",
-            config: i,
-            items: /* @__PURE__ */ new Map(),
-            lockedItems: new Set(e.lockedItems)
-          };
-          e.gridState && (r.gridState = {
-            width: e.gridState.width,
-            height: e.gridState.height,
-            cells: e.gridState.cells.map((a) => [...a])
-          }), e.slotState && (r.slotState = e.slotState);
-          for (const [a, d] of e.items)
-            r.items.set(
-              a,
-              d.map((l) => ({ ...l }))
-            );
-          g.set(r.id, r);
-          const c = v(r.id, t, n);
-          if (g.delete(r.id), !c.success)
-            return S("containerFull", {
-              containerId: e.id,
-              itemId: t,
-              overflow: n
-            }), {
-              success: !1,
-              added: c.added,
-              overflow: c.overflow,
-              reason: c.reason ?? "rule_failed"
-            };
-        }
-        const s = o.rules[0];
-        return s ? X(e, s, t, n) : { success: !1, added: 0, overflow: n, reason: "no_rules" };
-      }
-      function X(e, t, n, o) {
-        const s = e.config;
-        e.config = t;
-        const i = v(e.id, n, o);
-        return e.config = s, i;
-      }
-      function R(e, t, n, o = 1) {
-        const s = f(e);
-        if (s.config.mode !== "grid")
-          throw new u("addItemAt only works with grid containers");
-        return E(s, t, o, n);
-      }
-      function O(e, t, n) {
-        if (n === 0) return 0;
-        const o = f(e);
-        if (o.lockedItems.has(t))
-          throw new u(`Item "${t}" is locked and cannot be removed`);
-        const s = o.items.get(t);
-        if (!s || s.length === 0) return 0;
-        let i = n, r = 0;
-        for (let c = s.length - 1; c >= 0 && i > 0; c--) {
-          const a = s[c];
-          if (!a) continue;
-          const d = Math.min(a.quantity, i);
-          a.quantity -= d, i -= d, r += d, a.quantity === 0 && (o.gridState && a.position && Y(o, a.position, t), s.splice(c, 1));
-        }
-        return s.length === 0 && o.items.delete(t), r > 0 && S("itemRemoved", {
-          containerId: o.id,
-          itemId: t,
-          quantity: r,
-          newTotal: y(o, t)
-        }), r;
-      }
-      function Y(e, t, n) {
-        if (!e.gridState) return;
-        const o = x(n), { width: s, height: i } = t.rotated ? { width: o.height, height: o.width } : o;
-        for (let r = 0; r < i; r++)
-          for (let c = 0; c < s; c++) {
-            const a = t.y + r, d = t.x + c, l = e.gridState.cells[a];
-            l != null && l[d] && (l[d] = null);
-          }
-      }
-      function Z(e, t, n, o) {
-        if (o === 0) return { transferred: 0, overflow: 0 };
-        const s = f(e);
-        if (s.lockedItems.has(n))
-          throw new u(`Item "${n}" is locked and cannot be transferred`);
-        const i = y(s, n), r = Math.min(i, o);
-        if (r === 0)
-          return { transferred: 0, overflow: o };
-        const c = v(t, n, r);
-        return c.added > 0 && (O(e, n, c.added), S("itemTransferred", {
-          from: e,
-          to: t,
-          itemId: n,
-          quantity: c.added
-        })), {
-          transferred: c.added,
-          overflow: o - c.added
-        };
-      }
-      function W(e, t) {
-        const n = f(e), o = [];
-        for (const [s, i] of n.items) {
-          const r = i.reduce((d, l) => d + l.quantity, 0), c = i[0], a = {
-            itemId: s,
-            quantity: r
-          };
-          c != null && c.position && (a.position = c.position), o.push(a);
-        }
-        if (t != null && t.deep) {
-          const s = [...o];
-          for (const i of s)
-            if (g.has(i.itemId)) {
-              const r = W(i.itemId, { deep: !0 });
-              o.push(...r);
-            }
-        }
-        return o;
-      }
-      function tt(e, t) {
-        const o = f(e).items.get(t);
-        return o ? o.map((s) => ({ ...s })) : [];
-      }
-      function et(e, t) {
-        return f(e).items.has(t);
-      }
-      function nt(e, t) {
-        const n = f(e);
-        return y(n, t);
-      }
-      function y(e, t) {
-        const n = e.items.get(t);
-        return n ? n.reduce((o, s) => o + s.quantity, 0) : 0;
-      }
-      function ot(e, t, n) {
-        const o = f(e), s = o.config;
-        if (s.mode === "unlimited")
-          return { canAdd: !0, maxAddable: 1 / 0 };
-        if (s.mode === "count") {
-          const i = Array.from(o.items.values()).reduce(
-            (c, a) => c + a.length,
-            0
-          );
-          return s.maxCount - i <= 0 ? { canAdd: !1, maxAddable: 0, reason: "count_exceeded" } : { canAdd: !0, maxAddable: 1 / 0 };
-        }
-        if (s.mode === "weight") {
-          const i = A(t), r = M(o), c = s.maxWeight - r, a = Math.floor(c / i);
-          return a === 0 ? { canAdd: !1, maxAddable: 0, reason: "weight_exceeded" } : { canAdd: !0, maxAddable: a };
-        }
-        if (s.mode === "grid") {
-          const i = I(e, t);
-          return i.length === 0 ? { canAdd: !1, maxAddable: 0, reason: "no_space" } : { canAdd: !0, maxAddable: i.length };
-        }
-        return { canAdd: !1, maxAddable: 0, reason: "unsupported_mode" };
-      }
-      function st(e, t) {
-        const n = [], o = /* @__PURE__ */ new Set();
-        function s(i) {
-          if (o.has(i)) return;
-          o.add(i);
-          const r = g.get(i);
-          if (!r) return;
-          const c = y(r, e);
-          if (c > 0 && n.push({
-            containerId: r.id,
-            quantity: c
-          }), t != null && t.deep)
-            for (const [a] of r.items)
-              g.has(a) && s(a);
-        }
-        for (const i of g.values())
-          s(i.id);
-        return n;
-      }
-      function P(e, t) {
-        const n = f(e);
-        if (!(t != null && t.deep))
-          return M(n);
-        let o = 0;
-        for (const [s, i] of n.items) {
-          const r = i.reduce((c, a) => c + a.quantity, 0);
-          if (g.has(s)) {
-            const c = P(s, { deep: !0 }), a = A(s);
-            o += (a + c) * r;
-          } else {
-            const c = A(s);
-            o += c * r;
-          }
-        }
-        return o;
-      }
-      function M(e) {
-        let t = 0;
-        for (const [n, o] of e.items) {
-          const s = A(n), i = o.reduce((r, c) => r + c.quantity, 0);
-          t += s * i;
-        }
-        return t;
-      }
-      function it(e) {
-        const t = f(e), n = t.config;
-        if (n.mode === "unlimited")
-          return { type: "unlimited" };
-        if (n.mode === "count") {
-          const o = Array.from(t.items.values()).reduce(
-            (s, i) => s + i.length,
-            0
-          );
-          return { type: "count", remaining: n.maxCount - o };
-        }
-        if (n.mode === "weight") {
-          const o = M(t);
-          return { type: "weight", remaining: n.maxWeight - o };
-        }
-        if (n.mode === "grid" && t.gridState) {
-          let o = 0;
-          for (const i of t.gridState.cells)
-            for (const r of i)
-              r !== null && o++;
-          return { type: "cells", remaining: n.width * n.height - o };
-        }
-        if (n.mode === "slots" && t.slotState) {
-          const o = [];
-          for (const [s, i] of t.slotState.slots)
-            i === null && o.push(s);
-          return { type: "slots", empty: o };
-        }
-        return { type: "unlimited" };
-      }
-      function rt(e) {
-        return f(e).items.size === 0;
-      }
-      function ct(e) {
-        var o;
-        const t = f(e);
-        if (!t.gridState)
-          throw new u("Container is not in grid mode");
-        const n = [];
-        for (let s = 0; s < t.gridState.height; s++) {
-          const i = [];
-          for (let r = 0; r < t.gridState.width; r++) {
-            const c = (o = t.gridState.cells[s]) == null ? void 0 : o[r];
-            if (c == null)
-              i.push(null);
-            else {
-              const a = t.items.get(c.itemId), d = a == null ? void 0 : a[c.stackIndex];
-              i.push({
-                itemId: c.itemId,
-                quantity: (d == null ? void 0 : d.quantity) ?? 0,
-                isOrigin: c.isOrigin
-              });
-            }
-          }
-          n.push(i);
-        }
-        return n;
-      }
-      function I(e, t) {
-        const n = f(e);
-        if (!n.gridState)
-          return [];
-        const o = n.config, s = x(t), i = [];
-        for (let r = 0; r <= n.gridState.height - s.height; r++)
-          for (let c = 0; c <= n.gridState.width - s.width; c++)
-            z(n, t, { x: c, y: r, rotated: !1 }) && i.push({ x: c, y: r, rotated: !1 });
-        if (o.allowRotation && s.width !== s.height)
-          for (let r = 0; r <= n.gridState.height - s.width; r++)
-            for (let c = 0; c <= n.gridState.width - s.height; c++)
-              z(n, t, { x: c, y: r, rotated: !0 }) && i.push({ x: c, y: r, rotated: !0 });
-        return i;
-      }
-      function q(e, t, n) {
-        var c;
-        const o = f(e);
-        if (!o.slotState)
-          throw new u("Container is not in slots mode");
-        if (!o.slotState.slots.has(t))
-          throw new u(`Slot "${t}" does not exist`);
-        const i = (c = o.config.slotFilters) == null ? void 0 : c[t];
-        if (n !== null && i && !i(n))
-          throw new u(`Item "${n}" cannot be equipped in slot "${t}"`);
-        const r = o.slotState.slots.get(t) ?? null;
-        return o.slotState.slots.set(t, n), S("slotChanged", {
-          containerId: o.id,
-          slot: t,
-          oldItem: r,
-          newItem: n
-        }), r;
-      }
-      function at(e, t) {
-        const n = f(e);
-        if (!n.slotState)
-          throw new u("Container is not in slots mode");
-        return n.slotState.slots.get(t) ?? null;
-      }
-      function dt(e) {
-        const t = f(e);
-        if (!t.slotState)
-          throw new u("Container is not in slots mode");
-        return Object.fromEntries(t.slotState.slots);
-      }
-      function lt(e, t) {
-        q(e, t, null);
-      }
-      function ft(e, t, n) {
-        var r;
-        const o = f(e);
-        if (!o.slotState)
-          return { canAdd: !1, maxAddable: 0, reason: "not_slots_container" };
-        const s = o.config;
-        if (!o.slotState.slots.has(t))
-          return { canAdd: !1, maxAddable: 0, reason: "slot_not_found" };
-        const i = (r = s.slotFilters) == null ? void 0 : r[t];
-        return i && !i(n) ? { canAdd: !1, maxAddable: 0, reason: "slot_filter_failed" } : { canAdd: !0, maxAddable: 1 };
-      }
-      function ut(e, t, n, o) {
-        const i = f(e).items.get(t);
-        if (!i)
-          throw new u("Stack not found");
-        const r = i[n];
-        if (!r)
-          throw new u("Stack not found");
-        if (r.quantity < o)
-          throw new u("Insufficient quantity in stack");
-        r.quantity -= o, i.push({ itemId: t, quantity: o });
-      }
-      function ht(e, t, n, o) {
-        const s = f(e), i = s.items.get(t);
-        if (!i || i.length === 0)
-          throw new u(`No stacks found for item "${t}"`);
-        if (n < 0 || n >= i.length)
-          throw new u(`Invalid fromIndex: ${String(n)}`);
-        if (o < 0 || o >= i.length)
-          throw new u(`Invalid toIndex: ${String(o)}`);
-        const r = i[n], c = i[o];
-        if (!r || !c)
-          throw new u("Stack not found");
-        if (r.itemId !== c.itemId)
-          throw new u("Cannot merge different items");
-        const a = s.config, l = ("maxStackSize" in a ? a.maxStackSize ?? 1 / 0 : 1 / 0) - c.quantity, h = Math.min(l, r.quantity);
-        c.quantity += h, r.quantity -= h, r.quantity === 0 && i.splice(n, 1);
-      }
-      function gt(e) {
-        const t = f(e), n = t.config, o = "maxStackSize" in n ? n.maxStackSize ?? 1 / 0 : 1 / 0;
-        for (const [s, i] of t.items) {
-          const r = Math.min(o, b(s)), c = [];
-          let a = null;
-          for (const d of i) {
-            let l = d.quantity;
-            for (; l > 0; ) {
-              (!a || a.quantity >= r) && (a = { itemId: s, quantity: 0 }, c.push(a));
-              const h = r - a.quantity, m = Math.min(h, l);
-              a.quantity += m, l -= m;
-            }
-          }
-          t.items.set(s, c);
-        }
-      }
-      function N(e, t) {
-        f(e).lockedItems.add(t);
-      }
-      function mt(e, t) {
-        f(e).lockedItems.delete(t);
-      }
-      function wt(e) {
-        C = G();
-        try {
-          e(), C = null;
-        } catch (t) {
-          throw D(C), C = null, t;
-        }
-      }
-      function St(e, t) {
-        const n = f(e);
-        if (n.config.mode === "grid")
-          throw new u("Use autoArrange() for grid containers");
-        const o = W(e);
-        o.sort(t);
-        const s = /* @__PURE__ */ new Map();
-        for (const i of o) {
-          const r = n.items.get(i.itemId) ?? [];
-          s.set(i.itemId, r);
-        }
-        n.items = s;
-      }
-      function kt(e) {
-        const t = f(e);
-        if (t.config.mode !== "grid")
-          throw new u("autoArrange() only works with grid containers");
-        const n = [];
-        for (const [o, s] of t.items)
-          for (const i of s)
-            n.push({ itemId: o, quantity: i.quantity });
-        if (t.items.clear(), t.gridState)
-          for (let o = 0; o < t.gridState.height; o++) {
-            const s = t.gridState.cells[o];
-            if (s)
-              for (let i = 0; i < t.gridState.width; i++)
-                s[i] = null;
-          }
-        for (const o of n)
-          v(e, o.itemId, o.quantity);
-      }
-      function yt(e, t) {
-        const n = p[e];
-        return n.push(t), () => {
-          const o = n.indexOf(t);
-          o !== -1 && n.splice(o, 1);
-        };
-      }
-      function S(e, t) {
-        const n = p[e];
-        for (const o of n)
-          o(t);
-      }
-      function G() {
-        const e = [];
-        for (const t of g.values())
-          e.push({
-            id: t.id,
-            config: t.config,
-            items: Array.from(t.items.entries()).map(([n, o]) => ({
-              itemId: n,
-              stacks: o.map((s) => ({
-                quantity: s.quantity,
-                position: s.position
-              }))
-            })),
-            lockedItems: Array.from(t.lockedItems),
-            slotState: t.slotState ? {
-              slots: Array.from(t.slotState.slots.entries())
-            } : void 0
-          });
-        return { containers: e };
-      }
-      function D(e) {
-        const t = e;
-        g.clear();
-        for (const n of t.containers) {
-          T(n.id, n.config);
-          const o = f(n.id);
-          for (const s of n.items)
-            for (const i of s.stacks)
-              i.position ? R(o.id, s.itemId, i.position, i.quantity) : v(o.id, s.itemId, i.quantity);
-          for (const s of n.lockedItems)
-            N(o.id, s);
-          if (n.slotState)
-            for (const [s, i] of n.slotState.slots)
-              i !== null && q(o.id, s, i);
-        }
-      }
-      function vt(e) {
-        const t = f(e);
-        return {
-          id: t.id,
-          config: t.config,
-          items: Array.from(t.items.entries()).map(([n, o]) => ({
-            itemId: n,
-            stacks: o.map((s) => ({
-              quantity: s.quantity,
-              position: s.position
-            }))
-          })),
-          lockedItems: Array.from(t.lockedItems)
-        };
-      }
-      return {
-        createContainer: T,
-        removeContainer: V,
-        listContainers: B,
-        addItem: v,
-        addItemAt: R,
-        removeItem: O,
-        transfer: Z,
-        getContents: W,
-        getStacks: tt,
-        hasItem: et,
-        getQuantity: nt,
-        canAdd: ot,
-        findItem: st,
-        getTotalWeight: P,
-        getRemainingCapacity: it,
-        isEmpty: rt,
-        getGrid: ct,
-        findPlacements: I,
-        setSlot: q,
-        getSlot: at,
-        getAllSlots: dt,
-        clearSlot: lt,
-        canEquip: ft,
-        splitStack: ut,
-        mergeStacks: ht,
-        consolidate: gt,
-        lockItem: N,
-        unlockItem: mt,
-        transaction: wt,
-        sort: St,
-        autoArrange: kt,
-        on: yt,
-        serialize: G,
-        deserialize: D,
-        serializeContainer: vt
-      };
-    }
-
-    // Expose to window
-    window.createInventoryManager = xt;
-    window.InventoryError = At;
-    window.ValidationError = u;
-    // ============================================
-  </script>
-
-  <script>
-    // ============================================
-    // DEMO AND TEST CODE
-    // ============================================
-
-    // Global variables for demos
-    let manager = null;
-    let savedState = null;
-
-    // Test suite
-    const tests = [
-      // Basic creation
-      {
-        name: 'creates manager with default options',
-        fn: async () => {
-          const m = createInventoryManager();
-          if (!m) throw new Error('Manager is undefined');
-          if (typeof m.createContainer !== 'function') throw new Error('Missing createContainer method');
-        }
-      },
-      {
-        name: 'creates manager with custom getItemWeight',
-        fn: async () => {
-          const m = createInventoryManager({
-            getItemWeight: (id) => id === 'heavy' ? 10 : 1
-          });
-          m.createContainer('test', { mode: 'weight', maxWeight: 50 });
-          const result = m.addItem('test', 'heavy', 5);
-          if (!result.success) throw new Error('Should fit 5 heavy items');
-        }
-      },
-
-      // Unlimited mode
-      {
-        name: 'unlimited container accepts unlimited items',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('unlimited', { mode: 'unlimited', allowStacking: true });
-          const result = m.addItem('unlimited', 'sword', 1000);
-          if (!result.success) throw new Error('Should accept 1000 items');
-          if (result.added !== 1000) throw new Error(`Expected 1000, got ${result.added}`);
-        }
-      },
-      {
-        name: 'unlimited container with stacking combines items',
-        fn: async () => {
-          const m = createInventoryManager({ defaultStackSize: 50 });
-          m.createContainer('unlimited', { mode: 'unlimited', allowStacking: true, maxStackSize: 50 });
-          m.addItem('unlimited', 'arrow', 30);
-          m.addItem('unlimited', 'arrow', 30);
-          const stacks = m.getStacks('unlimited', 'arrow');
-          if (stacks.length !== 2) throw new Error(`Expected 2 stacks, got ${stacks.length}`);
-          if (stacks[0].quantity !== 50) throw new Error('First stack should be 50');
-        }
-      },
-
-      // Count mode
-      {
-        name: 'count container enforces max count',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('count', { mode: 'count', maxCount: 3, allowStacking: true });
-          m.addItem('count', 'item1', 1);
-          m.addItem('count', 'item2', 1);
-          m.addItem('count', 'item3', 1);
-          const result = m.addItem('count', 'item4', 1);
-          if (result.success) throw new Error('Should fail at max count');
-          if (result.reason !== 'count_exceeded') throw new Error(`Wrong reason: ${result.reason}`);
-        }
-      },
-      {
-        name: 'count container with stacking uses slots efficiently',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('count', { mode: 'count', maxCount: 2, allowStacking: true, maxStackSize: 10 });
-          m.addItem('count', 'arrow', 5);
-          m.addItem('count', 'arrow', 5);
-          const stacks = m.getStacks('count', 'arrow');
-          if (stacks.length !== 1) throw new Error('Should consolidate into 1 stack');
-        }
-      },
-
-      // Weight mode
-      {
-        name: 'weight container enforces max weight',
-        fn: async () => {
-          const m = createInventoryManager({
-            getItemWeight: (id) => id === 'iron' ? 5 : 1
-          });
-          m.createContainer('weight', { mode: 'weight', maxWeight: 20 });
-          m.addItem('weight', 'iron', 4); // 20 weight
-          const result = m.addItem('weight', 'iron', 1);
-          if (result.success) throw new Error('Should fail when exceeding weight');
-          if (result.reason !== 'weight_exceeded') throw new Error(`Wrong reason: ${result.reason}`);
-        }
-      },
-      {
-        name: 'weight container allows partial add',
-        fn: async () => {
-          const m = createInventoryManager({
-            getItemWeight: (id) => 2
-          });
-          m.createContainer('weight', { mode: 'weight', maxWeight: 15 });
-          const result = m.addItem('weight', 'item', 10); // Can only fit 7 (14 weight)
-          if (result.added !== 7) throw new Error(`Expected 7, got ${result.added}`);
-          if (result.overflow !== 3) throw new Error(`Expected overflow 3, got ${result.overflow}`);
-        }
-      },
-      {
-        name: 'getTotalWeight calculates correctly',
-        fn: async () => {
-          const m = createInventoryManager({
-            getItemWeight: (id) => id === 'gold' ? 3 : 1
-          });
-          m.createContainer('weight', { mode: 'weight', maxWeight: 50 });
-          m.addItem('weight', 'gold', 5);
-          m.addItem('weight', 'feather', 2);
-          const total = m.getTotalWeight('weight');
-          if (total !== 17) throw new Error(`Expected 17, got ${total}`);
-        }
-      },
-
-      // Grid mode
-      {
-        name: 'grid container places items automatically',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('grid', { mode: 'grid', width: 5, height: 5 });
-          const result = m.addItem('grid', 'item', 1);
-          if (!result.success) throw new Error('Should place item in grid');
-          const grid = m.getGrid('grid');
-          if (!grid[0][0]) throw new Error('Grid position 0,0 should be occupied');
-        }
-      },
-      {
-        name: 'grid container handles multi-cell items',
-        fn: async () => {
-          const m = createInventoryManager({
-            getItemSize: (id) => id === 'large' ? { width: 2, height: 2 } : { width: 1, height: 1 }
-          });
-          m.createContainer('grid', { mode: 'grid', width: 5, height: 5 });
-          m.addItem('grid', 'large', 1);
-          const grid = m.getGrid('grid');
-          let occupied = 0;
-          for (let y = 0; y < 5; y++) {
-            for (let x = 0; x < 5; x++) {
-              if (grid[y][x]) occupied++;
-            }
-          }
-          if (occupied !== 4) throw new Error(`Large item should occupy 4 cells, got ${occupied}`);
-        }
-      },
-      {
-        name: 'grid container prevents overlap',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('grid', { mode: 'grid', width: 2, height: 2 });
-          m.addItem('grid', 'item1', 1);
-          m.addItem('grid', 'item2', 1);
-          m.addItem('grid', 'item3', 1);
-          m.addItem('grid', 'item4', 1);
-          const result = m.addItem('grid', 'item5', 1);
-          if (result.success) throw new Error('Should fail when grid is full');
-          if (result.reason !== 'no_space') throw new Error(`Wrong reason: ${result.reason}`);
-        }
-      },
-      {
-        name: 'addItemAt places item at specific position',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('grid', { mode: 'grid', width: 5, height: 5 });
-          const result = m.addItemAt('grid', 'item', { x: 2, y: 3 }, 1);
-          if (!result.success) throw new Error('Should place at specified position');
-          const grid = m.getGrid('grid');
-          if (!grid[3][2]) throw new Error('Grid position 2,3 should be occupied');
-        }
-      },
-      {
-        name: 'grid findPlacements returns valid positions',
-        fn: async () => {
-          const m = createInventoryManager({
-            getItemSize: (id) => id === 'big' ? { width: 2, height: 2 } : { width: 1, height: 1 }
-          });
-          m.createContainer('grid', { mode: 'grid', width: 3, height: 3 });
-          const placements = m.findPlacements('grid', 'big');
-          if (placements.length !== 4) throw new Error(`Expected 4 placements for 2x2 in 3x3, got ${placements.length}`);
-        }
-      },
-
-      // Slots mode
-      {
-        name: 'slots container manages equipment slots',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('slots', { mode: 'slots', slots: ['head', 'body', 'legs'] });
-          m.setSlot('slots', 'head', 'helmet');
-          const item = m.getSlot('slots', 'head');
-          if (item !== 'helmet') throw new Error(`Expected helmet, got ${item}`);
-        }
-      },
-      {
-        name: 'slots container enforces slot filters',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('slots', {
-            mode: 'slots',
-            slots: ['head', 'body'],
-            slotFilters: {
-              head: (id) => id.includes('helmet') || id.includes('hat'),
-              body: (id) => id.includes('armor') || id.includes('shirt')
-            }
-          });
-          try {
-            m.setSlot('slots', 'head', 'sword');
-            throw new Error('Should reject invalid item');
-          } catch (e) {
-            if (!e.message.includes('cannot be equipped')) throw new Error('Wrong error message');
-          }
-        }
-      },
-      {
-        name: 'setSlot returns previous item',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('slots', { mode: 'slots', slots: ['weapon'] });
-          m.setSlot('slots', 'weapon', 'sword');
-          const old = m.setSlot('slots', 'weapon', 'axe');
-          if (old !== 'sword') throw new Error(`Expected sword, got ${old}`);
-        }
-      },
-
-      // Transfer operations
-      {
-        name: 'transfer moves items between containers',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('a', { mode: 'unlimited' });
-          m.createContainer('b', { mode: 'unlimited' });
-          m.addItem('a', 'gold', 10);
-          const result = m.transfer('a', 'b', 'gold', 5);
-          if (result.transferred !== 5) throw new Error(`Expected 5 transferred, got ${result.transferred}`);
-          if (m.getQuantity('a', 'gold') !== 5) throw new Error('Source should have 5 left');
-          if (m.getQuantity('b', 'gold') !== 5) throw new Error('Destination should have 5');
-        }
-      },
-      {
-        name: 'transfer handles capacity limits',
-        fn: async () => {
-          const m = createInventoryManager({
-            getItemWeight: () => 5
-          });
-          m.createContainer('a', { mode: 'unlimited' });
-          m.createContainer('b', { mode: 'weight', maxWeight: 20 });
-          m.addItem('a', 'item', 10);
-          const result = m.transfer('a', 'b', 'item', 10);
-          if (result.transferred !== 4) throw new Error(`Expected 4 transferred, got ${result.transferred}`);
-          if (result.overflow !== 6) throw new Error(`Expected 6 overflow, got ${result.overflow}`);
-        }
-      },
-
-      // Stack operations
-      {
-        name: 'splitStack divides stack into two',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('inv', { mode: 'unlimited', allowStacking: true });
-          m.addItem('inv', 'arrow', 20);
-          m.splitStack('inv', 'arrow', 0, 5);
-          const stacks = m.getStacks('inv', 'arrow');
-          if (stacks.length !== 2) throw new Error(`Expected 2 stacks, got ${stacks.length}`);
-          if (stacks[0].quantity !== 15) throw new Error(`First stack should be 15, got ${stacks[0].quantity}`);
-          if (stacks[1].quantity !== 5) throw new Error(`Second stack should be 5, got ${stacks[1].quantity}`);
-        }
-      },
-      {
-        name: 'consolidate combines all stacks',
-        fn: async () => {
-          const m = createInventoryManager({ defaultStackSize: 50 });
-          m.createContainer('inv', { mode: 'unlimited', allowStacking: true, maxStackSize: 50 });
-          m.addItem('inv', 'item', 20);
-          m.addItem('inv', 'item', 20);
-          m.addItem('inv', 'item', 20);
-          m.consolidate('inv');
-          const stacks = m.getStacks('inv', 'item');
-          if (stacks.length !== 2) throw new Error(`Expected 2 stacks, got ${stacks.length}`);
-          if (stacks[0].quantity !== 50) throw new Error('First stack should be 50');
-        }
-      },
-
-      // Queries
-      {
-        name: 'hasItem returns true for present items',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('inv', { mode: 'unlimited' });
-          m.addItem('inv', 'sword', 1);
-          if (!m.hasItem('inv', 'sword')) throw new Error('Should have sword');
-          if (m.hasItem('inv', 'axe')) throw new Error('Should not have axe');
-        }
-      },
-      {
-        name: 'getQuantity returns total across stacks',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('inv', { mode: 'unlimited', allowStacking: true, maxStackSize: 10 });
-          m.addItem('inv', 'item', 25);
-          if (m.getQuantity('inv', 'item') !== 25) throw new Error('Should have 25 total');
-        }
-      },
-      {
-        name: 'findItem locates items across containers',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('a', { mode: 'unlimited' });
-          m.createContainer('b', { mode: 'unlimited' });
-          m.addItem('a', 'gem', 5);
-          m.addItem('b', 'gem', 3);
-          const results = m.findItem('gem');
-          if (results.length !== 2) throw new Error(`Expected 2 containers, got ${results.length}`);
-          const total = results.reduce((sum, r) => sum + r.quantity, 0);
-          if (total !== 8) throw new Error(`Expected 8 total, got ${total}`);
-        }
-      },
-      {
-        name: 'canAdd checks capacity correctly',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('inv', { mode: 'count', maxCount: 5, allowStacking: true });
-          m.addItem('inv', 'item1', 1);
-          m.addItem('inv', 'item2', 1);
-          const result = m.canAdd('inv', 'item3', 1);
-          if (!result.canAdd) throw new Error('Should be able to add item');
-        }
-      },
-      {
-        name: 'isEmpty returns true for empty container',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('inv', { mode: 'unlimited' });
-          if (!m.isEmpty('inv')) throw new Error('Should be empty initially');
-          m.addItem('inv', 'item', 1);
-          if (m.isEmpty('inv')) throw new Error('Should not be empty after adding');
-        }
-      },
-
-      // Locking
-      {
-        name: 'locked items cannot be removed',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('inv', { mode: 'unlimited' });
-          m.addItem('inv', 'quest_item', 1);
-          m.lockItem('inv', 'quest_item');
-          try {
-            m.removeItem('inv', 'quest_item', 1);
-            throw new Error('Should not be able to remove locked item');
-          } catch (e) {
-            if (!e.message.includes('locked')) throw new Error('Wrong error message');
-          }
-        }
-      },
-      {
-        name: 'unlocked items can be removed',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('inv', { mode: 'unlimited' });
-          m.addItem('inv', 'item', 1);
-          m.lockItem('inv', 'item');
-          m.unlockItem('inv', 'item');
-          const removed = m.removeItem('inv', 'item', 1);
-          if (removed !== 1) throw new Error('Should remove unlocked item');
-        }
-      },
-
-      // Events
-      {
-        name: 'itemAdded event fires when item added',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('inv', { mode: 'unlimited' });
-          let fired = false;
-          m.on('itemAdded', (event) => {
-            if (event.itemId === 'test' && event.quantity === 5) fired = true;
-          });
-          m.addItem('inv', 'test', 5);
-          if (!fired) throw new Error('Event did not fire');
-        }
-      },
-      {
-        name: 'containerFull event fires on capacity exceeded',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('inv', { mode: 'count', maxCount: 1 });
-          let fired = false;
-          m.on('containerFull', (event) => {
-            if (event.overflow === 1) fired = true;
-          });
-          m.addItem('inv', 'item1', 1);
-          m.addItem('inv', 'item2', 1);
-          if (!fired) throw new Error('containerFull event did not fire');
-        }
-      },
-      {
-        name: 'unsubscribe stops receiving events',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('inv', { mode: 'unlimited' });
-          let count = 0;
-          const unsub = m.on('itemAdded', () => count++);
-          m.addItem('inv', 'item', 1);
-          unsub();
-          m.addItem('inv', 'item', 1);
-          if (count !== 1) throw new Error(`Expected 1 event, got ${count}`);
-        }
-      },
-
-      // Serialization
-      {
-        name: 'serialize and deserialize preserves state',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('inv', { mode: 'unlimited', allowStacking: true });
-          m.addItem('inv', 'sword', 5);
-          m.addItem('inv', 'potion', 10);
-          const data = m.serialize();
-
-          const m2 = createInventoryManager();
-          m2.deserialize(data);
-          if (m2.getQuantity('inv', 'sword') !== 5) throw new Error('Sword quantity not preserved');
-          if (m2.getQuantity('inv', 'potion') !== 10) throw new Error('Potion quantity not preserved');
-        }
-      },
-      {
-        name: 'serializeContainer saves single container',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('a', { mode: 'unlimited' });
-          m.createContainer('b', { mode: 'unlimited' });
-          m.addItem('a', 'item1', 5);
-          m.addItem('b', 'item2', 3);
-          const data = m.serializeContainer('a');
-          if (!data.id || data.id !== 'a') throw new Error('Container ID not saved');
-        }
-      },
-
-      // Edge cases
-      {
-        name: 'adding 0 quantity is no-op',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('inv', { mode: 'unlimited' });
-          const result = m.addItem('inv', 'item', 0);
-          if (!result.success) throw new Error('Should succeed as no-op');
-          if (result.added !== 0) throw new Error('Should add 0');
-          if (m.hasItem('inv', 'item')) throw new Error('Should not have item');
-        }
-      },
-      {
-        name: 'removing 0 quantity is no-op',
-        fn: async () => {
-          const m = createInventoryManager();
-          m.createContainer('inv', { mode: 'unlimited' });
-          m.addItem('inv', 'item', 5);
-          const removed = m.removeItem('inv', 'item', 0);
-          if (removed !== 0) throw new Error('Should remove 0');
-          if (m.getQuantity('inv', 'item') !== 5) throw new Error('Quantity should be unchanged');
-        }
-      },
-      {
-        name: 'handles large quantities',
-        fn: async () => {
-          const m = createInventoryManager({ defaultStackSize: 100000 });
-          m.createContainer('inv', { mode: 'unlimited', allowStacking: true });
-          const result = m.addItem('inv', 'item', 1000000);
-          if (!result.success) throw new Error('Should handle large quantity');
-          if (m.getQuantity('inv', 'item') !== 1000000) throw new Error('Quantity mismatch');
-        }
-      },
-    ];
-
-    function logResult(name, status, error) {
-      const output = document.getElementById('test-output');
-      const className = status === 'PASS' ? 'test-pass' : 'test-fail';
-      const errorMsg = error ? ` - ${error}` : '';
-      const icon = status === 'PASS' ? '✓' : '✗';
-      output.innerHTML += `<div class="${className}">${icon} [${status}] ${name}${errorMsg}</div>`;
-      output.scrollTop = output.scrollHeight;
-    }
-
-    function logSummary(passed, failed) {
-      const summary = document.getElementById('summary');
-      const total = passed + failed;
-      const percentage = Math.round((passed / total) * 100);
-      const className = failed === 0 ? 'test-pass' : 'test-fail';
-      summary.innerHTML = `
-        <span class="${className}">
-          ${passed}/${total} tests passed (${percentage}%)
-        </span>
-      `;
-    }
-
-    async function runAllTests() {
-      clearResults();
-      document.getElementById('test-output').innerHTML = '<div style="color: #4299e1;">Running tests...</div>';
-
-      let passed = 0, failed = 0;
-      const total = tests.length;
-
-      for (let i = 0; i < tests.length; i++) {
-        const test = tests[i];
-        const progress = ((i + 1) / total) * 100;
-        document.getElementById('progress').style.width = progress + '%';
-
-        try {
-          await test.fn();
-          logResult(test.name, 'PASS');
-          passed++;
-        } catch (e) {
-          logResult(test.name, 'FAIL', e.message);
-          failed++;
-        }
-
-        // Small delay for visual feedback
-        await new Promise(resolve => setTimeout(resolve, 10));
-      }
-
-      logSummary(passed, failed);
-    }
-
-    function clearResults() {
-      document.getElementById('test-output').innerHTML = '';
-      document.getElementById('summary').innerHTML = '';
-      document.getElementById('progress').style.width = '0%';
-    }
-
-    // Interactive demo functions
-    function createDemoContainer() {
-      if (!manager) manager = createInventoryManager({
-        getItemWeight: (id) => {
-          if (id.includes('heavy')) return 10;
-          if (id.includes('iron')) return 5;
-          return 1;
-        },
-        getItemSize: (id) => {
-          if (id === 'chest') return { width: 2, height: 2 };
-          if (id === 'sword') return { width: 1, height: 2 };
-          return { width: 1, height: 1 };
-        }
-      });
-
-      const type = document.getElementById('containerType').value;
-      const id = 'demo-' + type;
-
-      try {
-        manager.removeContainer(id);
-      } catch (e) {}
-
-      let config;
-      if (type === 'unlimited') {
-        config = { mode: 'unlimited', allowStacking: true };
-      } else if (type === 'count') {
-        config = { mode: 'count', maxCount: 5, allowStacking: true };
-      } else if (type === 'weight') {
-        config = { mode: 'weight', maxWeight: 50, allowStacking: true };
-      } else if (type === 'grid') {
-        config = { mode: 'grid', width: 5, height: 5, allowStacking: false };
-      } else if (type === 'slots') {
-        config = {
-          mode: 'slots',
-          slots: ['head', 'body', 'legs'],
-          slotFilters: {
-            head: (id) => id.includes('helmet') || id.includes('hat'),
-            body: (id) => id.includes('armor') || id.includes('chest'),
-            legs: (id) => id.includes('boots') || id.includes('pants')
-          }
-        };
-      }
-
-      manager.createContainer(id, config);
-      document.getElementById('container-output').innerHTML = `
-        <span class="badge badge-success">Created</span> Container "${id}" in ${type} mode
-      `;
-    }
-
-    function addDemoItem() {
-      if (!manager) {
-        document.getElementById('container-output').innerHTML = '<span class="badge badge-error">Error</span> Create a container first!';
-        return;
-      }
-
-      const type = document.getElementById('containerType').value;
-      const id = 'demo-' + type;
-      const itemId = document.getElementById('addItemId').value;
-      const qty = parseInt(document.getElementById('addItemQty').value);
-
-      try {
-        const result = manager.addItem(id, itemId, qty);
-        const contents = manager.getContents(id);
-        const capacity = manager.getRemainingCapacity(id);
-
-        document.getElementById('container-output').innerHTML = `
-          <div>
-            <span class="badge ${result.success ? 'badge-success' : 'badge-error'}">
-              ${result.success ? 'Success' : 'Partial/Failed'}
-            </span>
-            Added ${result.added}/${qty} ${itemId}
-            ${result.overflow > 0 ? `(${result.overflow} overflow)` : ''}
+    <main class="exhibits">
+      <!-- EXHIBIT 1: TETRIS VAULT -->
+      <section class="exhibit">
+        <div class="exhibit-header">
+          <h2 class="exhibit-title">Tetris Vault</h2>
+          <p class="exhibit-description">Grid-mode inventory with spatial placement, item sizes, rotation, and auto-arrange</p>
+        </div>
+        <div class="exhibit-content">
+          <div class="exhibit-interactive" id="exhibit-1">
+            <div class="grid-container">
+              <div class="grid-panel">
+                <div class="grid-cells" id="grid-cells" style="grid-template-columns: repeat(10, 36px);"></div>
+                <div class="capacity-bar"><div class="capacity-fill" id="grid-capacity"></div></div>
+              </div>
+              <div class="grid-panel loot-pile">
+                <div class="loot-pile-title">LOOT PILE</div>
+                <div id="loot-items"></div>
+              </div>
+            </div>
           </div>
-          <div style="margin-top: 10px;"><strong>Contents:</strong></div>
-          <div>${contents.map(item => `${item.itemId}: ${item.quantity}`).join('<br>')}</div>
-          <div style="margin-top: 10px;"><strong>Capacity:</strong> ${JSON.stringify(capacity)}</div>
-        `;
-      } catch (e) {
-        document.getElementById('container-output').innerHTML = `<span class="badge badge-error">Error</span> ${e.message}`;
+          <div class="exhibit-controls">
+            <button class="btn btn-primary btn-pulse" id="auto-arrange">Auto-Arrange</button>
+            <button class="btn btn-secondary" id="clear-grid">Clear All</button>
+            <label class="toggle"><input type="checkbox" id="rotation-toggle" checked><span class="toggle-switch"></span><span class="toggle-label">Rotation</span></label>
+          </div>
+        </div>
+      </section>
+
+      <!-- EXHIBIT 2: ADVENTURER'S LOADOUT -->
+      <section class="exhibit">
+        <div class="exhibit-header">
+          <h2 class="exhibit-title">Adventurer's Loadout</h2>
+          <p class="exhibit-description">Weight-based inventory, equipment slots, nested containers, and item locking</p>
+        </div>
+        <div class="exhibit-content">
+          <div class="exhibit-interactive" id="exhibit-2">
+            <div class="loadout-container">
+              <div class="character-panel">
+                <div class="panel-title">CHARACTER</div>
+                <div class="equipment-slots">
+                  <div class="equipment-slot" data-slot="head" id="slot-head"><span class="slot-label">head</span></div>
+                  <div class="slot-row">
+                    <div class="equipment-slot" data-slot="mainhand" id="slot-mainhand"><span class="slot-label">main</span></div>
+                    <div class="equipment-slot" data-slot="offhand" id="slot-offhand"><span class="slot-label">off</span></div>
+                  </div>
+                  <div class="equipment-slot" data-slot="chest" id="slot-chest"><span class="slot-label">chest</span></div>
+                  <div class="equipment-slot" data-slot="legs" id="slot-legs"><span class="slot-label">legs</span></div>
+                  <div class="equipment-slot" data-slot="feet" id="slot-feet"><span class="slot-label">feet</span></div>
+                </div>
+              </div>
+              <div class="backpack-panel">
+                <div class="panel-title">BACKPACK</div>
+                <div class="weight-bar">
+                  <div class="weight-bar-track">
+                    <div class="weight-bar-fill" id="weight-fill"></div>
+                    <span class="weight-bar-text" id="weight-text">0/50 kg</span>
+                  </div>
+                </div>
+                <div class="inventory-list" id="backpack-items"></div>
+              </div>
+              <div class="chest-panel">
+                <div class="panel-title">STORAGE CHEST</div>
+                <div class="inventory-list" id="chest-items"></div>
+              </div>
+            </div>
+          </div>
+          <div class="exhibit-controls">
+            <button class="btn btn-secondary" id="lock-gold">🔒 Lock Gold</button>
+            <button class="btn btn-secondary" id="sort-items">Sort A-Z</button>
+            <button class="btn btn-secondary" id="merge-stacks">Merge Stacks</button>
+            <button class="btn btn-primary" id="snapshot">💾 Snapshot</button>
+            <button class="btn btn-secondary" id="restore" disabled>⏪ Restore</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- EXHIBIT 3: TIME-WARP TRADING -->
+      <section class="exhibit">
+        <div class="exhibit-header">
+          <h2 class="exhibit-title">Time-Warp Trading</h2>
+          <p class="exhibit-description">Atomic transactions with rollback - watch trades unfold in slow motion</p>
+        </div>
+        <div class="exhibit-content">
+          <div class="exhibit-interactive" id="exhibit-3">
+            <div class="trading-container">
+              <div class="trader-panel">
+                <div class="panel-title">PLAYER</div>
+                <div style="margin-bottom: var(--space-md); font-size: var(--font-size-lg);">💰 Gold: <span id="player-gold">150</span></div>
+                <div class="trader-inventory" id="player-inventory"></div>
+                <div style="margin-top: var(--space-md); font-size: var(--font-size-sm); color: var(--text-muted);">Weight: <span id="player-weight">0</span>/30 kg</div>
+              </div>
+              <div class="trade-table">
+                <div class="trade-icon">🤝</div>
+                <div class="trade-zone" id="trade-zone"><span class="trade-zone-label">Trade Area</span></div>
+              </div>
+              <div class="trader-panel">
+                <div class="panel-title">MERCHANT</div>
+                <div class="trader-inventory" id="merchant-inventory"></div>
+              </div>
+            </div>
+            <div class="trade-summary">
+              <div class="trade-offer"><span>YOUR OFFER:</span><span id="offer-items">🗡️ Rusty Sword</span></div>
+              <div class="trade-offer"><span>YOU WANT:</span><span id="want-items">⚔️ Magic Sword</span></div>
+              <div class="trade-offer"><span>NET:</span><span class="trade-net" id="trade-net">-80g</span></div>
+            </div>
+          </div>
+          <div class="exhibit-controls">
+            <button class="btn btn-primary btn-pulse" id="execute-trade">▶️ Execute Trade</button>
+            <label class="toggle"><input type="checkbox" id="chaos-gremlin"><span class="toggle-switch"></span><span class="toggle-label">🐛 Chaos Gremlin</span></label>
+            <div class="speed-slider"><span>⏱️ Speed:</span><input type="range" id="trade-speed" min="1" max="5" value="3"></div>
+            <button class="btn btn-secondary" id="reset-trade">Reset</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="test-runner">
+      <div class="test-runner-header">
+        <h2 class="test-runner-title">Test Suite</h2>
+        <div class="test-runner-actions">
+          <button class="btn btn-primary" id="run-tests">Run Tests</button>
+        </div>
+      </div>
+      <div class="test-runner-content">
+        <div class="test-progress">
+          <div class="test-progress-bar"><div class="test-progress-fill" id="progress-fill"></div></div>
+          <div class="test-progress-text" id="progress-text">Ready to run tests</div>
+        </div>
+        <div class="test-output" id="test-output"><div class="test-output-empty">Click "Run Tests" to execute the test suite</div></div>
+        <div class="test-summary hidden" id="test-summary">
+          <div class="test-summary-item passed"><span>✓</span><span id="passed-count">0</span> passed</div>
+          <div class="test-summary-item failed"><span>✗</span><span id="failed-count">0</span> failed</div>
+          <div class="test-summary-item skipped"><span>○</span><span id="skipped-count">0</span> skipped</div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script type="module">
+// ============================================
+// INVENTORY LIBRARY (INLINE)
+// ============================================
+class ValidationError extends Error { constructor(m) { super(m); this.name = 'ValidationError'; } }
+
+function createInventoryManager(options = {}) {
+  const containers = new Map();
+  const eventListeners = { itemAdded: [], itemRemoved: [], itemTransferred: [], containerFull: [], slotChanged: [], containerRemoved: [] };
+  let transactionSnapshot = null;
+  const getItemWeight = options.getItemWeight || (() => 1);
+  const getItemSize = options.getItemSize || (() => ({ width: 1, height: 1 }));
+  const getItemStackLimit = options.getItemStackLimit || (() => options.defaultStackSize || 99);
+
+  function validateItemWeight(itemId) {
+    const weight = getItemWeight(itemId);
+    if (typeof weight !== 'number' || isNaN(weight) || weight <= 0) throw new ValidationError(`Invalid weight for "${itemId}"`);
+    return weight;
+  }
+  function validateItemSize(itemId) {
+    const size = getItemSize(itemId);
+    if (!size || typeof size.width !== 'number' || typeof size.height !== 'number' || size.width <= 0 || size.height <= 0)
+      throw new ValidationError(`Invalid size for "${itemId}"`);
+    return size;
+  }
+
+  function createContainer(id, config) {
+    if (containers.has(id)) throw new ValidationError(`Container "${id}" already exists`);
+    const container = { id, config, items: new Map(), lockedItems: new Set() };
+    if (config.mode === 'grid') {
+      container.gridState = { width: config.width, height: config.height, cells: Array.from({ length: config.height }, () => Array(config.width).fill(null)) };
+    }
+    if (config.mode === 'slots') {
+      container.slotState = { slots: new Map(config.slots.map(s => [s, null])) };
+    }
+    containers.set(id, container);
+  }
+
+  function removeContainer(id) {
+    if (!containers.has(id)) throw new ValidationError(`Container "${id}" does not exist`);
+    fireEvent('containerRemoved', { containerId: id });
+    containers.delete(id);
+  }
+
+  function listContainers() { return Array.from(containers.keys()); }
+  function getContainer(id) { const c = containers.get(id); if (!c) throw new ValidationError(`Container "${id}" does not exist`); return c; }
+
+  function getTotalQuantity(container, itemId) {
+    const stacks = container.items.get(itemId);
+    return stacks ? stacks.reduce((sum, s) => sum + s.quantity, 0) : 0;
+  }
+
+  function fireEvent(event, data) { eventListeners[event]?.forEach(cb => cb(data)); }
+
+  function addItem(containerId, itemId, quantity) {
+    if (quantity === 0) return { success: true, added: 0, overflow: 0 };
+    const container = getContainer(containerId);
+    const config = container.config;
+    if (config.mode === 'unlimited') return addItemUnlimited(container, itemId, quantity);
+    if (config.mode === 'count') return addItemCount(container, itemId, quantity);
+    if (config.mode === 'weight') return addItemWeight(container, itemId, quantity);
+    if (config.mode === 'grid') return addItemGrid(container, itemId, quantity);
+    return { success: false, added: 0, overflow: quantity, reason: 'unsupported_mode' };
+  }
+
+  function addItemUnlimited(container, itemId, quantity) {
+    const stacks = container.items.get(itemId) || [];
+    const stackLimit = container.config.maxStackSize || getItemStackLimit(itemId);
+    let remaining = quantity;
+    if (container.config.allowStacking !== false) {
+      for (const stack of stacks) {
+        if (stack.quantity < stackLimit) { const toAdd = Math.min(stackLimit - stack.quantity, remaining); stack.quantity += toAdd; remaining -= toAdd; if (remaining === 0) break; }
+      }
+      while (remaining > 0) { const toAdd = Math.min(stackLimit, remaining); stacks.push({ itemId, quantity: toAdd }); remaining -= toAdd; }
+    } else {
+      for (let i = 0; i < quantity; i++) stacks.push({ itemId, quantity: 1 });
+    }
+    container.items.set(itemId, stacks);
+    fireEvent('itemAdded', { containerId: container.id, itemId, quantity, newTotal: getTotalQuantity(container, itemId) });
+    return { success: true, added: quantity, overflow: 0 };
+  }
+
+  function addItemCount(container, itemId, quantity) {
+    const config = container.config;
+    const currentCount = Array.from(container.items.values()).reduce((sum, stacks) => sum + stacks.length, 0);
+    const available = config.maxCount - currentCount;
+    if (available <= 0) { fireEvent('containerFull', { containerId: container.id, itemId, overflow: quantity }); return { success: false, added: 0, overflow: quantity, reason: 'count_exceeded' }; }
+    const toAdd = Math.min(available, quantity);
+    const stacks = container.items.get(itemId) || [];
+    for (let i = 0; i < toAdd; i++) stacks.push({ itemId, quantity: 1 });
+    container.items.set(itemId, stacks);
+    fireEvent('itemAdded', { containerId: container.id, itemId, quantity: toAdd, newTotal: getTotalQuantity(container, itemId) });
+    if (toAdd < quantity) { fireEvent('containerFull', { containerId: container.id, itemId, overflow: quantity - toAdd }); return { success: false, added: toAdd, overflow: quantity - toAdd, reason: 'count_exceeded' }; }
+    return { success: true, added: toAdd, overflow: 0 };
+  }
+
+  function addItemWeight(container, itemId, quantity) {
+    const config = container.config;
+    const itemWeight = validateItemWeight(itemId);
+    const currentWeight = getTotalWeightInternal(container);
+    const availableWeight = config.maxWeight - currentWeight;
+    const maxAddable = Math.floor(availableWeight / itemWeight);
+    if (maxAddable === 0) { fireEvent('containerFull', { containerId: container.id, itemId, overflow: quantity }); return { success: false, added: 0, overflow: quantity, reason: 'weight_exceeded' }; }
+    const toAdd = Math.min(quantity, maxAddable);
+    const result = addItemUnlimited(container, itemId, toAdd);
+    if (toAdd < quantity) { fireEvent('containerFull', { containerId: container.id, itemId, overflow: quantity - toAdd }); return { success: false, added: toAdd, overflow: quantity - toAdd, reason: 'weight_exceeded' }; }
+    return result;
+  }
+
+  function addItemGrid(container, itemId, quantity, position) {
+    validateItemSize(itemId);
+    if (position) return addItemGridAt(container, itemId, quantity, position);
+    const placements = findPlacements(container.id, itemId);
+    if (placements.length === 0) { fireEvent('containerFull', { containerId: container.id, itemId, overflow: quantity }); return { success: false, added: 0, overflow: quantity, reason: 'no_space' }; }
+    return addItemGridAt(container, itemId, quantity, placements[0]);
+  }
+
+  function addItemGridAt(container, itemId, quantity, position) {
+    const size = validateItemSize(itemId);
+    const { width, height } = position.rotated ? { width: size.height, height: size.width } : size;
+    if (!canPlaceAtPosition(container, itemId, position)) return { success: false, added: 0, overflow: quantity, reason: 'no_space' };
+    const stacks = container.items.get(itemId) || [];
+    const stackIndex = stacks.length;
+    stacks.push({ itemId, quantity, position });
+    container.items.set(itemId, stacks);
+    for (let dy = 0; dy < height; dy++) {
+      for (let dx = 0; dx < width; dx++) {
+        container.gridState.cells[position.y + dy][position.x + dx] = { itemId, stackIndex, isOrigin: dy === 0 && dx === 0 };
       }
     }
+    fireEvent('itemAdded', { containerId: container.id, itemId, quantity, newTotal: getTotalQuantity(container, itemId) });
+    return { success: true, added: quantity, overflow: 0 };
+  }
 
-    let gridManager = null;
-    let itemColors = new Map(); // Track colors for each item
-
-    function getItemColor(itemId) {
-      if (!itemColors.has(itemId)) {
-        // Generate a random hue (0-360) and consistent saturation/lightness
-        const hue = Math.floor(Math.random() * 360);
-        const saturation = 70 + Math.random() * 20; // 70-90%
-        const lightness = 45 + Math.random() * 10; // 45-55%
-        itemColors.set(itemId, { hue, saturation, lightness });
+  function canPlaceAtPosition(container, itemId, position) {
+    if (!container.gridState) return false;
+    const size = validateItemSize(itemId);
+    const { width, height } = position.rotated ? { width: size.height, height: size.width } : size;
+    if (position.x < 0 || position.y < 0 || position.x + width > container.gridState.width || position.y + height > container.gridState.height) return false;
+    for (let dy = 0; dy < height; dy++) {
+      for (let dx = 0; dx < width; dx++) {
+        if (container.gridState.cells[position.y + dy][position.x + dx] !== null) return false;
       }
-      return itemColors.get(itemId);
     }
+    return true;
+  }
 
-    function getItemSizeFromId(id) {
-      // Parse size from item ID like "sword2x1" or use default
-      const match = id.match(/(\d+)x(\d+)/);
-      if (match) {
-        return { width: parseInt(match[1]), height: parseInt(match[2]) };
+  function addItemAt(containerId, itemId, position, quantity = 1) {
+    const container = getContainer(containerId);
+    if (container.config.mode !== 'grid') throw new ValidationError('addItemAt only works with grid containers');
+    return addItemGrid(container, itemId, quantity, position);
+  }
+
+  function removeItem(containerId, itemId, quantity) {
+    if (quantity === 0) return 0;
+    const container = getContainer(containerId);
+    if (container.lockedItems.has(itemId)) throw new ValidationError(`Item "${itemId}" is locked`);
+    const stacks = container.items.get(itemId);
+    if (!stacks || stacks.length === 0) return 0;
+    let remaining = quantity, removed = 0;
+    for (let i = stacks.length - 1; i >= 0 && remaining > 0; i--) {
+      const stack = stacks[i];
+      const toRemove = Math.min(stack.quantity, remaining);
+      stack.quantity -= toRemove;
+      remaining -= toRemove;
+      removed += toRemove;
+      if (stack.quantity === 0) {
+        if (container.gridState && stack.position) clearGridPosition(container, stack.position, itemId);
+        stacks.splice(i, 1);
       }
-      // Named items with known sizes
-      if (id.includes('shield')) return { width: 2, height: 2 };
-      if (id.includes('sword')) return { width: 1, height: 2 };
-      if (id.includes('bow')) return { width: 1, height: 3 };
-      if (id.includes('staff')) return { width: 1, height: 3 };
-      if (id.includes('hammer')) return { width: 2, height: 2 };
-      if (id.includes('potion')) return { width: 1, height: 1 };
-      if (id.includes('gem')) return { width: 1, height: 1 };
-      if (id.includes('chest')) return { width: 2, height: 2 };
-      if (id.includes('boots')) return { width: 2, height: 1 };
-      if (id.includes('helmet')) return { width: 2, height: 1 };
-      if (id.includes('armor')) return { width: 2, height: 3 };
-      return { width: 1, height: 1 };
     }
+    if (stacks.length === 0) container.items.delete(itemId);
+    if (removed > 0) fireEvent('itemRemoved', { containerId: container.id, itemId, quantity: removed, newTotal: getTotalQuantity(container, itemId) });
+    return removed;
+  }
 
-    function setupGridDemo() {
-      // Clear colors
-      itemColors.clear();
+  function clearGridPosition(container, position, itemId) {
+    if (!container.gridState) return;
+    const size = validateItemSize(itemId);
+    const { width, height } = position.rotated ? { width: size.height, height: size.width } : size;
+    for (let dy = 0; dy < height; dy++) {
+      for (let dx = 0; dx < width; dx++) { container.gridState.cells[position.y + dy][position.x + dx] = null; }
+    }
+  }
 
-      gridManager = createInventoryManager({
-        getItemSize: getItemSizeFromId
+  function transfer(from, to, itemId, quantity) {
+    if (quantity === 0) return { transferred: 0, overflow: 0 };
+    const source = getContainer(from);
+    if (source.lockedItems.has(itemId)) throw new ValidationError(`Item "${itemId}" is locked`);
+    const available = getTotalQuantity(source, itemId);
+    const toTransfer = Math.min(available, quantity);
+    if (toTransfer === 0) return { transferred: 0, overflow: quantity };
+    const addResult = addItem(to, itemId, toTransfer);
+    if (addResult.added > 0) { removeItem(from, itemId, addResult.added); fireEvent('itemTransferred', { from, to, itemId, quantity: addResult.added }); }
+    return { transferred: addResult.added, overflow: quantity - addResult.added };
+  }
+
+  function getContents(containerId) {
+    const container = getContainer(containerId);
+    const contents = [];
+    for (const [itemId, stacks] of container.items) {
+      const total = stacks.reduce((sum, s) => sum + s.quantity, 0);
+      contents.push({ itemId, quantity: total, position: stacks[0]?.position });
+    }
+    return contents;
+  }
+
+  function getStacks(containerId, itemId) { const c = getContainer(containerId); return (c.items.get(itemId) || []).map(s => ({ ...s })); }
+  function hasItem(containerId, itemId) { return getContainer(containerId).items.has(itemId); }
+  function getQuantity(containerId, itemId) { return getTotalQuantity(getContainer(containerId), itemId); }
+
+  function canAdd(containerId, itemId, quantity) {
+    const container = getContainer(containerId);
+    const config = container.config;
+    if (config.mode === 'unlimited') return { canAdd: true, maxAddable: Infinity };
+    if (config.mode === 'count') {
+      const current = Array.from(container.items.values()).reduce((sum, stacks) => sum + stacks.length, 0);
+      const remaining = config.maxCount - current;
+      return remaining > 0 ? { canAdd: true, maxAddable: remaining } : { canAdd: false, maxAddable: 0, reason: 'count_exceeded' };
+    }
+    if (config.mode === 'weight') {
+      const itemWeight = validateItemWeight(itemId);
+      const currentWeight = getTotalWeightInternal(container);
+      const maxAddable = Math.floor((config.maxWeight - currentWeight) / itemWeight);
+      return maxAddable > 0 ? { canAdd: true, maxAddable } : { canAdd: false, maxAddable: 0, reason: 'weight_exceeded' };
+    }
+    if (config.mode === 'grid') {
+      const placements = findPlacements(containerId, itemId);
+      return placements.length > 0 ? { canAdd: true, maxAddable: placements.length } : { canAdd: false, maxAddable: 0, reason: 'no_space' };
+    }
+    return { canAdd: false, maxAddable: 0, reason: 'unsupported_mode' };
+  }
+
+  function findItem(itemId) {
+    const results = [];
+    for (const container of containers.values()) {
+      const qty = getTotalQuantity(container, itemId);
+      if (qty > 0) results.push({ containerId: container.id, quantity: qty });
+    }
+    return results;
+  }
+
+  function getTotalWeightInternal(container) {
+    let weight = 0;
+    for (const [itemId, stacks] of container.items) {
+      const itemWeight = validateItemWeight(itemId);
+      weight += stacks.reduce((sum, s) => sum + s.quantity, 0) * itemWeight;
+    }
+    return weight;
+  }
+
+  function getTotalWeight(containerId) { return getTotalWeightInternal(getContainer(containerId)); }
+
+  function getRemainingCapacity(containerId) {
+    const container = getContainer(containerId);
+    const config = container.config;
+    if (config.mode === 'unlimited') return { type: 'unlimited' };
+    if (config.mode === 'count') { const current = Array.from(container.items.values()).reduce((sum, stacks) => sum + stacks.length, 0); return { type: 'count', remaining: config.maxCount - current }; }
+    if (config.mode === 'weight') { return { type: 'weight', remaining: config.maxWeight - getTotalWeightInternal(container) }; }
+    if (config.mode === 'grid') {
+      let occupied = 0;
+      for (const row of container.gridState.cells) for (const cell of row) if (cell !== null) occupied++;
+      return { type: 'cells', remaining: config.width * config.height - occupied };
+    }
+    return { type: 'unlimited' };
+  }
+
+  function isEmpty(containerId) { return getContainer(containerId).items.size === 0; }
+
+  function getGrid(containerId) {
+    const container = getContainer(containerId);
+    if (!container.gridState) throw new ValidationError('Container is not in grid mode');
+    const result = [];
+    for (let y = 0; y < container.gridState.height; y++) {
+      const row = [];
+      for (let x = 0; x < container.gridState.width; x++) {
+        const cell = container.gridState.cells[y][x];
+        if (cell === null) row.push(null);
+        else {
+          const stacks = container.items.get(cell.itemId);
+          const stack = stacks?.[cell.stackIndex];
+          row.push({ itemId: cell.itemId, quantity: stack?.quantity || 0, isOrigin: cell.isOrigin });
+        }
+      }
+      result.push(row);
+    }
+    return result;
+  }
+
+  function findPlacements(containerId, itemId) {
+    const container = getContainer(containerId);
+    if (!container.gridState) return [];
+    const config = container.config;
+    const size = validateItemSize(itemId);
+    const placements = [];
+    for (let y = 0; y <= container.gridState.height - size.height; y++) {
+      for (let x = 0; x <= container.gridState.width - size.width; x++) {
+        if (canPlaceAtPosition(container, itemId, { x, y, rotated: false })) placements.push({ x, y, rotated: false });
+      }
+    }
+    if (config.allowRotation && size.width !== size.height) {
+      for (let y = 0; y <= container.gridState.height - size.width; y++) {
+        for (let x = 0; x <= container.gridState.width - size.height; x++) {
+          if (canPlaceAtPosition(container, itemId, { x, y, rotated: true })) placements.push({ x, y, rotated: true });
+        }
+      }
+    }
+    return placements;
+  }
+
+  function setSlot(containerId, slot, itemId) {
+    const container = getContainer(containerId);
+    if (!container.slotState) throw new ValidationError('Container is not in slots mode');
+    if (!container.slotState.slots.has(slot)) throw new ValidationError(`Slot "${slot}" does not exist`);
+    const config = container.config;
+    if (itemId !== null && config.slotFilters?.[slot] && !config.slotFilters[slot](itemId)) throw new ValidationError(`Item cannot be equipped in slot "${slot}"`);
+    const oldItem = container.slotState.slots.get(slot);
+    container.slotState.slots.set(slot, itemId);
+    fireEvent('slotChanged', { containerId: container.id, slot, oldItem, newItem: itemId });
+    return oldItem;
+  }
+
+  function getSlot(containerId, slot) { const c = getContainer(containerId); if (!c.slotState) throw new ValidationError('Not slots mode'); return c.slotState.slots.get(slot) || null; }
+  function getAllSlots(containerId) { const c = getContainer(containerId); if (!c.slotState) throw new ValidationError('Not slots mode'); return Object.fromEntries(c.slotState.slots); }
+  function clearSlot(containerId, slot) { setSlot(containerId, slot, null); }
+  function canEquip(containerId, slot, itemId) {
+    const c = getContainer(containerId);
+    if (!c.slotState) return { canAdd: false, maxAddable: 0, reason: 'not_slots_container' };
+    if (!c.slotState.slots.has(slot)) return { canAdd: false, maxAddable: 0, reason: 'slot_not_found' };
+    const filter = c.config.slotFilters?.[slot];
+    if (filter && !filter(itemId)) return { canAdd: false, maxAddable: 0, reason: 'slot_filter_failed' };
+    return { canAdd: true, maxAddable: 1 };
+  }
+
+  function lockItem(containerId, itemId) { getContainer(containerId).lockedItems.add(itemId); }
+  function unlockItem(containerId, itemId) { getContainer(containerId).lockedItems.delete(itemId); }
+
+  function transaction(fn) {
+    transactionSnapshot = serialize();
+    try { fn(); transactionSnapshot = null; }
+    catch (error) { deserialize(transactionSnapshot); transactionSnapshot = null; throw error; }
+  }
+
+  function sort(containerId, compareFn) {
+    const container = getContainer(containerId);
+    const contents = getContents(containerId);
+    contents.sort(compareFn);
+    const newItems = new Map();
+    for (const entry of contents) {
+      const oldStacks = container.items.get(entry.itemId) || [];
+      newItems.set(entry.itemId, oldStacks);
+    }
+    container.items = newItems;
+  }
+
+  function autoArrange(containerId) {
+    const container = getContainer(containerId);
+    if (container.config.mode !== 'grid') throw new ValidationError('autoArrange only works with grid');
+    const items = [];
+    for (const [itemId, stacks] of container.items) {
+      for (const stack of stacks) items.push({ itemId, quantity: stack.quantity });
+    }
+    container.items.clear();
+    for (let y = 0; y < container.gridState.height; y++) for (let x = 0; x < container.gridState.width; x++) container.gridState.cells[y][x] = null;
+    for (const item of items) addItem(containerId, item.itemId, item.quantity);
+  }
+
+  function consolidate(containerId) {
+    const container = getContainer(containerId);
+    for (const [itemId, stacks] of container.items) {
+      const total = stacks.reduce((sum, s) => sum + s.quantity, 0);
+      container.items.set(itemId, [{ itemId, quantity: total }]);
+    }
+  }
+
+  function mergeStacks(containerId, itemId, fromIndex, toIndex) {
+    const c = getContainer(containerId);
+    const stacks = c.items.get(itemId);
+    if (!stacks || !stacks[fromIndex] || !stacks[toIndex]) throw new ValidationError('Stack not found');
+    stacks[toIndex].quantity += stacks[fromIndex].quantity;
+    stacks.splice(fromIndex, 1);
+  }
+
+  function splitStack(containerId, itemId, fromIndex, count) {
+    const c = getContainer(containerId);
+    const stacks = c.items.get(itemId);
+    if (!stacks || !stacks[fromIndex]) throw new ValidationError('Stack not found');
+    if (stacks[fromIndex].quantity < count) throw new ValidationError('Insufficient quantity');
+    stacks[fromIndex].quantity -= count;
+    stacks.push({ itemId, quantity: count });
+  }
+
+  function on(event, callback) { eventListeners[event]?.push(callback); return () => { const idx = eventListeners[event]?.indexOf(callback); if (idx >= 0) eventListeners[event].splice(idx, 1); }; }
+
+  function serialize() {
+    const serialized = [];
+    for (const container of containers.values()) {
+      serialized.push({
+        id: container.id, config: container.config,
+        items: Array.from(container.items.entries()).map(([itemId, stacks]) => ({ itemId, stacks: stacks.map(s => ({ quantity: s.quantity, position: s.position })) })),
+        lockedItems: Array.from(container.lockedItems),
+        slotState: container.slotState ? { slots: Array.from(container.slotState.slots.entries()) } : undefined
       });
-      gridManager.createContainer('grid', {
-        mode: 'grid',
-        width: 6,
-        height: 6,
-        allowStacking: true,
-        maxStackSize: 99,
-        allowRotation: tier1_rotationExists
-      });
-
-      // Initialize configuration UI dependencies
-      updateConfigDependencies();
-
-      // Auto-populate with various items of different sizes
-      const itemsToAdd = [
-        'shield',    // 2x2
-        'sword',     // 1x2
-        'potion',    // 1x1
-        'gem',       // 1x1
-        'boots',     // 2x1
-        'helmet',    // 2x1
-        'bow',       // 1x3
-        'hammer',    // 2x2
-        'staff',     // 1x3
-        'chest',     // 2x2
-        'armor',     // 2x3
-      ];
-
-      // Shuffle the items for variety
-      itemsToAdd.sort(() => Math.random() - 0.5);
-
-      let added = 0;
-      for (const item of itemsToAdd) {
-        const result = gridManager.addItem('grid', item, 1);
-        if (result.success) added++;
-        // Stop if grid is getting full (allow some space for manual adds)
-        if (added >= 7) break;
-      }
-
-      updateGridDisplay();
-      document.getElementById('grid-output').innerHTML = `
-        <span class="badge badge-success">Ready</span> Grid initialized with ${added} random items - drag to rearrange!
-      `;
     }
+    return { containers: serialized };
+  }
 
-    function addToGrid() {
-      if (!gridManager) {
-        setupGridDemo();
-        return;
-      }
-
-      let itemId = document.getElementById('gridItemId').value;
-      const size = document.getElementById('gridItemSize').value;
-
-      // If a size is selected, append it to the item name to make it unique
-      if (size !== '1x1') {
-        itemId = itemId + '-' + size;
-      }
-
-      const result = gridManager.addItem('grid', itemId, 1);
-      const itemSize = getItemSizeFromId(itemId);
-
-      updateGridDisplay();
-      document.getElementById('grid-output').innerHTML = `
-        <span class="badge ${result.success ? 'badge-success' : 'badge-error'}">
-          ${result.success ? 'Placed' : 'Failed'}
-        </span> ${result.success ? `Added ${itemId} (${itemSize.width}x${itemSize.height})` : `No space for ${itemSize.width}x${itemSize.height} item`}
-      `;
-    }
-
-    function clearGrid() {
-      if (gridManager) {
-        gridManager.removeContainer('grid');
-      }
-      setupGridDemo();
-    }
-
-    let draggedItem = null;
-    let draggedFromPos = null;
-
-    // Configuration State (Three-Tier System)
-    let tier1_rotationExists = false;      // Library: can items rotate at all?
-    let tier2_smartPlacement = true;        // Demo: search nearby positions on failed drop?
-    let tier3_smartRotation = true;         // Demo: smart placement may try rotation?
-
-    // Preview State
-    let previewElement = null;              // The ghost preview div
-    let lastMouseX = 0;                     // Track mouse position
-    let lastMouseY = 0;                     // Track mouse position
-
-    // Keyboard State
-    let keyboardListenerActive = false;
-    let rotationKeyHandler = null;
-
-    function toggleRotationExists() {
-      const checkbox = document.getElementById('tier1-rotation');
-      tier1_rotationExists = checkbox.checked;
-      updateConfigDependencies();
-      recreateGridWithRotation();
-
-      document.getElementById('grid-output').innerHTML = tier1_rotationExists
-        ? '<span class="badge badge-success">Tier 1 Enabled</span> Rotation is now possible in this grid'
-        : '<span class="badge badge-info">Tier 1 Disabled</span> Rotation is disabled';
-    }
-
-    function toggleSmartPlacement() {
-      const checkbox = document.getElementById('tier2-smart');
-      tier2_smartPlacement = checkbox.checked;
-      updateConfigDependencies();
-
-      document.getElementById('grid-output').innerHTML = tier2_smartPlacement
-        ? '<span class="badge badge-success">Tier 2 Enabled</span> Smart placement will search nearby positions'
-        : '<span class="badge badge-info">Tier 2 Disabled</span> Items must fit at exact drop position';
-    }
-
-    function toggleSmartRotation() {
-      const checkbox = document.getElementById('tier3-smart-rotate');
-      tier3_smartRotation = checkbox.checked;
-
-      document.getElementById('grid-output').innerHTML = tier3_smartRotation
-        ? '<span class="badge badge-success">Tier 3 Enabled</span> Smart placement may auto-rotate items'
-        : '<span class="badge badge-info">Tier 3 Disabled</span> Smart placement preserves current rotation';
-    }
-
-    function updateConfigDependencies() {
-      const tier3Checkbox = document.getElementById('tier3-smart-rotate');
-      const tier3Label = tier3Checkbox.parentElement;
-      const tier3DisabledSpan = document.getElementById('tier3-disabled');
-
-      // Tier 3 requires BOTH Tier 1 AND Tier 2
-      const tier3Available = tier1_rotationExists && tier2_smartPlacement;
-
-      tier3Checkbox.disabled = !tier3Available;
-      tier3Label.style.opacity = tier3Available ? '1' : '0.5';
-      tier3DisabledSpan.style.display = tier3Available ? 'none' : 'inline';
-
-      // If Tier 3 gets disabled, uncheck it
-      if (!tier3Available && tier3_smartRotation) {
-        tier3Checkbox.checked = false;
-        tier3_smartRotation = false;
-      }
-    }
-
-    function recreateGridWithRotation() {
-      if (!gridManager) return;
-
-      // Save current contents
-      const contents = gridManager.getContents('grid');
-
-      // Remove and recreate container with new allowRotation setting
-      gridManager.removeContainer('grid');
-      gridManager.createContainer('grid', {
-        mode: 'grid',
-        width: 6,
-        height: 6,
-        allowStacking: true,
-        maxStackSize: 99,
-        allowRotation: tier1_rotationExists  // KEY: Pass rotation setting to library
-      });
-
-      // Restore items
-      for (const item of contents) {
-        if (item.position) {
-          // If rotation is now disabled, force rotated items to non-rotated
-          const position = tier1_rotationExists
-            ? item.position
-            : { ...item.position, rotated: false };
-
-          gridManager.addItemAt('grid', item.itemId, position, item.quantity);
+  function deserialize(data) {
+    containers.clear();
+    for (const cd of data.containers) {
+      createContainer(cd.id, cd.config);
+      const container = getContainer(cd.id);
+      for (const itemData of cd.items) {
+        for (const stackData of itemData.stacks) {
+          if (stackData.position) addItemAt(cd.id, itemData.itemId, stackData.position, stackData.quantity);
+          else addItem(cd.id, itemData.itemId, stackData.quantity);
         }
       }
-
-      updateGridDisplay();
+      for (const itemId of cd.lockedItems) lockItem(cd.id, itemId);
+      if (cd.slotState) for (const [slot, itemId] of cd.slotState.slots) if (itemId) setSlot(cd.id, slot, itemId);
     }
+  }
 
-    function findOriginPosition(grid, itemId, startX, startY) {
-      // Find the origin cell (isOrigin: true) for this item
-      for (let y = 0; y < grid.length; y++) {
-        for (let x = 0; x < grid[y].length; x++) {
-          const cell = grid[y][x];
-          if (cell && cell.itemId === itemId && cell.isOrigin) {
-            return { x, y };
-          }
-        }
+  function serializeContainer(containerId) {
+    const container = getContainer(containerId);
+    return {
+      id: container.id, config: container.config,
+      items: Array.from(container.items.entries()).map(([itemId, stacks]) => ({ itemId, stacks: stacks.map(s => ({ quantity: s.quantity, position: s.position })) })),
+      lockedItems: Array.from(container.lockedItems)
+    };
+  }
+
+  return { createContainer, removeContainer, listContainers, addItem, addItemAt, removeItem, transfer, getContents, getStacks, hasItem, getQuantity, canAdd, findItem, getTotalWeight, getRemainingCapacity, isEmpty, getGrid, findPlacements, setSlot, getSlot, getAllSlots, clearSlot, canEquip, splitStack, mergeStacks, consolidate, lockItem, unlockItem, transaction, sort, autoArrange, on, serialize, deserialize, serializeContainer };
+}
+
+// ============================================
+// ITEM DEFINITIONS
+// ============================================
+const ITEMS = {
+  gem: { icon: '💎', name: 'Gem', size: { width: 1, height: 1 }, weight: 0.5 },
+  sword: { icon: '⚔️', name: 'Sword', size: { width: 1, height: 3 }, weight: 5 },
+  shield: { icon: '🛡️', name: 'Shield', size: { width: 2, height: 2 }, weight: 8 },
+  bow: { icon: '🏹', name: 'Bow', size: { width: 3, height: 1 }, weight: 3 },
+  scroll: { icon: '📜', name: 'Scroll', size: { width: 1, height: 1 }, weight: 0.2 },
+  helmet: { icon: '🪖', name: 'Helmet', size: { width: 2, height: 1 }, weight: 4 },
+  potion: { icon: '🧪', name: 'Potion', size: { width: 1, height: 1 }, weight: 0.5 },
+  gold: { icon: '💰', name: 'Gold', size: { width: 1, height: 1 }, weight: 0.1 },
+  bread: { icon: '🍞', name: 'Bread', size: { width: 1, height: 1 }, weight: 0.3 },
+  armor: { icon: '🥋', name: 'Armor', size: { width: 2, height: 2 }, weight: 12 },
+  pants: { icon: '👖', name: 'Pants', size: { width: 1, height: 2 }, weight: 3 },
+  boots: { icon: '👢', name: 'Boots', size: { width: 1, height: 1 }, weight: 2 },
+  rustySword: { icon: '🗡️', name: 'Rusty Sword', size: { width: 1, height: 2 }, weight: 4 },
+  magicSword: { icon: '⚔️', name: 'Magic Sword', size: { width: 1, height: 3 }, weight: 3, price: 100 },
+  steelShield: { icon: '🛡️', name: 'Steel Shield', size: { width: 2, height: 2 }, weight: 10, price: 75 },
+  elixir: { icon: '🧪', name: 'Elixir', size: { width: 1, height: 1 }, weight: 0.5, price: 50 },
+  spellScroll: { icon: '📜', name: 'Scroll', size: { width: 1, height: 1 }, weight: 0.1, price: 25 },
+  plateHelm: { icon: '🪖', name: 'Plate Helm', size: { width: 2, height: 1 }, weight: 6, slotType: 'head' },
+  plateArmor: { icon: '🥋', name: 'Plate Armor', size: { width: 2, height: 2 }, weight: 15, slotType: 'chest' },
+  longbow: { icon: '🏹', name: 'Longbow', size: { width: 1, height: 3 }, weight: 4 },
+  manaPotion: { icon: '🧪', name: 'Mana Pot', size: { width: 1, height: 1 }, weight: 0.5 },
+  ruby: { icon: '💎', name: 'Ruby', size: { width: 1, height: 1 }, weight: 0.3 },
+  emerald: { icon: '💎', name: 'Emerald', size: { width: 1, height: 1 }, weight: 0.3 }
+};
+
+// ============================================
+// EXHIBIT 1: TETRIS VAULT
+// ============================================
+const gridManager = createInventoryManager({
+  getItemSize: (id) => ITEMS[id]?.size || { width: 1, height: 1 },
+  getItemWeight: (id) => ITEMS[id]?.weight || 1
+});
+
+const GRID_WIDTH = 10, GRID_HEIGHT = 8;
+let lootPile = ['gem', 'sword', 'shield', 'bow', 'scroll', 'helmet'];
+let rotationEnabled = true;
+let draggingItem = null;
+
+function initGridExhibit() {
+  gridManager.createContainer('vault', { mode: 'grid', width: GRID_WIDTH, height: GRID_HEIGHT, allowRotation: true });
+  // Pre-populate with scattered items
+  gridManager.addItemAt('vault', 'sword', { x: 0, y: 0, rotated: false });
+  gridManager.addItemAt('vault', 'shield', { x: 3, y: 2, rotated: false });
+  gridManager.addItemAt('vault', 'gem', { x: 6, y: 0, rotated: false });
+  gridManager.addItemAt('vault', 'bow', { x: 7, y: 3, rotated: false });
+  renderGrid();
+  renderLootPile();
+}
+
+function renderGrid() {
+  const container = document.getElementById('grid-cells');
+  container.innerHTML = '';
+  const grid = gridManager.getGrid('vault');
+  for (let y = 0; y < GRID_HEIGHT; y++) {
+    for (let x = 0; x < GRID_WIDTH; x++) {
+      const cell = document.createElement('div');
+      cell.className = 'grid-cell';
+      cell.dataset.x = x;
+      cell.dataset.y = y;
+      const gridCell = grid[y][x];
+      if (gridCell && gridCell.isOrigin) {
+        cell.textContent = ITEMS[gridCell.itemId]?.icon || '?';
+        cell.classList.add('occupied');
+        cell.draggable = true;
+        cell.dataset.itemId = gridCell.itemId;
+      } else if (gridCell) {
+        cell.classList.add('occupied');
       }
-      return null;
+      cell.addEventListener('dragover', handleGridDragOver);
+      cell.addEventListener('drop', handleGridDrop);
+      cell.addEventListener('dragleave', handleGridDragLeave);
+      cell.addEventListener('dragstart', handleGridDragStart);
+      container.appendChild(cell);
     }
+  }
+  updateCapacityBar();
+}
 
-    function createPreview(itemId, rotated) {
-      removePreview();
+function renderLootPile() {
+  const container = document.getElementById('loot-items');
+  container.innerHTML = '';
+  lootPile.forEach((itemId, i) => {
+    const item = ITEMS[itemId];
+    const el = document.createElement('div');
+    el.className = 'loot-item' + (i === 0 ? ' highlight' : '');
+    el.draggable = true;
+    el.dataset.itemId = itemId;
+    el.innerHTML = `<span class="loot-item-icon">${item.icon}</span><div><div class="item-name">${item.name}</div><div class="loot-item-info">${item.size.width}x${item.size.height}</div></div>`;
+    el.addEventListener('dragstart', handleLootDragStart);
+    container.appendChild(el);
+  });
+}
 
-      const size = getItemSizeFromId(itemId);
-      const { width, height } = rotated
-        ? { width: size.height, height: size.width }
-        : size;
+function updateCapacityBar() {
+  const cap = gridManager.getRemainingCapacity('vault');
+  const total = GRID_WIDTH * GRID_HEIGHT;
+  const used = total - cap.remaining;
+  document.getElementById('grid-capacity').style.width = (used / total * 100) + '%';
+}
 
-      previewElement = document.createElement('div');
-      previewElement.className = 'drag-preview';
-      previewElement.style.gridTemplateColumns = `repeat(${width}, 40px)`;
-      previewElement.style.position = 'relative';
+function handleLootDragStart(e) {
+  draggingItem = { itemId: e.target.dataset.itemId, fromLoot: true };
+  e.dataTransfer.effectAllowed = 'move';
+}
 
-      const color = getItemColor(itemId);
+function handleGridDragStart(e) {
+  const itemId = e.target.dataset.itemId;
+  if (!itemId) return;
+  draggingItem = { itemId, fromGrid: true, x: parseInt(e.target.dataset.x), y: parseInt(e.target.dataset.y) };
+  e.dataTransfer.effectAllowed = 'move';
+}
 
-      for (let dy = 0; dy < height; dy++) {
-        for (let dx = 0; dx < width; dx++) {
-          const cell = document.createElement('div');
-          cell.className = 'drag-preview-cell';
-          cell.style.background = `hsl(${color.hue}, ${color.saturation}%, ${color.lightness}%)`;
-          previewElement.appendChild(cell);
-        }
-      }
+function handleGridDragOver(e) {
+  e.preventDefault();
+  if (!draggingItem) return;
+  const x = parseInt(e.target.dataset.x), y = parseInt(e.target.dataset.y);
+  clearDropHighlights();
+  const placements = gridManager.findPlacements('vault', draggingItem.itemId);
+  const valid = placements.some(p => p.x === x && p.y === y);
+  highlightCells(x, y, draggingItem.itemId, valid);
+}
 
-      // Add manual rotation indicator if item is rotated from original
-      if (draggedItem && (rotated !== draggedItem.originalRotation)) {
-        const indicator = document.createElement('div');
-        indicator.style.position = 'absolute';
-        indicator.style.top = '-25px';
-        indicator.style.right = '-10px';
-        indicator.style.fontSize = '20px';
-        indicator.textContent = '🔄';
-        indicator.title = 'Manually rotated';
-        previewElement.appendChild(indicator);
-      }
+function handleGridDragLeave() { clearDropHighlights(); }
 
-      document.body.appendChild(previewElement);
-      return previewElement;
+function handleGridDrop(e) {
+  e.preventDefault();
+  if (!draggingItem) return;
+  const x = parseInt(e.target.dataset.x), y = parseInt(e.target.dataset.y);
+  clearDropHighlights();
+  if (draggingItem.fromGrid) {
+    gridManager.removeItem('vault', draggingItem.itemId, 1);
+  }
+  const result = gridManager.addItemAt('vault', draggingItem.itemId, { x, y, rotated: false });
+  if (result.success) {
+    if (draggingItem.fromLoot) {
+      lootPile = lootPile.filter(id => id !== draggingItem.itemId);
+      renderLootPile();
     }
+  } else if (draggingItem.fromGrid) {
+    gridManager.addItemAt('vault', draggingItem.itemId, { x: draggingItem.x, y: draggingItem.y, rotated: false });
+  }
+  draggingItem = null;
+  renderGrid();
+}
 
-    function removePreview() {
-      if (previewElement) {
-        previewElement.remove();
-        previewElement = null;
-      }
+function highlightCells(x, y, itemId, valid) {
+  const size = ITEMS[itemId]?.size || { width: 1, height: 1 };
+  for (let dy = 0; dy < size.height; dy++) {
+    for (let dx = 0; dx < size.width; dx++) {
+      const cell = document.querySelector(`.grid-cell[data-x="${x+dx}"][data-y="${y+dy}"]`);
+      if (cell) cell.classList.add(valid ? 'valid-drop' : 'invalid-drop');
     }
+  }
+}
 
-    function updatePreviewPosition(mouseX, mouseY) {
-      if (!previewElement) return;
-      previewElement.style.left = (mouseX - 20) + 'px';
-      previewElement.style.top = (mouseY - 20) + 'px';
+function clearDropHighlights() {
+  document.querySelectorAll('.grid-cell').forEach(c => c.classList.remove('valid-drop', 'invalid-drop'));
+}
+
+document.getElementById('auto-arrange').addEventListener('click', () => {
+  gridManager.autoArrange('vault');
+  renderGrid();
+  document.getElementById('auto-arrange').classList.remove('btn-pulse');
+});
+
+document.getElementById('clear-grid').addEventListener('click', () => {
+  const contents = gridManager.getContents('vault');
+  contents.forEach(item => {
+    gridManager.removeItem('vault', item.itemId, item.quantity);
+    if (!lootPile.includes(item.itemId)) lootPile.push(item.itemId);
+  });
+  renderGrid();
+  renderLootPile();
+});
+
+document.getElementById('rotation-toggle').addEventListener('change', (e) => { rotationEnabled = e.target.checked; });
+
+// ============================================
+// EXHIBIT 2: ADVENTURER'S LOADOUT
+// ============================================
+const loadoutManager = createInventoryManager({
+  getItemWeight: (id) => ITEMS[id]?.weight || 1,
+  getItemSize: (id) => ITEMS[id]?.size || { width: 1, height: 1 }
+});
+
+let savedSnapshot = null;
+let goldLocked = false;
+
+function initLoadoutExhibit() {
+  loadoutManager.createContainer('backpack', { mode: 'weight', maxWeight: 50, allowStacking: true });
+  loadoutManager.createContainer('chest', { mode: 'unlimited', allowStacking: true });
+  loadoutManager.createContainer('equipment', {
+    mode: 'slots',
+    slots: ['head', 'mainhand', 'offhand', 'chest', 'legs', 'feet'],
+    slotFilters: {
+      head: (id) => ['helmet', 'plateHelm'].includes(id),
+      mainhand: (id) => ['sword', 'rustySword', 'magicSword'].includes(id),
+      offhand: (id) => ['shield', 'steelShield'].includes(id),
+      chest: (id) => ['armor', 'plateArmor'].includes(id),
+      legs: (id) => ['pants'].includes(id),
+      feet: (id) => ['boots'].includes(id)
     }
+  });
+  // Pre-populate backpack (~70% weight)
+  loadoutManager.addItem('backpack', 'rustySword', 1);
+  loadoutManager.addItem('backpack', 'potion', 12);
+  loadoutManager.addItem('backpack', 'gold', 47);
+  loadoutManager.addItem('backpack', 'bread', 5);
+  loadoutManager.addItem('backpack', 'ruby', 3);
+  loadoutManager.addItem('backpack', 'emerald', 2);
+  // Pre-equip some gear
+  loadoutManager.setSlot('equipment', 'head', 'helmet');
+  loadoutManager.setSlot('equipment', 'mainhand', 'rustySword');
+  loadoutManager.setSlot('equipment', 'chest', 'armor');
+  // Chest has better gear
+  loadoutManager.addItem('chest', 'gold', 500);
+  loadoutManager.addItem('chest', 'magicSword', 1);
+  loadoutManager.addItem('chest', 'plateHelm', 1);
+  loadoutManager.addItem('chest', 'manaPotion', 20);
+  loadoutManager.addItem('chest', 'longbow', 1);
+  renderLoadout();
+}
 
-    function getGridCellAtMouse(mouseX, mouseY) {
-      const gridContainer = document.querySelector('.grid-display');
-      if (!gridContainer) return null;
+function renderLoadout() {
+  renderBackpack();
+  renderChest();
+  renderEquipment();
+  updateWeightBar();
+}
 
-      const rect = gridContainer.getBoundingClientRect();
-      if (mouseX < rect.left || mouseX > rect.right ||
-          mouseY < rect.top || mouseY > rect.bottom) {
-        return null;
-      }
+function renderBackpack() {
+  const container = document.getElementById('backpack-items');
+  container.innerHTML = '';
+  const contents = loadoutManager.getContents('backpack');
+  contents.forEach(entry => {
+    const item = ITEMS[entry.itemId];
+    const el = document.createElement('div');
+    el.className = 'inventory-item' + (goldLocked && entry.itemId === 'gold' ? ' locked' : '');
+    el.draggable = !(goldLocked && entry.itemId === 'gold');
+    el.dataset.itemId = entry.itemId;
+    el.dataset.source = 'backpack';
+    el.innerHTML = `<span class="item-icon">${item?.icon || '?'}</span><span class="item-name">${item?.name || entry.itemId}</span><span class="item-qty">x${entry.quantity}</span>`;
+    el.addEventListener('dragstart', handleLoadoutDragStart);
+    container.appendChild(el);
+  });
+}
 
-      const cellX = Math.floor((mouseX - rect.left) / 42); // 40px + 2px gap
-      const cellY = Math.floor((mouseY - rect.top) / 42);
+function renderChest() {
+  const container = document.getElementById('chest-items');
+  container.innerHTML = '';
+  const contents = loadoutManager.getContents('chest');
+  contents.forEach((entry, i) => {
+    const item = ITEMS[entry.itemId];
+    const el = document.createElement('div');
+    el.className = 'inventory-item' + (entry.itemId === 'plateHelm' ? ' highlight' : '');
+    el.draggable = true;
+    el.dataset.itemId = entry.itemId;
+    el.dataset.source = 'chest';
+    if (entry.itemId === 'plateHelm') el.title = 'Drag me to upgrade!';
+    el.innerHTML = `<span class="item-icon">${item?.icon || '?'}</span><span class="item-name">${item?.name || entry.itemId}</span><span class="item-qty">x${entry.quantity}</span>`;
+    el.addEventListener('dragstart', handleLoadoutDragStart);
+    container.appendChild(el);
+  });
+}
 
-      if (cellX < 0 || cellX >= 6 || cellY < 0 || cellY >= 6) return null;
-
-      return { x: cellX, y: cellY };
-    }
-
-    function checkCanPlace(itemId, x, y, rotated) {
-      if (!gridManager) return false;
-
-      const size = getItemSizeFromId(itemId);
-      const { width, height } = rotated
-        ? { width: size.height, height: size.width }
-        : size;
-
-      // Check bounds
-      if (x < 0 || y < 0 || x + width > 6 || y + height > 6) return false;
-
-      const grid = gridManager.getGrid('grid');
-
-      // Check if cells are empty or occupied by dragged item itself
-      for (let dy = 0; dy < height; dy++) {
-        for (let dx = 0; dx < width; dx++) {
-          const cell = grid[y + dy]?.[x + dx];
-          if (cell !== null && cell.itemId !== draggedItem.itemId) {
-            return false;
-          }
-        }
-      }
-
-      return true;
-    }
-
-    function findNearestValidPosition(itemId, targetX, targetY, currentRotation) {
-      if (!tier2_smartPlacement) return null;
-
-      // Search in spiral pattern (radius 0, 1, 2, 3)
-      const maxRadius = 3;
-
-      for (let radius = 0; radius <= maxRadius; radius++) {
-        if (radius === 0) {
-          // Check exact position first
-          if (checkCanPlace(itemId, targetX, targetY, currentRotation)) {
-            return {
-              x: targetX,
-              y: targetY,
-              rotated: currentRotation,
-              wasAdjusted: false,
-              wasRotated: false
-            };
-          }
-          continue;
-        }
-
-        // Check all positions at this radius (perimeter only)
-        for (let dx = -radius; dx <= radius; dx++) {
-          for (let dy = -radius; dy <= radius; dy++) {
-            // Skip if not on perimeter
-            if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
-
-            const testX = targetX + dx;
-            const testY = targetY + dy;
-
-            // Try current rotation first
-            if (checkCanPlace(itemId, testX, testY, currentRotation)) {
-              return {
-                x: testX,
-                y: testY,
-                rotated: currentRotation,
-                wasAdjusted: true,
-                wasRotated: false
-              };
-            }
-
-            // Try opposite rotation if Tier 1 AND Tier 3 enabled
-            if (tier1_rotationExists && tier3_smartRotation) {
-              const altRotation = !currentRotation;
-              if (checkCanPlace(itemId, testX, testY, altRotation)) {
-                return {
-                  x: testX,
-                  y: testY,
-                  rotated: altRotation,
-                  wasAdjusted: true,
-                  wasRotated: true
-                };
-              }
-            }
-          }
-        }
-      }
-
-      return null;
-    }
-
-    function validatePreviewPosition() {
-      if (!previewElement || !draggedItem) return;
-
-      const gridPos = getGridCellAtMouse(lastMouseX, lastMouseY);
-      const cells = previewElement.querySelectorAll('.drag-preview-cell');
-
-      // Remove all state classes
-      cells.forEach(cell => {
-        cell.classList.remove('preview-valid', 'preview-invalid', 'preview-adjusted');
-      });
-
-      if (!gridPos) {
-        // Outside grid - red
-        cells.forEach(cell => cell.classList.add('preview-invalid'));
-        return;
-      }
-
-      // Check if can place at exact position
-      const canPlaceExact = checkCanPlace(draggedItem.itemId, gridPos.x, gridPos.y, draggedItem.currentRotation);
-
-      if (canPlaceExact) {
-        // Green - valid at exact position
-        cells.forEach(cell => cell.classList.add('preview-valid'));
-        // Remove auto-rotation indicator if present
-        const autoIndicator = previewElement.querySelector('.auto-rotate-indicator');
-        if (autoIndicator) autoIndicator.remove();
-      } else if (tier2_smartPlacement) {
-        // Try smart placement
-        const smartResult = findNearestValidPosition(
-          draggedItem.itemId,
-          gridPos.x,
-          gridPos.y,
-          draggedItem.currentRotation
-        );
-
-        if (smartResult && smartResult.wasAdjusted) {
-          // Blue - smart placement will adjust position
-          cells.forEach(cell => cell.classList.add('preview-adjusted'));
-
-          // Add auto-rotation indicator if smart placement will rotate
-          if (smartResult.wasRotated) {
-            let autoIndicator = previewElement.querySelector('.auto-rotate-indicator');
-            if (!autoIndicator) {
-              autoIndicator = document.createElement('div');
-              autoIndicator.className = 'auto-rotate-indicator';
-              autoIndicator.style.position = 'absolute';
-              autoIndicator.style.top = '-25px';
-              autoIndicator.style.left = '-10px';
-              autoIndicator.style.fontSize = '20px';
-              autoIndicator.textContent = '⟲';
-              autoIndicator.title = 'Will auto-rotate';
-              previewElement.appendChild(autoIndicator);
-            }
-          } else {
-            // Remove auto-rotation indicator if not needed
-            const autoIndicator = previewElement.querySelector('.auto-rotate-indicator');
-            if (autoIndicator) autoIndicator.remove();
-          }
-        } else {
-          // Red - no valid position found
-          cells.forEach(cell => cell.classList.add('preview-invalid'));
-          const autoIndicator = previewElement.querySelector('.auto-rotate-indicator');
-          if (autoIndicator) autoIndicator.remove();
-        }
+function renderEquipment() {
+  const slots = loadoutManager.getAllSlots('equipment');
+  for (const [slot, itemId] of Object.entries(slots)) {
+    const el = document.getElementById('slot-' + slot);
+    if (el) {
+      el.innerHTML = `<span class="slot-label">${slot}</span>`;
+      if (itemId) {
+        el.innerHTML = ITEMS[itemId]?.icon || '?' + el.innerHTML;
+        el.classList.add('filled');
       } else {
-        // Smart placement disabled - red
-        cells.forEach(cell => cell.classList.add('preview-invalid'));
-        const autoIndicator = previewElement.querySelector('.auto-rotate-indicator');
-        if (autoIndicator) autoIndicator.remove();
+        el.classList.remove('filled');
       }
     }
+  }
+}
 
-    function handleRotationKey(e) {
-      if (!draggedItem || !tier1_rotationExists) return;
+function updateWeightBar() {
+  const weight = loadoutManager.getTotalWeight('backpack');
+  const maxWeight = 50;
+  const pct = (weight / maxWeight) * 100;
+  const fill = document.getElementById('weight-fill');
+  fill.style.width = pct + '%';
+  fill.className = 'weight-bar-fill' + (pct > 90 ? ' danger' : pct > 70 ? ' warning' : '');
+  document.getElementById('weight-text').textContent = `${weight.toFixed(1)}/${maxWeight} kg`;
+}
 
-      // R or Space key
-      if (e.key === 'r' || e.key === 'R' || e.key === ' ') {
-        e.preventDefault();
+let loadoutDragging = null;
 
-        // Toggle rotation
-        draggedItem.currentRotation = !draggedItem.currentRotation;
+function handleLoadoutDragStart(e) {
+  loadoutDragging = { itemId: e.target.dataset.itemId, source: e.target.dataset.source };
+  e.dataTransfer.effectAllowed = 'move';
+}
 
-        // Recreate preview with new dimensions
-        createPreview(draggedItem.itemId, draggedItem.currentRotation);
-        updatePreviewPosition(lastMouseX, lastMouseY);
-
-        // Flash animation
-        previewElement.classList.add('preview-rotated');
-        setTimeout(() => {
-          if (previewElement) {
-            previewElement.classList.remove('preview-rotated');
-          }
-        }, 300);
-
-        // Re-validate
-        validatePreviewPosition();
-
-        // Feedback
-        const size = getItemSizeFromId(draggedItem.itemId);
-        const w = draggedItem.currentRotation ? size.height : size.width;
-        const h = draggedItem.currentRotation ? size.width : size.height;
-
-        document.getElementById('grid-output').innerHTML = `
-          <span class="badge badge-info">Rotated</span>
-          Manual rotation applied (${w}×${h})
-        `;
-      }
+document.querySelectorAll('.equipment-slot').forEach(slot => {
+  slot.addEventListener('dragover', (e) => { e.preventDefault(); slot.style.borderColor = 'var(--accent-blue)'; });
+  slot.addEventListener('dragleave', () => { slot.style.borderColor = ''; });
+  slot.addEventListener('drop', (e) => {
+    e.preventDefault();
+    slot.style.borderColor = '';
+    if (!loadoutDragging) return;
+    const slotName = slot.dataset.slot;
+    const result = loadoutManager.canEquip('equipment', slotName, loadoutDragging.itemId);
+    if (result.canAdd) {
+      const oldItem = loadoutManager.setSlot('equipment', slotName, loadoutDragging.itemId);
+      loadoutManager.removeItem(loadoutDragging.source, loadoutDragging.itemId, 1);
+      if (oldItem) loadoutManager.addItem('backpack', oldItem, 1);
+      renderLoadout();
+    } else {
+      slot.classList.add('invalid');
+      setTimeout(() => slot.classList.remove('invalid'), 300);
     }
+    loadoutDragging = null;
+  });
+});
 
-    function updateGridDisplay() {
-      if (!gridManager) return;
-
-      const grid = gridManager.getGrid('grid');
-      const container = document.getElementById('grid-container');
-
-      const gridHtml = document.createElement('div');
-      gridHtml.className = 'grid-display';
-      gridHtml.style.gridTemplateColumns = `repeat(6, 40px)`;
-
-      for (let y = 0; y < grid.length; y++) {
-        for (let x = 0; x < grid[y].length; x++) {
-          const cell = grid[y][x];
-          const cellDiv = document.createElement('div');
-          cellDiv.className = 'grid-cell';
-          cellDiv.dataset.x = x;
-          cellDiv.dataset.y = y;
-
-          if (cell) {
-            cellDiv.classList.add('occupied');
-            cellDiv.draggable = true; // Make ALL occupied cells draggable
-
-            // Apply color based on itemId
-            const color = getItemColor(cell.itemId);
-            cellDiv.style.background = `linear-gradient(135deg,
-              hsl(${color.hue}, ${color.saturation}%, ${color.lightness}%) 0%,
-              hsl(${color.hue}, ${color.saturation}%, ${color.lightness - 15}%) 100%)`;
-
-            if (cell.isOrigin) {
-              cellDiv.classList.add('origin');
-              cellDiv.textContent = cell.itemId.substring(0, 4);
-            }
-
-            // Drag start - works from any cell of the item
-            cellDiv.addEventListener('dragstart', (e) => {
-              // Find the origin position for this item
-              const originPos = findOriginPosition(grid, cell.itemId, x, y);
-              if (!originPos) return;
-
-              const stacks = gridManager.getStacks('grid', cell.itemId);
-              const stack = stacks.find(s => s.position && s.position.x === originPos.x && s.position.y === originPos.y);
-
-              if (stack) {
-                draggedItem = {
-                  itemId: cell.itemId,
-                  quantity: cell.quantity,
-                  position: stack.position,
-                  originalRotation: stack.position.rotated || false,
-                  currentRotation: stack.position.rotated || false
-                };
-                draggedFromPos = originPos; // Use origin position
-                cellDiv.classList.add('dragging');
-                e.dataTransfer.effectAllowed = 'move';
-
-                // Create drag preview
-                createPreview(cell.itemId, draggedItem.currentRotation);
-                updatePreviewPosition(e.clientX, e.clientY);
-
-                // Attach keyboard listener for manual rotation (if Tier 1 enabled)
-                if (tier1_rotationExists) {
-                  rotationKeyHandler = handleRotationKey;
-                  document.addEventListener('keydown', rotationKeyHandler);
-                  keyboardListenerActive = true;
-                }
-
-                // Add dragging class to all cells of this item
-                document.querySelectorAll('.grid-cell.occupied').forEach(c => {
-                  const cx = parseInt(c.dataset.x);
-                  const cy = parseInt(c.dataset.y);
-                  if (grid[cy][cx] && grid[cy][cx].itemId === cell.itemId) {
-                    c.classList.add('dragging');
-                  }
-                });
-              }
-            });
-
-            cellDiv.addEventListener('dragend', (e) => {
-              // Remove keyboard listener
-              if (keyboardListenerActive && rotationKeyHandler) {
-                document.removeEventListener('keydown', rotationKeyHandler);
-                keyboardListenerActive = false;
-                rotationKeyHandler = null;
-              }
-
-              // Remove preview
-              removePreview();
-
-              // Clear all drag-over highlights and dragging state
-              document.querySelectorAll('.grid-cell').forEach(c => {
-                c.classList.remove('drag-over');
-                c.classList.remove('dragging');
-              });
-            });
-          }
-
-          // Allow dropping on any cell
-          cellDiv.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            cellDiv.classList.add('drag-over');
-          });
-
-          cellDiv.addEventListener('dragleave', (e) => {
-            cellDiv.classList.remove('drag-over');
-          });
-
-          cellDiv.addEventListener('drop', (e) => {
-            e.preventDefault();
-            cellDiv.classList.remove('drag-over');
-
-            if (!draggedItem) return;
-
-            const dropX = parseInt(cellDiv.dataset.x);
-            const dropY = parseInt(cellDiv.dataset.y);
-
-            // Skip if dropped on same position with same rotation
-            if (draggedFromPos &&
-                dropX === draggedFromPos.x &&
-                dropY === draggedFromPos.y &&
-                draggedItem.currentRotation === draggedItem.originalRotation) {
-              return;
-            }
-
-            try {
-              // Determine target position and rotation
-              let finalX = dropX;
-              let finalY = dropY;
-              let finalRotation = draggedItem.currentRotation;
-              let placementType = 'exact';
-
-              // Check if can place at exact position
-              const canPlaceExact = checkCanPlace(draggedItem.itemId, dropX, dropY, finalRotation);
-
-              if (!canPlaceExact && tier2_smartPlacement) {
-                // Try smart placement
-                const smartResult = findNearestValidPosition(
-                  draggedItem.itemId, dropX, dropY, finalRotation
-                );
-
-                if (smartResult) {
-                  finalX = smartResult.x;
-                  finalY = smartResult.y;
-                  finalRotation = smartResult.rotated;
-                  placementType = smartResult.wasRotated ? 'rotated' : 'adjusted';
-                } else {
-                  placementType = 'failed';
-                }
-              } else if (!canPlaceExact) {
-                placementType = 'failed';
-              }
-
-              if (placementType === 'failed') {
-                // Restore and show error
-                updateGridDisplay();
-                document.getElementById('grid-output').innerHTML = `
-                  <span class="badge badge-error">Failed</span>
-                  Cannot place at (${dropX}, ${dropY})
-                `;
-                return;
-              }
-
-              // Remove all items of this type, re-add others, add dragged at final position
-              const allStacks = gridManager.getStacks('grid', draggedItem.itemId);
-              const otherStacks = allStacks.filter(stack => {
-                if (!stack.position || !draggedItem.position) return true;
-                return !(stack.position.x === draggedItem.position.x &&
-                        stack.position.y === draggedItem.position.y &&
-                        stack.position.rotated === draggedItem.position.rotated);
-              });
-
-              const totalQty = allStacks.reduce((sum, s) => sum + s.quantity, 0);
-              gridManager.removeItem('grid', draggedItem.itemId, totalQty);
-
-              for (const stack of otherStacks) {
-                if (stack.position) {
-                  gridManager.addItemAt('grid', stack.itemId, stack.position, stack.quantity);
-                }
-              }
-
-              const result = gridManager.addItemAt('grid', draggedItem.itemId,
-                { x: finalX, y: finalY, rotated: finalRotation },
-                draggedItem.quantity
-              );
-
-              if (!result.success) {
-                // Restore original
-                gridManager.addItemAt('grid', draggedItem.itemId,
-                  draggedItem.position, draggedItem.quantity
-                );
-                document.getElementById('grid-output').innerHTML = `
-                  <span class="badge badge-error">Failed</span> ${result.reason}
-                `;
-              } else {
-                // Generate feedback message
-                const rotationChanged = finalRotation !== draggedItem.originalRotation;
-                let message = '';
-
-                if (placementType === 'exact') {
-                  message = `<span class="badge badge-success">Placed</span> at (${finalX}, ${finalY})`;
-                  if (rotationChanged) message += ` <span class="badge badge-info">🔄 Manual</span>`;
-                } else if (placementType === 'adjusted') {
-                  message = `<span class="badge badge-info">Adjusted</span> to (${finalX}, ${finalY})`;
-                  if (rotationChanged) message += ` <span class="badge badge-info">🔄 Manual</span>`;
-                } else if (placementType === 'rotated') {
-                  message = `<span class="badge badge-info">Smart</span> at (${finalX}, ${finalY}) <span class="badge badge-info">⟲ Auto</span>`;
-                }
-
-                document.getElementById('grid-output').innerHTML = message;
-              }
-
-              updateGridDisplay();
-            } catch (error) {
-              console.error('Drop error:', error);
-            }
-
-            draggedItem = null;
-            draggedFromPos = null;
-          });
-
-          gridHtml.appendChild(cellDiv);
-        }
-      }
-
-      container.innerHTML = '';
-      container.appendChild(gridHtml);
+['backpack-items', 'chest-items'].forEach(containerId => {
+  document.getElementById(containerId).addEventListener('dragover', (e) => e.preventDefault());
+  document.getElementById(containerId).addEventListener('drop', (e) => {
+    e.preventDefault();
+    if (!loadoutDragging) return;
+    const target = containerId === 'backpack-items' ? 'backpack' : 'chest';
+    if (loadoutDragging.source !== target) {
+      const result = loadoutManager.transfer(loadoutDragging.source, target, loadoutDragging.itemId, 1);
+      renderLoadout();
     }
+    loadoutDragging = null;
+  });
+});
 
-    // Global dragover listener to track mouse position and update preview
-    document.addEventListener('dragover', (e) => {
-      lastMouseX = e.clientX;
-      lastMouseY = e.clientY;
-      if (previewElement) {
-        updatePreviewPosition(e.clientX, e.clientY);
-        validatePreviewPosition();
-      }
+document.getElementById('lock-gold').addEventListener('click', () => {
+  goldLocked = !goldLocked;
+  if (goldLocked) loadoutManager.lockItem('backpack', 'gold');
+  else loadoutManager.unlockItem('backpack', 'gold');
+  document.getElementById('lock-gold').textContent = goldLocked ? '🔓 Unlock Gold' : '🔒 Lock Gold';
+  renderLoadout();
+});
+
+document.getElementById('sort-items').addEventListener('click', () => {
+  loadoutManager.sort('backpack', (a, b) => a.itemId.localeCompare(b.itemId));
+  renderLoadout();
+});
+
+document.getElementById('merge-stacks').addEventListener('click', () => {
+  loadoutManager.consolidate('backpack');
+  renderLoadout();
+});
+
+document.getElementById('snapshot').addEventListener('click', () => {
+  savedSnapshot = loadoutManager.serialize();
+  document.getElementById('restore').disabled = false;
+  document.body.style.animation = 'flash 0.2s';
+  setTimeout(() => document.body.style.animation = '', 200);
+});
+
+document.getElementById('restore').addEventListener('click', () => {
+  if (savedSnapshot) {
+    loadoutManager.deserialize(savedSnapshot);
+    renderLoadout();
+  }
+});
+
+// ============================================
+// EXHIBIT 3: TIME-WARP TRADING
+// ============================================
+const tradeManager = createInventoryManager({
+  getItemWeight: (id) => ITEMS[id]?.weight || 1
+});
+
+let playerOffer = ['rustySword'];
+let playerWant = ['magicSword'];
+let tradeInProgress = false;
+
+function initTradingExhibit() {
+  tradeManager.createContainer('player', { mode: 'weight', maxWeight: 30, allowStacking: true });
+  tradeManager.createContainer('merchant', { mode: 'unlimited', allowStacking: true });
+  tradeManager.addItem('player', 'rustySword', 1);
+  tradeManager.addItem('player', 'potion', 3);
+  tradeManager.addItem('player', 'gold', 150);
+  tradeManager.addItem('merchant', 'magicSword', 1);
+  tradeManager.addItem('merchant', 'steelShield', 1);
+  tradeManager.addItem('merchant', 'elixir', 1);
+  tradeManager.addItem('merchant', 'spellScroll', 1);
+  renderTrading();
+}
+
+function renderTrading() {
+  renderPlayerInventory();
+  renderMerchantInventory();
+  updateTradeSummary();
+  document.getElementById('player-gold').textContent = tradeManager.getQuantity('player', 'gold');
+  document.getElementById('player-weight').textContent = tradeManager.getTotalWeight('player').toFixed(1);
+}
+
+function renderPlayerInventory() {
+  const container = document.getElementById('player-inventory');
+  container.innerHTML = '';
+  const contents = tradeManager.getContents('player').filter(e => e.itemId !== 'gold');
+  contents.forEach(entry => {
+    const item = ITEMS[entry.itemId];
+    const el = document.createElement('div');
+    el.className = 'trader-item' + (playerOffer.includes(entry.itemId) ? ' selected' : '');
+    el.dataset.itemId = entry.itemId;
+    el.innerHTML = `<span class="item-icon">${item?.icon || '?'}</span><span class="item-name">${item?.name || entry.itemId}</span>`;
+    el.addEventListener('click', () => toggleOffer(entry.itemId));
+    container.appendChild(el);
+  });
+}
+
+function renderMerchantInventory() {
+  const container = document.getElementById('merchant-inventory');
+  container.innerHTML = '';
+  const contents = tradeManager.getContents('merchant');
+  contents.forEach(entry => {
+    const item = ITEMS[entry.itemId];
+    const el = document.createElement('div');
+    el.className = 'trader-item' + (playerWant.includes(entry.itemId) ? ' selected' : '');
+    el.dataset.itemId = entry.itemId;
+    el.innerHTML = `<span class="item-icon">${item?.icon || '?'}</span><span class="item-name">${item?.name || entry.itemId}</span><span class="trader-item-price">${item?.price || 25}g</span>`;
+    el.addEventListener('click', () => toggleWant(entry.itemId));
+    container.appendChild(el);
+  });
+}
+
+function toggleOffer(itemId) {
+  if (playerOffer.includes(itemId)) playerOffer = playerOffer.filter(id => id !== itemId);
+  else playerOffer.push(itemId);
+  renderTrading();
+}
+
+function toggleWant(itemId) {
+  if (playerWant.includes(itemId)) playerWant = playerWant.filter(id => id !== itemId);
+  else playerWant.push(itemId);
+  renderTrading();
+}
+
+function updateTradeSummary() {
+  const offerText = playerOffer.map(id => ITEMS[id]?.icon || '?').join(' ') || '-';
+  const wantText = playerWant.map(id => ITEMS[id]?.icon || '?').join(' ') || '-';
+  document.getElementById('offer-items').textContent = offerText;
+  document.getElementById('want-items').textContent = wantText;
+  const wantCost = playerWant.reduce((sum, id) => sum + (ITEMS[id]?.price || 25), 0);
+  const offerValue = playerOffer.reduce((sum, id) => sum + (ITEMS[id]?.price || 10), 0);
+  const net = offerValue - wantCost;
+  const netEl = document.getElementById('trade-net');
+  netEl.textContent = (net >= 0 ? '+' : '') + net + 'g';
+  netEl.className = 'trade-net' + (net < 0 ? ' negative' : '');
+}
+
+async function executeTrade() {
+  if (tradeInProgress || playerWant.length === 0) return;
+  tradeInProgress = true;
+  document.getElementById('execute-trade').disabled = true;
+  const speed = 6 - parseInt(document.getElementById('trade-speed').value);
+  const baseDelay = speed * 200;
+  const chaosEnabled = document.getElementById('chaos-gremlin').checked;
+  const tradeZone = document.getElementById('trade-zone');
+  const wantCost = playerWant.reduce((sum, id) => sum + (ITEMS[id]?.price || 25), 0);
+  const offerValue = playerOffer.reduce((sum, id) => sum + (ITEMS[id]?.price || 10), 0);
+  const goldNeeded = wantCost - offerValue;
+
+  try {
+    tradeManager.transaction(() => {
+      // Remove offered items
+      playerOffer.forEach(id => tradeManager.removeItem('player', id, 1));
+      // Pay gold if needed
+      if (goldNeeded > 0) tradeManager.removeItem('player', 'gold', goldNeeded);
+      // Simulate delay/failure point
+      if (chaosEnabled) throw new Error('Chaos Gremlin strikes!');
+      // Add wanted items
+      playerWant.forEach(id => {
+        tradeManager.removeItem('merchant', id, 1);
+        tradeManager.addItem('player', id, 1);
+      });
+      // Add offered items to merchant
+      playerOffer.forEach(id => tradeManager.addItem('merchant', id, 1));
+      // Give gold to merchant
+      if (goldNeeded > 0) tradeManager.addItem('merchant', 'gold', goldNeeded);
     });
+    // Success animation
+    tradeZone.style.background = 'rgba(35, 134, 54, 0.3)';
+    await sleep(baseDelay);
+    playerOffer = [];
+    playerWant = [];
+  } catch (e) {
+    // Failure - show rewind
+    tradeZone.style.background = 'rgba(218, 54, 51, 0.3)';
+    const gremlin = document.createElement('div');
+    gremlin.className = 'gremlin';
+    gremlin.textContent = '🐛';
+    gremlin.style.left = '50%';
+    gremlin.style.top = '50%';
+    gremlin.style.transform = 'translate(-50%, -50%)';
+    document.body.appendChild(gremlin);
+    await sleep(baseDelay);
+    gremlin.remove();
+  }
 
-    let transferManager = null;
-    function setupTransferDemo() {
-      transferManager = createInventoryManager({
-        getItemWeight: () => 5
-      });
-      transferManager.createContainer('containerA', { mode: 'unlimited', allowStacking: true });
-      transferManager.createContainer('containerB', { mode: 'weight', maxWeight: 30, allowStacking: true });
-      transferManager.addItem('containerA', 'potion', 20);
+  tradeZone.style.background = '';
+  tradeInProgress = false;
+  document.getElementById('execute-trade').disabled = false;
+  document.getElementById('execute-trade').classList.remove('btn-pulse');
+  renderTrading();
+}
 
-      document.getElementById('transfer-output').innerHTML = `
-        <span class="badge badge-success">Ready</span>
-        <div style="margin-top: 10px;">
-          Container A (unlimited): 20 potions<br>
-          Container B (max 30 weight, 5 per item): empty
-        </div>
-      `;
-    }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-    function performTransfer() {
-      if (!transferManager) {
-        setupTransferDemo();
-      }
+document.getElementById('execute-trade').addEventListener('click', executeTrade);
 
-      const itemId = document.getElementById('transferItemId').value;
-      const qty = parseInt(document.getElementById('transferQty').value);
+document.getElementById('reset-trade').addEventListener('click', () => {
+  tradeManager.removeContainer('player');
+  tradeManager.removeContainer('merchant');
+  playerOffer = ['rustySword'];
+  playerWant = ['magicSword'];
+  initTradingExhibit();
+  document.getElementById('execute-trade').classList.add('btn-pulse');
+});
 
-      const result = transferManager.transfer('containerA', 'containerB', itemId, qty);
-      const contentsA = transferManager.getContents('containerA');
-      const contentsB = transferManager.getContents('containerB');
-
-      document.getElementById('transfer-output').innerHTML = `
-        <span class="badge badge-info">Transferred</span> ${result.transferred} items
-        ${result.overflow > 0 ? `<span class="badge badge-error">${result.overflow} overflow</span>` : ''}
-        <div style="margin-top: 10px;">
-          <strong>Container A:</strong> ${contentsA.map(i => `${i.itemId}: ${i.quantity}`).join(', ') || 'empty'}<br>
-          <strong>Container B:</strong> ${contentsB.map(i => `${i.itemId}: ${i.quantity}`).join(', ') || 'empty'}
-        </div>
-      `;
-    }
-
-    let slotsManager = null;
-    function setupSlotsDemo() {
-      slotsManager = createInventoryManager();
-      slotsManager.createContainer('equipment', {
-        mode: 'slots',
-        slots: ['head', 'body', 'legs'],
-        slotFilters: {
-          head: (id) => id.includes('helmet') || id.includes('hat'),
-          body: (id) => id.includes('armor') || id.includes('chest'),
-          legs: (id) => id.includes('boots') || id.includes('pants')
-        }
-      });
-
-      document.getElementById('slots-output').innerHTML = '<span class="badge badge-success">Ready</span> Equipment slots initialized';
-    }
-
-    function equipItem() {
-      if (!slotsManager) setupSlotsDemo();
-
-      const slot = document.getElementById('equipSlot').value;
-      const item = document.getElementById('equipItem').value;
-
+// ============================================
+// TEST RUNNER
+// ============================================
+const testRunner = {
+  tests: [],
+  results: [],
+  running: false,
+  register(name, fn) { this.tests.push({ name, fn }); },
+  async run() {
+    if (this.running) return;
+    this.running = true;
+    this.results = [];
+    const output = document.getElementById('test-output');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const summary = document.getElementById('test-summary');
+    const runBtn = document.getElementById('run-tests');
+    runBtn.disabled = true;
+    output.innerHTML = '';
+    summary.classList.add('hidden');
+    progressFill.style.width = '0%';
+    progressFill.className = 'test-progress-fill';
+    let passed = 0, failed = 0;
+    for (let i = 0; i < this.tests.length; i++) {
+      const test = this.tests[i];
+      const progress = ((i + 1) / this.tests.length) * 100;
+      progressFill.style.width = `${progress}%`;
+      progressText.textContent = `Running: ${test.name}`;
       try {
-        const old = slotsManager.setSlot('equipment', slot, item);
-        const slots = slotsManager.getAllSlots('equipment');
-
-        document.getElementById('slots-output').innerHTML = `
-          <span class="badge badge-success">Equipped</span> ${item} to ${slot}
-          ${old ? ` (replaced ${old})` : ''}
-          <div style="margin-top: 10px;"><strong>Current equipment:</strong></div>
-          <div>
-            Head: ${slots.head || 'empty'}<br>
-            Body: ${slots.body || 'empty'}<br>
-            Legs: ${slots.legs || 'empty'}
-          </div>
-        `;
+        await test.fn();
+        passed++;
+        this.results.push({ name: test.name, passed: true });
+        output.innerHTML += `<div class="test-item"><span class="test-icon pass">✓</span><span class="test-name">${escapeHtml(test.name)}</span></div>`;
       } catch (e) {
-        document.getElementById('slots-output').innerHTML = `<span class="badge badge-error">Failed</span> ${e.message}`;
+        failed++;
+        this.results.push({ name: test.name, passed: false, error: e.message });
+        output.innerHTML += `<div class="test-item"><span class="test-icon fail">✗</span><div><div class="test-name">${escapeHtml(test.name)}</div><div class="test-error">${escapeHtml(e.message)}</div></div></div>`;
       }
+      output.scrollTop = output.scrollHeight;
+      await new Promise(r => setTimeout(r, 10));
     }
+    progressFill.classList.add(failed === 0 ? 'success' : 'failure');
+    progressText.textContent = `Complete: ${passed}/${this.tests.length} passed`;
+    document.getElementById('passed-count').textContent = passed;
+    document.getElementById('failed-count').textContent = failed;
+    document.getElementById('skipped-count').textContent = 0;
+    summary.classList.remove('hidden');
+    runBtn.disabled = false;
+    this.running = false;
+  }
+};
 
-    function unequipAll() {
-      if (!slotsManager) return;
+function escapeHtml(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
-      slotsManager.clearSlot('equipment', 'head');
-      slotsManager.clearSlot('equipment', 'body');
-      slotsManager.clearSlot('equipment', 'legs');
+document.getElementById('run-tests').addEventListener('click', () => testRunner.run());
 
-      document.getElementById('slots-output').innerHTML = '<span class="badge badge-info">Cleared</span> All slots unequipped';
-    }
+// Register tests
+testRunner.register('creates manager with default options', () => {
+  const m = createInventoryManager();
+  if (!m) throw new Error('Manager not created');
+});
 
-    let stackManager = null;
-    function setupStackDemo() {
-      stackManager = createInventoryManager({ defaultStackSize: 20 });
-      stackManager.createContainer('stacks', { mode: 'unlimited', allowStacking: true, maxStackSize: 20 });
-      stackManager.addItem('stacks', 'arrow', 15);
+testRunner.register('creates unlimited container', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'unlimited' });
+  if (!m.listContainers().includes('test')) throw new Error('Container not found');
+});
 
-      const stacks = stackManager.getStacks('stacks', 'arrow');
-      document.getElementById('stack-output').innerHTML = `
-        <span class="badge badge-success">Ready</span>
-        <div style="margin-top: 10px;">Current stacks: ${stacks.length} stack(s) of arrows</div>
-      `;
-    }
+testRunner.register('adds items to unlimited container', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'unlimited' });
+  const result = m.addItem('test', 'item1', 5);
+  if (!result.success) throw new Error('Add failed');
+  if (m.getQuantity('test', 'item1') !== 5) throw new Error('Wrong quantity');
+});
 
-    function addMultipleStacks() {
-      if (!stackManager) setupStackDemo();
+testRunner.register('removes items from container', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'unlimited' });
+  m.addItem('test', 'item1', 10);
+  const removed = m.removeItem('test', 'item1', 3);
+  if (removed !== 3) throw new Error('Wrong removed count');
+  if (m.getQuantity('test', 'item1') !== 7) throw new Error('Wrong remaining');
+});
 
-      stackManager.addItem('stacks', 'arrow', 10);
-      stackManager.addItem('stacks', 'arrow', 10);
-      stackManager.addItem('stacks', 'arrow', 10);
+testRunner.register('creates count-limited container', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'count', maxCount: 5 });
+  m.addItem('test', 'item1', 3);
+  m.addItem('test', 'item2', 2);
+  const result = m.addItem('test', 'item3', 1);
+  if (result.success) throw new Error('Should have failed');
+  if (result.reason !== 'count_exceeded') throw new Error('Wrong reason');
+});
 
-      const stacks = stackManager.getStacks('stacks', 'arrow');
-      document.getElementById('stack-output').innerHTML = `
-        <span class="badge badge-info">Added</span> 30 more arrows
-        <div style="margin-top: 10px;">
-          <strong>Stacks:</strong> ${stacks.length} stack(s)<br>
-          ${stacks.map((s, i) => `Stack ${i + 1}: ${s.quantity} arrows`).join('<br>')}
-        </div>
-      `;
-    }
+testRunner.register('creates weight-limited container', () => {
+  const m = createInventoryManager({ getItemWeight: () => 2 });
+  m.createContainer('test', { mode: 'weight', maxWeight: 10 });
+  m.addItem('test', 'item1', 3); // 6 weight
+  const result = m.addItem('test', 'item2', 3); // needs 6 more, only 4 available
+  if (result.added !== 2) throw new Error('Should add partial: ' + result.added);
+});
 
-    function consolidateStacks() {
-      if (!stackManager) return;
+testRunner.register('creates grid container', () => {
+  const m = createInventoryManager({ getItemSize: () => ({ width: 1, height: 1 }) });
+  m.createContainer('test', { mode: 'grid', width: 5, height: 5 });
+  const grid = m.getGrid('test');
+  if (grid.length !== 5) throw new Error('Wrong height');
+  if (grid[0].length !== 5) throw new Error('Wrong width');
+});
 
-      stackManager.consolidate('stacks');
-      const stacks = stackManager.getStacks('stacks', 'arrow');
+testRunner.register('places items in grid', () => {
+  const m = createInventoryManager({ getItemSize: () => ({ width: 2, height: 2 }) });
+  m.createContainer('test', { mode: 'grid', width: 5, height: 5 });
+  const result = m.addItemAt('test', 'item1', { x: 0, y: 0, rotated: false });
+  if (!result.success) throw new Error('Add failed');
+  const grid = m.getGrid('test');
+  if (!grid[0][0]) throw new Error('Cell should be occupied');
+});
 
-      document.getElementById('stack-output').innerHTML = `
-        <span class="badge badge-success">Consolidated</span>
-        <div style="margin-top: 10px;">
-          <strong>Stacks after consolidation:</strong> ${stacks.length} stack(s)<br>
-          ${stacks.map((s, i) => `Stack ${i + 1}: ${s.quantity} arrows`).join('<br>')}
-        </div>
-      `;
-    }
+testRunner.register('finds placements in grid', () => {
+  const m = createInventoryManager({ getItemSize: () => ({ width: 1, height: 1 }) });
+  m.createContainer('test', { mode: 'grid', width: 3, height: 3 });
+  const placements = m.findPlacements('test', 'item1');
+  if (placements.length !== 9) throw new Error('Should find 9 placements');
+});
 
-    let eventsManager = null;
-    let unsubscribers = [];
-    function setupEventsDemo() {
-      if (eventsManager) {
-        unsubscribers.forEach(u => u());
-        unsubscribers = [];
-      }
+testRunner.register('grid rejects overlapping items', () => {
+  const m = createInventoryManager({ getItemSize: () => ({ width: 2, height: 2 }) });
+  m.createContainer('test', { mode: 'grid', width: 3, height: 3 });
+  m.addItemAt('test', 'item1', { x: 0, y: 0, rotated: false });
+  const result = m.addItemAt('test', 'item2', { x: 1, y: 1, rotated: false });
+  if (result.success) throw new Error('Should reject overlap');
+});
 
-      eventsManager = createInventoryManager();
-      eventsManager.createContainer('watched', { mode: 'unlimited', allowStacking: true });
+testRunner.register('creates slots container', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'slots', slots: ['head', 'chest', 'feet'] });
+  const slots = m.getAllSlots('test');
+  if (!('head' in slots)) throw new Error('Missing head slot');
+});
 
-      const output = document.getElementById('events-output');
-      output.innerHTML = '<div style="color: #4299e1;">Listening for events...</div>';
+testRunner.register('equips items to slots', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'slots', slots: ['head'], slotFilters: { head: (id) => id === 'helmet' } });
+  const old = m.setSlot('test', 'head', 'helmet');
+  if (old !== null) throw new Error('Should return null for empty slot');
+  if (m.getSlot('test', 'head') !== 'helmet') throw new Error('Slot not set');
+});
 
-      unsubscribers.push(eventsManager.on('itemAdded', (e) => {
-        output.innerHTML += `<div class="test-pass">➕ Added ${e.quantity}x ${e.itemId} to ${e.containerId} (total: ${e.newTotal})</div>`;
-        output.scrollTop = output.scrollHeight;
-      }));
+testRunner.register('slot filters reject invalid items', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'slots', slots: ['head'], slotFilters: { head: (id) => id === 'helmet' } });
+  try {
+    m.setSlot('test', 'head', 'sword');
+    throw new Error('Should have rejected');
+  } catch (e) {
+    if (!e.message.includes('cannot be equipped')) throw e;
+  }
+});
 
-      unsubscribers.push(eventsManager.on('itemRemoved', (e) => {
-        output.innerHTML += `<div style="color: #fc8181;">➖ Removed ${e.quantity}x ${e.itemId} from ${e.containerId} (total: ${e.newTotal})</div>`;
-        output.scrollTop = output.scrollHeight;
-      }));
+testRunner.register('transfers items between containers', () => {
+  const m = createInventoryManager();
+  m.createContainer('a', { mode: 'unlimited' });
+  m.createContainer('b', { mode: 'unlimited' });
+  m.addItem('a', 'item1', 10);
+  const result = m.transfer('a', 'b', 'item1', 5);
+  if (result.transferred !== 5) throw new Error('Wrong transfer count');
+  if (m.getQuantity('a', 'item1') !== 5) throw new Error('Wrong source qty');
+  if (m.getQuantity('b', 'item1') !== 5) throw new Error('Wrong dest qty');
+});
 
-      unsubscribers.push(eventsManager.on('containerFull', (e) => {
-        output.innerHTML += `<div style="color: #f6ad55;">⚠️ Container ${e.containerId} full! ${e.overflow} ${e.itemId} overflow</div>`;
-        output.scrollTop = output.scrollHeight;
-      }));
-    }
+testRunner.register('locks items prevent removal', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'unlimited' });
+  m.addItem('test', 'item1', 5);
+  m.lockItem('test', 'item1');
+  try {
+    m.removeItem('test', 'item1', 1);
+    throw new Error('Should have thrown');
+  } catch (e) {
+    if (!e.message.includes('locked')) throw e;
+  }
+});
 
-    function triggerEvents() {
-      if (!eventsManager) setupEventsDemo();
+testRunner.register('unlocks items allow removal', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'unlimited' });
+  m.addItem('test', 'item1', 5);
+  m.lockItem('test', 'item1');
+  m.unlockItem('test', 'item1');
+  const removed = m.removeItem('test', 'item1', 1);
+  if (removed !== 1) throw new Error('Should remove after unlock');
+});
 
-      eventsManager.addItem('watched', 'sword', 5);
-      setTimeout(() => eventsManager.addItem('watched', 'potion', 10), 300);
-      setTimeout(() => eventsManager.removeItem('watched', 'sword', 2), 600);
-      setTimeout(() => eventsManager.addItem('watched', 'gem', 3), 900);
-    }
+testRunner.register('transactions roll back on error', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'unlimited' });
+  m.addItem('test', 'item1', 10);
+  try {
+    m.transaction(() => {
+      m.removeItem('test', 'item1', 5);
+      throw new Error('Simulated failure');
+    });
+  } catch (e) {}
+  if (m.getQuantity('test', 'item1') !== 10) throw new Error('Should rollback');
+});
 
-    function clearEventLog() {
-      document.getElementById('events-output').innerHTML = '<div style="color: #4299e1;">Event log cleared. Waiting for events...</div>';
-    }
+testRunner.register('transactions commit on success', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'unlimited' });
+  m.addItem('test', 'item1', 10);
+  m.transaction(() => {
+    m.removeItem('test', 'item1', 5);
+  });
+  if (m.getQuantity('test', 'item1') !== 5) throw new Error('Should commit');
+});
 
-    let serializationManager = null;
-    function setupSerializationDemo() {
-      serializationManager = createInventoryManager();
-      serializationManager.createContainer('inv1', { mode: 'unlimited', allowStacking: true });
-      serializationManager.createContainer('inv2', { mode: 'count', maxCount: 5 });
-      serializationManager.addItem('inv1', 'sword', 3);
-      serializationManager.addItem('inv1', 'potion', 10);
-      serializationManager.addItem('inv2', 'gem', 2);
+testRunner.register('serializes and deserializes state', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'unlimited' });
+  m.addItem('test', 'item1', 7);
+  const data = m.serialize();
+  m.removeContainer('test');
+  m.deserialize(data);
+  if (m.getQuantity('test', 'item1') !== 7) throw new Error('Should restore');
+});
 
-      document.getElementById('serialization-output').innerHTML = `
-        <span class="badge badge-success">Setup</span> Created 2 containers with items
-        <div style="margin-top: 10px;">
-          inv1: 3 swords, 10 potions<br>
-          inv2: 2 gems
-        </div>
-      `;
-    }
+testRunner.register('fires itemAdded events', () => {
+  const m = createInventoryManager();
+  let fired = false;
+  m.on('itemAdded', (e) => { fired = true; });
+  m.createContainer('test', { mode: 'unlimited' });
+  m.addItem('test', 'item1', 1);
+  if (!fired) throw new Error('Event not fired');
+});
 
-    function serializeState() {
-      if (!serializationManager) setupSerializationDemo();
+testRunner.register('fires itemRemoved events', () => {
+  const m = createInventoryManager();
+  let fired = false;
+  m.on('itemRemoved', (e) => { fired = true; });
+  m.createContainer('test', { mode: 'unlimited' });
+  m.addItem('test', 'item1', 5);
+  m.removeItem('test', 'item1', 1);
+  if (!fired) throw new Error('Event not fired');
+});
 
-      savedState = serializationManager.serialize();
-      document.getElementById('serialization-output').innerHTML = `
-        <span class="badge badge-success">Saved</span> State serialized to memory
-        <div style="margin-top: 10px;">
-          <pre style="background: #2d3748; color: #e2e8f0; padding: 10px; border-radius: 4px; font-size: 11px; overflow-x: auto;">
-${JSON.stringify(savedState, null, 2).substring(0, 500)}...
-          </pre>
-        </div>
-      `;
-    }
+testRunner.register('fires containerFull events', () => {
+  const m = createInventoryManager();
+  let fired = false;
+  m.on('containerFull', (e) => { fired = true; });
+  m.createContainer('test', { mode: 'count', maxCount: 1 });
+  m.addItem('test', 'item1', 1);
+  m.addItem('test', 'item2', 1);
+  if (!fired) throw new Error('Event not fired');
+});
 
-    function deserializeState() {
-      if (!savedState) {
-        document.getElementById('serialization-output').innerHTML = '<span class="badge badge-error">Error</span> No saved state! Serialize first.';
-        return;
-      }
+testRunner.register('hasItem returns true for existing items', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'unlimited' });
+  m.addItem('test', 'item1', 1);
+  if (!m.hasItem('test', 'item1')) throw new Error('Should have item');
+});
 
-      serializationManager = createInventoryManager();
-      serializationManager.deserialize(savedState);
+testRunner.register('hasItem returns false for missing items', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'unlimited' });
+  if (m.hasItem('test', 'item1')) throw new Error('Should not have item');
+});
 
-      const inv1 = serializationManager.getContents('inv1');
-      const inv2 = serializationManager.getContents('inv2');
+testRunner.register('isEmpty returns true for empty container', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'unlimited' });
+  if (!m.isEmpty('test')) throw new Error('Should be empty');
+});
 
-      document.getElementById('serialization-output').innerHTML = `
-        <span class="badge badge-success">Restored</span> State deserialized successfully!
-        <div style="margin-top: 10px;">
-          <strong>Restored containers:</strong><br>
-          inv1: ${inv1.map(i => `${i.quantity}x ${i.itemId}`).join(', ')}<br>
-          inv2: ${inv2.map(i => `${i.quantity}x ${i.itemId}`).join(', ')}
-        </div>
-      `;
-    }
+testRunner.register('isEmpty returns false for non-empty container', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'unlimited' });
+  m.addItem('test', 'item1', 1);
+  if (m.isEmpty('test')) throw new Error('Should not be empty');
+});
 
-    function clearAllContainers() {
-      if (!serializationManager) return;
+testRunner.register('getContents returns all items', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'unlimited' });
+  m.addItem('test', 'item1', 3);
+  m.addItem('test', 'item2', 5);
+  const contents = m.getContents('test');
+  if (contents.length !== 2) throw new Error('Wrong item count');
+});
 
-      const containers = serializationManager.listContainers();
-      containers.forEach(id => serializationManager.removeContainer(id));
+testRunner.register('getRemainingCapacity for count mode', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'count', maxCount: 10 });
+  m.addItem('test', 'item1', 3);
+  const cap = m.getRemainingCapacity('test');
+  if (cap.remaining !== 7) throw new Error('Wrong capacity');
+});
 
-      document.getElementById('serialization-output').innerHTML = '<span class="badge badge-info">Cleared</span> All containers removed';
-    }
+testRunner.register('getRemainingCapacity for weight mode', () => {
+  const m = createInventoryManager({ getItemWeight: () => 2 });
+  m.createContainer('test', { mode: 'weight', maxWeight: 20 });
+  m.addItem('test', 'item1', 3);
+  const cap = m.getRemainingCapacity('test');
+  if (cap.remaining !== 14) throw new Error('Wrong capacity: ' + cap.remaining);
+});
+
+testRunner.register('canAdd returns correct maxAddable', () => {
+  const m = createInventoryManager({ getItemWeight: () => 5 });
+  m.createContainer('test', { mode: 'weight', maxWeight: 20 });
+  const result = m.canAdd('test', 'item1', 10);
+  if (result.maxAddable !== 4) throw new Error('Wrong maxAddable');
+});
+
+testRunner.register('findItem locates items across containers', () => {
+  const m = createInventoryManager();
+  m.createContainer('a', { mode: 'unlimited' });
+  m.createContainer('b', { mode: 'unlimited' });
+  m.addItem('a', 'item1', 5);
+  m.addItem('b', 'item1', 3);
+  const found = m.findItem('item1');
+  if (found.length !== 2) throw new Error('Should find in both');
+});
+
+testRunner.register('autoArrange repacks grid items', () => {
+  const m = createInventoryManager({ getItemSize: () => ({ width: 1, height: 1 }) });
+  m.createContainer('test', { mode: 'grid', width: 3, height: 3 });
+  m.addItemAt('test', 'item1', { x: 2, y: 2, rotated: false });
+  m.autoArrange('test');
+  const grid = m.getGrid('test');
+  if (!grid[0][0] || grid[0][0].itemId !== 'item1') throw new Error('Should move to 0,0');
+});
+
+testRunner.register('sort orders items alphabetically', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'unlimited' });
+  m.addItem('test', 'zebra', 1);
+  m.addItem('test', 'apple', 1);
+  m.addItem('test', 'mango', 1);
+  m.sort('test', (a, b) => a.itemId.localeCompare(b.itemId));
+  const contents = m.getContents('test');
+  if (contents[0].itemId !== 'apple') throw new Error('Should be sorted');
+});
+
+testRunner.register('consolidate merges stacks', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'unlimited', allowStacking: true });
+  m.addItem('test', 'item1', 3);
+  m.addItem('test', 'item1', 5);
+  m.consolidate('test');
+  const stacks = m.getStacks('test', 'item1');
+  if (stacks.length !== 1) throw new Error('Should consolidate to 1 stack');
+  if (stacks[0].quantity !== 8) throw new Error('Wrong total quantity');
+});
+
+testRunner.register('throws on duplicate container', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'unlimited' });
+  try {
+    m.createContainer('test', { mode: 'unlimited' });
+    throw new Error('Should throw');
+  } catch (e) {
+    if (!e.message.includes('already exists')) throw e;
+  }
+});
+
+testRunner.register('throws on non-existent container', () => {
+  const m = createInventoryManager();
+  try {
+    m.addItem('nonexistent', 'item', 1);
+    throw new Error('Should throw');
+  } catch (e) {
+    if (!e.message.includes('does not exist')) throw e;
+  }
+});
+
+testRunner.register('removeContainer deletes container', () => {
+  const m = createInventoryManager();
+  m.createContainer('test', { mode: 'unlimited' });
+  m.removeContainer('test');
+  if (m.listContainers().includes('test')) throw new Error('Should be removed');
+});
+
+testRunner.register('grid rotation finds more placements', () => {
+  const m = createInventoryManager({ getItemSize: (id) => id === 'tall' ? { width: 1, height: 3 } : { width: 1, height: 1 } });
+  m.createContainer('test', { mode: 'grid', width: 3, height: 1, allowRotation: true });
+  const placements = m.findPlacements('test', 'tall');
+  if (placements.length === 0) throw new Error('Should find rotated placement');
+  if (!placements.some(p => p.rotated)) throw new Error('Should include rotated');
+});
+
+// ============================================
+// INITIALIZE EXHIBITS
+// ============================================
+initGridExhibit();
+initLoadoutExhibit();
+initTradingExhibit();
   </script>
 </body>
 </html>
