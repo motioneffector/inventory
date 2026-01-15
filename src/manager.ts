@@ -747,8 +747,10 @@ export function createInventoryManager(
 
     // Update all grid cells for this itemId
     for (let y = 0; y < container.gridState.cells.length; y++) {
-      for (let x = 0; x < container.gridState.cells[y].length; x++) {
-        const cell = container.gridState.cells[y][x]
+      const row = container.gridState.cells[y]
+      if (!row) continue
+      for (let x = 0; x < row.length; x++) {
+        const cell = row[x]
         if (cell && cell.itemId === itemId && cell.isOrigin) {
           const key = `${x},${y}`
           const newIndex = positionMap.get(key)
@@ -1425,7 +1427,7 @@ export function createInventoryManager(
       // Success - changes committed
     } catch (error) {
       // Rollback - restore original state
-      container.items = snapshot.items
+      container.items = snapshot.items as Map<ItemId, ItemStack[]>
       if (snapshot.gridCells && container.gridState) {
         container.gridState.cells = snapshot.gridCells
       }
