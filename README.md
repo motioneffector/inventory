@@ -6,6 +6,8 @@ A flexible, type-safe inventory system supporting multiple storage paradigms for
 [![license](https://img.shields.io/npm/l/@motioneffector/inventory.svg)](https://github.com/motioneffector/inventory/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
+**[Try the interactive demo →](https://motioneffector.github.io/inventory/)**
+
 ## Features
 
 - **Multiple Storage Modes** - Unlimited, count-based, weight-based, grid-based, and slot-based inventories
@@ -19,7 +21,7 @@ A flexible, type-safe inventory system supporting multiple storage paradigms for
 - **Item Locking** - Prevent removal of quest or equipped items
 - **Serialization** - Full save/load support for persistence
 
-[Read the full manual →](https://github.com/motioneffector/inventory/wiki)
+[Read the full manual →](https://motioneffector.github.io/inventory/manual/)
 
 ## Quick Start
 
