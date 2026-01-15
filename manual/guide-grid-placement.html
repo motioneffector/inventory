@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grid Placement - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Grid Placement</h1>
+<p>Build a Tetris-style inventory where items occupy multiple cells based on their size. Items can be rotated and precisely positioned.</p>
+<h2>Prerequisites</h2>
+<p>Before starting, you should:</p>
+<ul>
+<li><a href="concept-containers.html">Understand how containers work</a></li>
+<li><a href="concept-item-metadata.html">Know about item metadata callbacks</a></li>
+</ul>
+<h2>Overview</h2>
+<p>We&#39;ll create a grid inventory by:</p>
+<ol>
+<li>Providing a <code>getItemSize</code> callback returning <code>{ width, height }</code></li>
+<li>Creating a container with <code>mode: &#39;grid&#39;</code>, <code>width</code>, and <code>height</code></li>
+<li>Adding items (auto-placed or manually positioned)</li>
+<li>Enabling rotation for more placement flexibility</li>
+<li>Querying grid state</li>
+</ol>
+<h2>Step 1: Provide the Size Callback</h2>
+<p>The library needs to know each item&#39;s dimensions. Pass a <code>getItemSize</code> function when creating the manager.</p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager({
+  getItemSize: (itemId) =&gt; {
+    const sizes: Record&lt;string, { width: number; height: number }&gt; = {
+      &#39;dagger&#39;: { width: 1, height: 2 },
+      &#39;sword&#39;: { width: 1, height: 4 },
+      &#39;shield&#39;: { width: 2, height: 2 },
+      &#39;potion&#39;: { width: 1, height: 1 },
+      &#39;bow&#39;: { width: 1, height: 3 },
+    }
+    return sizes[itemId] ?? { width: 1, height: 1 }
+  },
+})
+</code></pre>
+<p>Both <code>width</code> and <code>height</code> must be positive integers.</p>
+<h2>Step 2: Create a Grid Container</h2>
+<p>Create a container with <code>mode: &#39;grid&#39;</code> and specify dimensions.</p>
+<pre><code class="language-typescript">inventory.createContainer(&#39;stash&#39;, {
+  mode: &#39;grid&#39;,
+  width: 10,  // 10 cells wide
+  height: 6,  // 6 cells tall
+})
+</code></pre>
+<p>This creates a 60-cell grid (10 x 6).</p>
+<h2>Step 3: Add Items</h2>
+<p>Use <code>addItem</code> for automatic placement or <code>addItemAt</code> for precise positioning.</p>
+<pre><code class="language-typescript">// Auto-place: library finds first available spot
+inventory.addItem(&#39;stash&#39;, &#39;sword&#39;, 1)
+inventory.addItem(&#39;stash&#39;, &#39;potion&#39;, 3)
+
+// Manual placement at specific coordinates
+inventory.addItemAt(&#39;stash&#39;, &#39;shield&#39;, { x: 5, y: 0 })
+inventory.addItemAt(&#39;stash&#39;, &#39;dagger&#39;, { x: 8, y: 0 })
+</code></pre>
+<p>Coordinates are zero-indexed from the top-left corner.</p>
+<h2>Step 4: Enable Rotation</h2>
+<p>Allow items to rotate 90 degrees for more placement options.</p>
+<pre><code class="language-typescript">inventory.createContainer(&#39;stash&#39;, {
+  mode: &#39;grid&#39;,
+  width: 10,
+  height: 6,
+  allowRotation: true, // Enable rotation
+})
+
+// A sword (1x4) can now also fit as (4x1)
+inventory.addItemAt(&#39;stash&#39;, &#39;sword&#39;, { x: 0, y: 0, rotated: true })
+
+// Find all valid placements including rotated positions
+const placements = inventory.findPlacements(&#39;stash&#39;, &#39;bow&#39;)
+// Includes both normal and rotated positions
+</code></pre>
+<h2>Step 5: Query Grid State</h2>
+<p>Inspect the grid to see what&#39;s where.</p>
+<pre><code class="language-typescript">// Get the full grid state
+const grid = inventory.getGrid(&#39;stash&#39;)
+// 2D array where each cell is null or { itemId, quantity, isOrigin }
+
+// Check a specific cell
+const cell = grid[0][0] // Row 0, Column 0
+if (cell) {
+  console.log(`Cell contains ${cell.itemId}, origin: ${cell.isOrigin}`)
+}
+
+// Find all valid positions for an item
+const placements = inventory.findPlacements(&#39;stash&#39;, &#39;shield&#39;)
+// [{ x: 0, y: 2 }, { x: 2, y: 3, rotated: true }, ...]
+</code></pre>
+<h2>Complete Example</h2>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager({
+  getItemSize: (id) =&gt; {
+    const sizes: Record&lt;string, { width: number; height: number }&gt; = {
+      &#39;longsword&#39;: { width: 1, height: 4 },
+      &#39;shield&#39;: { width: 2, height: 2 },
+      &#39;helmet&#39;: { width: 2, height: 2 },
+      &#39;potion&#39;: { width: 1, height: 1 },
+      &#39;ring&#39;: { width: 1, height: 1 },
+    }
+    return sizes[id] ?? { width: 1, height: 1 }
+  },
+})
+
+// Create a 10x8 stash with rotation
+inventory.createContainer(&#39;stash&#39;, {
+  mode: &#39;grid&#39;,
+  width: 10,
+  height: 8,
+  allowRotation: true,
+})
+
+// Place items
+inventory.addItemAt(&#39;stash&#39;, &#39;longsword&#39;, { x: 0, y: 0 })
+inventory.addItemAt(&#39;stash&#39;, &#39;shield&#39;, { x: 1, y: 0 })
+inventory.addItemAt(&#39;stash&#39;, &#39;helmet&#39;, { x: 3, y: 0 })
+inventory.addItem(&#39;stash&#39;, &#39;potion&#39;, 5) // Auto-placed
+
+// Visualize the grid
+const grid = inventory.getGrid(&#39;stash&#39;)
+for (let y = 0; y &lt; grid.length; y++) {
+  let row = &#39;&#39;
+  for (let x = 0; x &lt; grid[y].length; x++) {
+    const cell = grid[y][x]
+    row += cell ? cell.itemId[0].toUpperCase() : &#39;.&#39;
+  }
+  console.log(row)
+}
+// Output:
+// LSSHH.....
+// LSSHH.....
+// L.........
+// L.........
+// PPPPP.....
+// ..........
+// ..........
+// ..........
+</code></pre>
+<h2>Variations</h2>
+<h3>Stacking in Grid Cells</h3>
+<p>Enable stacking to allow multiple items in the same cell position.</p>
+<pre><code class="language-typescript">inventory.createContainer(&#39;stash&#39;, {
+  mode: &#39;grid&#39;,
+  width: 10,
+  height: 6,
+  allowStacking: true,
+  maxStackSize: 99,
+})
+
+// Stack potions at the same position
+inventory.addItemAt(&#39;stash&#39;, &#39;potion&#39;, { x: 0, y: 0 }, 50)
+inventory.addItemAt(&#39;stash&#39;, &#39;potion&#39;, { x: 0, y: 0 }, 30) // Same cell
+
+const grid = inventory.getGrid(&#39;stash&#39;)
+console.log(grid[0][0]) // { itemId: &#39;potion&#39;, quantity: 80, isOrigin: true }
+</code></pre>
+<h3>Auto-Arrange</h3>
+<p>Reorganize items to pack them efficiently.</p>
+<pre><code class="language-typescript">// After removing items, the grid may have gaps
+inventory.removeItem(&#39;stash&#39;, &#39;shield&#39;, 1)
+
+// Auto-arrange repacks everything from top-left
+inventory.autoArrange(&#39;stash&#39;)
+</code></pre>
+<h3>Checking Before Placing</h3>
+<pre><code class="language-typescript">// Check if an item can be added
+const canFit = inventory.canAdd(&#39;stash&#39;, &#39;longsword&#39;, 1)
+if (!canFit.canAdd) {
+  console.log(`Cannot add: ${canFit.reason}`) // &#39;no_space&#39;
+}
+
+// Find all valid placements
+const placements = inventory.findPlacements(&#39;stash&#39;, &#39;shield&#39;)
+if (placements.length === 0) {
+  console.log(&#39;No room for shield&#39;)
+} else {
+  console.log(`${placements.length} possible positions`)
+}
+</code></pre>
+<h2>Troubleshooting</h2>
+<h3>Item Doesn&#39;t Fit Even Though Grid Looks Empty</h3>
+<p><strong>Symptom:</strong> <code>addItem</code> fails with <code>no_space</code> but the grid appears to have room.</p>
+<p><strong>Cause:</strong> The item&#39;s size doesn&#39;t fit in any contiguous empty area.</p>
+<p><strong>Solution:</strong> Use <code>findPlacements</code> to see available positions, or check if rotation would help:</p>
+<pre><code class="language-typescript">const placements = inventory.findPlacements(&#39;stash&#39;, &#39;large-item&#39;)
+console.log(`Found ${placements.length} valid positions`)
+</code></pre>
+<h3>addItemAt Fails at Empty Position</h3>
+<p><strong>Symptom:</strong> Placing at specific coordinates fails even though the cell is empty.</p>
+<p><strong>Cause:</strong> The item extends beyond grid boundaries or overlaps other items.</p>
+<p><strong>Solution:</strong> Ensure the full item footprint fits:</p>
+<pre><code class="language-typescript">// A 2x3 item at (9, 0) in a 10-wide grid would extend to x=10 (out of bounds)
+// Place at (8, 0) instead
+</code></pre>
+<h2>See Also</h2>
+<ul>
+<li><strong><a href="concept-storage-modes.html">Storage Modes</a></strong> - Overview of all container modes</li>
+<li><strong><a href="concept-item-metadata.html">Item Metadata</a></strong> - More on the <code>getItemSize</code> callback</li>
+<li><strong><a href="api-grid-operations.html">Grid Operations API</a></strong> - Reference for <code>getGrid</code>, <code>findPlacements</code>, <code>autoArrange</code></li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

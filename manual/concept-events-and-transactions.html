@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events &amp; Transactions - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Events &amp; Transactions</h1>
+<p>Events notify you when inventory changes happen. Transactions group operations into atomic units that roll back on failure.</p>
+<h2>Events</h2>
+<h3>How Events Work</h3>
+<p>Subscribe to events with <code>manager.on(eventName, callback)</code>. Your callback runs whenever that event fires. The <code>on</code> method returns an unsubscribe function.</p>
+<pre><code>addItem(&#39;backpack&#39;, &#39;sword&#39;, 1)
+         │
+         ▼
+    ┌─────────────────┐
+    │ &#39;itemAdded&#39;     │────► Your callback({ containerId, itemId, quantity, newTotal })
+    │ event fires     │
+    └─────────────────┘
+</code></pre>
+<h3>Basic Usage</h3>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+inventory.createContainer(&#39;backpack&#39;, { mode: &#39;unlimited&#39; })
+
+// Subscribe to item additions
+const unsubscribe = inventory.on(&#39;itemAdded&#39;, (event) =&gt; {
+  console.log(`Added ${event.quantity} ${event.itemId} to ${event.containerId}`)
+  console.log(`New total: ${event.newTotal}`)
+})
+
+inventory.addItem(&#39;backpack&#39;, &#39;sword&#39;, 1)
+// Logs: &quot;Added 1 sword to backpack&quot;
+// Logs: &quot;New total: 1&quot;
+
+// Later, stop listening
+unsubscribe()
+</code></pre>
+<h3>Available Events</h3>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>When it fires</th>
+<th>Payload</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>itemAdded</code></td>
+<td>Item added to container</td>
+<td><code>{ containerId, itemId, quantity, newTotal }</code></td>
+</tr>
+<tr>
+<td><code>itemRemoved</code></td>
+<td>Item removed from container</td>
+<td><code>{ containerId, itemId, quantity, newTotal }</code></td>
+</tr>
+<tr>
+<td><code>itemTransferred</code></td>
+<td>Item moved between containers</td>
+<td><code>{ from, to, itemId, quantity }</code></td>
+</tr>
+<tr>
+<td><code>containerFull</code></td>
+<td>Add failed due to capacity</td>
+<td><code>{ containerId, itemId, overflow }</code></td>
+</tr>
+<tr>
+<td><code>slotChanged</code></td>
+<td>Equipment slot changed</td>
+<td><code>{ containerId, slot, oldItem, newItem }</code></td>
+</tr>
+<tr>
+<td><code>containerRemoved</code></td>
+<td>Container destroyed</td>
+<td><code>{ containerId }</code></td>
+</tr>
+</tbody></table>
+<h3>Event Examples</h3>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+
+// React to inventory full
+inventory.on(&#39;containerFull&#39;, (event) =&gt; {
+  showNotification(`Cannot add ${event.overflow} more ${event.itemId}!`)
+})
+
+// React to equipment changes
+inventory.on(&#39;slotChanged&#39;, (event) =&gt; {
+  if (event.newItem) {
+    updateCharacterModel(event.slot, event.newItem)
+  }
+})
+
+// Log all removals
+inventory.on(&#39;itemRemoved&#39;, (event) =&gt; {
+  analytics.track(&#39;item_removed&#39;, {
+    item: event.itemId,
+    quantity: event.quantity,
+  })
+})
+</code></pre>
+<h2>Transactions</h2>
+<h3>How Transactions Work</h3>
+<p>Wrap operations in <code>transaction(() =&gt; { ... })</code>. If any operation throws an error, all changes roll back to the state before the transaction started.</p>
+<pre><code>transaction(() =&gt; {
+  removeItem(&#39;backpack&#39;, &#39;gold&#39;, 100)  ─┐
+  addItem(&#39;shop&#39;, &#39;sword&#39;, 1)          ─┤ All succeed or all fail
+  removeItem(&#39;shop&#39;, &#39;sword&#39;, 1)       ─┤
+  addItem(&#39;backpack&#39;, &#39;sword&#39;, 1)      ─┘
+})
+</code></pre>
+<h3>Basic Usage</h3>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+inventory.createContainer(&#39;player&#39;, { mode: &#39;unlimited&#39; })
+inventory.createContainer(&#39;chest&#39;, { mode: &#39;unlimited&#39; })
+inventory.addItem(&#39;player&#39;, &#39;gold&#39;, 100)
+
+// Successful transaction
+inventory.transaction(() =&gt; {
+  inventory.removeItem(&#39;player&#39;, &#39;gold&#39;, 50)
+  inventory.addItem(&#39;chest&#39;, &#39;gold&#39;, 50)
+})
+// Both changes applied
+
+// Failed transaction
+try {
+  inventory.transaction(() =&gt; {
+    inventory.removeItem(&#39;player&#39;, &#39;gold&#39;, 25)
+    inventory.addItem(&#39;chest&#39;, &#39;gold&#39;, 25)
+    throw new Error(&#39;Changed my mind!&#39;) // Simulated failure
+  })
+} catch (e) {
+  // Transaction rolled back
+}
+
+// Player still has 50 gold (not 25)
+console.log(inventory.getQuantity(&#39;player&#39;, &#39;gold&#39;)) // 50
+</code></pre>
+<h3>When to Use Transactions</h3>
+<p>Use transactions when you have multiple operations that must all succeed or all fail:</p>
+<ul>
+<li><strong>Trading</strong> - Remove gold, add item; both must work</li>
+<li><strong>Crafting</strong> - Remove materials, add result; don&#39;t lose materials if crafting fails</li>
+<li><strong>Moving items</strong> - Remove from source, add to destination; don&#39;t duplicate or lose items</li>
+</ul>
+<h3>Transaction Example: Safe Trade</h3>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+inventory.createContainer(&#39;player&#39;, { mode: &#39;weight&#39;, maxWeight: 50 })
+inventory.createContainer(&#39;merchant&#39;, { mode: &#39;unlimited&#39; })
+inventory.addItem(&#39;player&#39;, &#39;gold&#39;, 100)
+inventory.addItem(&#39;merchant&#39;, &#39;rare-sword&#39;, 1)
+
+function buyItem(itemId: string, price: number): boolean {
+  try {
+    inventory.transaction(() =&gt; {
+      // Remove gold from player
+      const removed = inventory.removeItem(&#39;player&#39;, &#39;gold&#39;, price)
+      if (removed &lt; price) {
+        throw new Error(&#39;Not enough gold&#39;)
+      }
+
+      // Add item to player
+      const result = inventory.addItem(&#39;player&#39;, itemId, 1)
+      if (!result.success) {
+        throw new Error(&#39;Inventory full&#39;)
+      }
+
+      // Remove item from merchant
+      inventory.removeItem(&#39;merchant&#39;, itemId, 1)
+    })
+    return true
+  } catch (e) {
+    // Transaction rolled back - gold stays, item stays with merchant
+    return false
+  }
+}
+</code></pre>
+<h2>Key Points</h2>
+<ul>
+<li><strong>Events fire immediately</strong> - Callbacks run synchronously when the action happens, not queued.</li>
+<li><strong>Unsubscribe to avoid leaks</strong> - Keep the unsubscribe function and call it when you no longer need the listener.</li>
+<li><strong>Transactions are synchronous</strong> - The callback runs immediately; async operations inside won&#39;t roll back properly.</li>
+<li><strong>Rollback is complete</strong> - On failure, the entire inventory state reverts to pre-transaction.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li><strong><a href="api-events.html">Events API</a></strong> - Full reference for <code>on()</code> and event types</li>
+<li><strong><a href="api-transactions.html">Transactions API</a></strong> - Full reference for <code>transaction()</code></li>
+<li><strong><a href="guide-using-transactions.html">Using Transactions Guide</a></strong> - Practical patterns for atomic operations</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

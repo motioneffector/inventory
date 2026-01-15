@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weight-Based Inventories - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Weight-Based Inventories</h1>
+<p>Create an inventory with carry capacity limits. Items have weight, and the container enforces a maximum total weight.</p>
+<h2>Prerequisites</h2>
+<p>Before starting, you should:</p>
+<ul>
+<li><a href="concept-containers.html">Understand how containers work</a></li>
+<li><a href="concept-item-metadata.html">Know about item metadata callbacks</a></li>
+</ul>
+<h2>Overview</h2>
+<p>We&#39;ll create a weight-limited backpack by:</p>
+<ol>
+<li>Providing a <code>getItemWeight</code> callback to the manager</li>
+<li>Creating a container with <code>mode: &#39;weight&#39;</code> and <code>maxWeight</code></li>
+<li>Adding items (the library auto-enforces the weight limit)</li>
+<li>Querying remaining capacity</li>
+</ol>
+<h2>Step 1: Provide the Weight Callback</h2>
+<p>The library needs to know how much each item weighs. Pass a <code>getItemWeight</code> function when creating the manager.</p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager({
+  getItemWeight: (itemId) =&gt; {
+    const weights: Record&lt;string, number&gt; = {
+      &#39;iron-sword&#39;: 8,
+      &#39;health-potion&#39;: 0.5,
+      &#39;gold-coin&#39;: 0.01,
+      &#39;tower-shield&#39;: 15,
+    }
+    return weights[itemId] ?? 1 // Default weight of 1
+  },
+})
+</code></pre>
+<p>The callback receives the item ID and must return a positive number. Zero weight is not allowed.</p>
+<h2>Step 2: Create a Weight Container</h2>
+<p>Create a container with <code>mode: &#39;weight&#39;</code> and specify the maximum weight.</p>
+<pre><code class="language-typescript">inventory.createContainer(&#39;backpack&#39;, {
+  mode: &#39;weight&#39;,
+  maxWeight: 50, // Can hold up to 50 weight units
+})
+</code></pre>
+<h2>Step 3: Add Items</h2>
+<p>Add items normally. The library calculates total weight and rejects items that would exceed the limit.</p>
+<pre><code class="language-typescript">// Add a sword (8 weight) - success
+const result1 = inventory.addItem(&#39;backpack&#39;, &#39;iron-sword&#39;, 1)
+console.log(result1) // { success: true, added: 1, overflow: 0 }
+
+// Add 10 potions (0.5 each = 5 weight) - success
+const result2 = inventory.addItem(&#39;backpack&#39;, &#39;health-potion&#39;, 10)
+console.log(result2) // { success: true, added: 10, overflow: 0 }
+
+// Current weight: 8 + 5 = 13
+
+// Try to add 100 potions (50 weight) - partial success
+const result3 = inventory.addItem(&#39;backpack&#39;, &#39;health-potion&#39;, 100)
+console.log(result3)
+// { success: false, added: 74, overflow: 26, reason: &#39;weight_exceeded&#39; }
+// Added 74 (37 weight), couldn&#39;t fit 26 more
+</code></pre>
+<h2>Step 4: Query Remaining Capacity</h2>
+<p>Check how much weight capacity remains, or ask if specific items can fit.</p>
+<pre><code class="language-typescript">// Get remaining capacity
+const capacity = inventory.getRemainingCapacity(&#39;backpack&#39;)
+// { type: &#39;weight&#39;, remaining: 0 } (full after adding 74 more potions)
+
+// Check if more items can fit
+const canFit = inventory.canAdd(&#39;backpack&#39;, &#39;gold-coin&#39;, 1000)
+// { canAdd: true, maxAddable: 0 } (no room)
+
+// Get total weight
+const weight = inventory.getTotalWeight(&#39;backpack&#39;)
+// 50
+</code></pre>
+<h2>Complete Example</h2>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+// Item weights for our game
+const itemWeights: Record&lt;string, number&gt; = {
+  &#39;iron-sword&#39;: 8,
+  &#39;steel-sword&#39;: 10,
+  &#39;health-potion&#39;: 0.5,
+  &#39;mana-potion&#39;: 0.5,
+  &#39;gold-coin&#39;: 0.01,
+  &#39;iron-ore&#39;: 2,
+  &#39;dragon-scale&#39;: 5,
+}
+
+const inventory = createInventoryManager({
+  getItemWeight: (id) =&gt; itemWeights[id] ?? 1,
+})
+
+// Create a 50-weight backpack
+inventory.createContainer(&#39;backpack&#39;, {
+  mode: &#39;weight&#39;,
+  maxWeight: 50,
+})
+
+// Equip for adventure
+inventory.addItem(&#39;backpack&#39;, &#39;iron-sword&#39;, 1)     // 8 weight
+inventory.addItem(&#39;backpack&#39;, &#39;health-potion&#39;, 10) // 5 weight
+inventory.addItem(&#39;backpack&#39;, &#39;gold-coin&#39;, 100)    // 1 weight
+
+console.log(inventory.getTotalWeight(&#39;backpack&#39;)) // 14
+console.log(inventory.getRemainingCapacity(&#39;backpack&#39;))
+// { type: &#39;weight&#39;, remaining: 36 }
+
+// Can we carry 20 iron ore?
+const check = inventory.canAdd(&#39;backpack&#39;, &#39;iron-ore&#39;, 20)
+// { canAdd: true, maxAddable: 18 } (36 / 2 = 18 max)
+</code></pre>
+<h2>Variations</h2>
+<h3>Fractional Weights</h3>
+<p>Weight can be any positive number, including decimals.</p>
+<pre><code class="language-typescript">const inventory = createInventoryManager({
+  getItemWeight: (id) =&gt; {
+    if (id === &#39;feather&#39;) return 0.001
+    if (id === &#39;boulder&#39;) return 500
+    return 1
+  },
+})
+</code></pre>
+<h3>Weight with Stacking</h3>
+<p>Combine weight limits with item stacking. Each stack&#39;s weight is <code>itemWeight * quantity</code>.</p>
+<pre><code class="language-typescript">inventory.createContainer(&#39;pouch&#39;, {
+  mode: &#39;weight&#39;,
+  maxWeight: 10,
+  allowStacking: true,
+  maxStackSize: 99,
+})
+
+// Add 20 potions (0.5 weight each = 10 total) as one stack
+inventory.addItem(&#39;pouch&#39;, &#39;health-potion&#39;, 20)
+</code></pre>
+<h3>Different Capacity Containers</h3>
+<pre><code class="language-typescript">// Small pouch for quick access
+inventory.createContainer(&#39;belt-pouch&#39;, {
+  mode: &#39;weight&#39;,
+  maxWeight: 5,
+})
+
+// Large backpack for general storage
+inventory.createContainer(&#39;backpack&#39;, {
+  mode: &#39;weight&#39;,
+  maxWeight: 50,
+})
+
+// Cart for bulk transport
+inventory.createContainer(&#39;cart&#39;, {
+  mode: &#39;weight&#39;,
+  maxWeight: 500,
+})
+</code></pre>
+<h2>Troubleshooting</h2>
+<h3>Weight Always Returns Wrong Value</h3>
+<p><strong>Symptom:</strong> <code>getTotalWeight</code> returns unexpected numbers.</p>
+<p><strong>Cause:</strong> Your <code>getItemWeight</code> callback returns inconsistent values or the wrong type.</p>
+<p><strong>Solution:</strong> Ensure the callback always returns a positive number for any item ID:</p>
+<pre><code class="language-typescript">getItemWeight: (id) =&gt; {
+  const weight = myItemDatabase[id]?.weight
+  if (typeof weight !== &#39;number&#39; || weight &lt;= 0) {
+    console.warn(`Unknown or invalid weight for ${id}, using default`)
+    return 1
+  }
+  return weight
+}
+</code></pre>
+<h3>Items Rejected Unexpectedly</h3>
+<p><strong>Symptom:</strong> <code>addItem</code> fails even when you think there&#39;s room.</p>
+<p><strong>Cause:</strong> Weight calculation includes all items. Check actual remaining capacity.</p>
+<p><strong>Solution:</strong> Use <code>getRemainingCapacity</code> to see exact remaining weight before adding.</p>
+<h2>See Also</h2>
+<ul>
+<li><strong><a href="concept-storage-modes.html">Storage Modes</a></strong> - Overview of all container modes</li>
+<li><strong><a href="concept-item-metadata.html">Item Metadata</a></strong> - More on the <code>getItemWeight</code> callback</li>
+<li><strong><a href="api-querying.html">Querying API</a></strong> - Reference for <code>getTotalWeight</code>, <code>getRemainingCapacity</code>, <code>canAdd</code></li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

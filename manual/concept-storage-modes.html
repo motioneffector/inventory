@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Storage Modes - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Storage Modes</h1>
+<p>Every container has a mode that controls how it accepts items. The mode is the container&#39;s personality—it decides whether an item fits and where it goes.</p>
+<h2>How It Works</h2>
+<p>When you create a container, you specify its mode in the configuration. The mode determines:</p>
+<ul>
+<li>What capacity limits apply (if any)</li>
+<li>How items are organized within the container</li>
+<li>What additional configuration options are available</li>
+</ul>
+<p>There are six modes, each serving different gameplay needs.</p>
+<h2>The Six Modes</h2>
+<h3>Unlimited</h3>
+<p>No restrictions. Items always fit.</p>
+<pre><code class="language-typescript">inventory.createContainer(&#39;debug-bag&#39;, {
+  mode: &#39;unlimited&#39;,
+})
+</code></pre>
+<p>Use for: Development, creative mode, special containers with no limits.</p>
+<h3>Count</h3>
+<p>Limits the total number of item stacks (not total items).</p>
+<pre><code class="language-typescript">inventory.createContainer(&#39;belt&#39;, {
+  mode: &#39;count&#39;,
+  maxCount: 6, // Max 6 different item stacks
+})
+</code></pre>
+<p>Use for: Quick-access slots, hotbars, limited inventory slots.</p>
+<h3>Weight</h3>
+<p>Limits by total weight. Requires <a href="concept-item-metadata.html">getItemWeight callback</a>.</p>
+<pre><code class="language-typescript">inventory.createContainer(&#39;backpack&#39;, {
+  mode: &#39;weight&#39;,
+  maxWeight: 100,
+})
+</code></pre>
+<p>Use for: Realistic carry capacity, survival games, encumbrance systems.</p>
+<h3>Grid</h3>
+<p>2D Tetris-style placement. Items occupy cells based on their size. Requires <a href="concept-item-metadata.html">getItemSize callback</a>.</p>
+<pre><code class="language-typescript">inventory.createContainer(&#39;stash&#39;, {
+  mode: &#39;grid&#39;,
+  width: 10,
+  height: 6,
+  allowRotation: true, // Optional: allow 90-degree rotation
+})
+</code></pre>
+<p>Use for: Tetris inventories, spatial puzzles, Diablo/Resident Evil style.</p>
+<h3>Slots</h3>
+<p>Named equipment slots with optional type restrictions.</p>
+<pre><code class="language-typescript">inventory.createContainer(&#39;equipment&#39;, {
+  mode: &#39;slots&#39;,
+  slots: [&#39;head&#39;, &#39;chest&#39;, &#39;mainhand&#39;],
+  slotFilters: {
+    head: (itemId) =&gt; itemId.includes(&#39;helmet&#39;),
+    mainhand: (itemId) =&gt; itemId.includes(&#39;sword&#39;) || itemId.includes(&#39;axe&#39;),
+  },
+})
+</code></pre>
+<p>Use for: Equipment systems, character gear, crafting stations with specific input slots.</p>
+<h3>Combined</h3>
+<p>Multiple rules that must all pass.</p>
+<pre><code class="language-typescript">inventory.createContainer(&#39;special-bag&#39;, {
+  mode: &#39;combined&#39;,
+  rules: [
+    { mode: &#39;count&#39;, maxCount: 20 },
+    { mode: &#39;weight&#39;, maxWeight: 50 },
+  ],
+})
+</code></pre>
+<p>Use for: Complex restrictions (e.g., max 20 stacks AND max 50 weight).</p>
+<h2>Basic Usage</h2>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager({
+  getItemWeight: (id) =&gt; ({ sword: 5, potion: 1 }[id] ?? 1),
+  getItemSize: (id) =&gt; ({ sword: { width: 1, height: 3 } }[id] ?? { width: 1, height: 1 }),
+})
+
+// Weight-based backpack
+inventory.createContainer(&#39;backpack&#39;, {
+  mode: &#39;weight&#39;,
+  maxWeight: 50,
+})
+
+// Grid-based stash
+inventory.createContainer(&#39;stash&#39;, {
+  mode: &#39;grid&#39;,
+  width: 8,
+  height: 8,
+})
+
+// Equipment slots
+inventory.createContainer(&#39;gear&#39;, {
+  mode: &#39;slots&#39;,
+  slots: [&#39;head&#39;, &#39;chest&#39;, &#39;legs&#39;],
+})
+</code></pre>
+<h2>Key Points</h2>
+<ul>
+<li><strong>Mode is fixed</strong> - You cannot change a container&#39;s mode after creation. Create a new container if you need different rules.</li>
+<li><strong>Callbacks required for some modes</strong> - Weight mode needs <code>getItemWeight</code>, grid mode needs <code>getItemSize</code>. These are set on the manager, not the container.</li>
+<li><strong>Stacking works with most modes</strong> - Add <code>allowStacking: true</code> and optionally <code>maxStackSize</code> to enable stacking. See <a href="concept-stacking.html">Stacking</a>.</li>
+<li><strong>Combined validates all rules</strong> - In combined mode, adding an item must pass every rule or it fails.</li>
+</ul>
+<h2>Examples</h2>
+<h3>Checking Remaining Capacity</h3>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager({
+  getItemWeight: () =&gt; 1,
+})
+
+inventory.createContainer(&#39;bag&#39;, { mode: &#39;weight&#39;, maxWeight: 10 })
+inventory.addItem(&#39;bag&#39;, &#39;item&#39;, 3)
+
+const capacity = inventory.getRemainingCapacity(&#39;bag&#39;)
+// { type: &#39;weight&#39;, remaining: 7 }
+</code></pre>
+<h3>Handling Add Failures</h3>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager({
+  getItemWeight: () =&gt; 5,
+})
+
+inventory.createContainer(&#39;small-bag&#39;, { mode: &#39;weight&#39;, maxWeight: 10 })
+
+const result = inventory.addItem(&#39;small-bag&#39;, &#39;brick&#39;, 5)
+// { success: false, added: 2, overflow: 3, reason: &#39;weight_exceeded&#39; }
+</code></pre>
+<h2>Related</h2>
+<ul>
+<li><strong><a href="concept-containers.html">Containers</a></strong> - The concept that modes configure</li>
+<li><strong><a href="concept-item-metadata.html">Item Metadata</a></strong> - Callbacks required for weight and grid modes</li>
+<li><strong><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></strong> - Detailed guide for weight mode</li>
+<li><strong><a href="guide-grid-placement.html">Grid Placement</a></strong> - Detailed guide for grid mode</li>
+<li><strong><a href="guide-equipment-slots.html">Equipment Slots</a></strong> - Detailed guide for slots mode</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

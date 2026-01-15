@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Locking Items - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Locking Items</h1>
+<p>Prevent removal of quest items, equipped gear, or other protected items. Locked items cannot be removed or transferred until unlocked.</p>
+<h2>Prerequisites</h2>
+<p>Before starting, you should:</p>
+<ul>
+<li><a href="your-first-inventory.html">Know basic container operations</a></li>
+</ul>
+<h2>Overview</h2>
+<p>We&#39;ll lock items by:</p>
+<ol>
+<li>Calling <code>lockItem(containerId, itemId)</code> to protect an item</li>
+<li>Observing that locked items throw on remove/transfer attempts</li>
+<li>Calling <code>unlockItem()</code> to release the protection</li>
+</ol>
+<h2>Step 1: Lock an Item</h2>
+<p>Use <code>lockItem</code> to prevent an item from being removed.</p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+
+inventory.createContainer(&#39;backpack&#39;, { mode: &#39;unlimited&#39; })
+inventory.addItem(&#39;backpack&#39;, &#39;quest-scroll&#39;, 1)
+
+// Lock the quest item
+inventory.lockItem(&#39;backpack&#39;, &#39;quest-scroll&#39;)
+</code></pre>
+<h2>Step 2: Locked Items Can&#39;t Be Removed</h2>
+<p>Attempting to remove or transfer a locked item throws an error.</p>
+<pre><code class="language-typescript">// Try to remove - throws error
+try {
+  inventory.removeItem(&#39;backpack&#39;, &#39;quest-scroll&#39;, 1)
+} catch (e) {
+  console.log(&#39;Cannot remove locked item&#39;)
+}
+
+// Try to transfer - also throws
+try {
+  inventory.transfer(&#39;backpack&#39;, &#39;chest&#39;, &#39;quest-scroll&#39;, 1)
+} catch (e) {
+  console.log(&#39;Cannot transfer locked item&#39;)
+}
+
+// Item is still there
+console.log(inventory.hasItem(&#39;backpack&#39;, &#39;quest-scroll&#39;)) // true
+</code></pre>
+<h2>Step 3: Unlock to Allow Removal</h2>
+<p>Call <code>unlockItem</code> when it&#39;s safe to remove the item.</p>
+<pre><code class="language-typescript">// Quest complete - unlock the item
+inventory.unlockItem(&#39;backpack&#39;, &#39;quest-scroll&#39;)
+
+// Now removal works
+inventory.removeItem(&#39;backpack&#39;, &#39;quest-scroll&#39;, 1)
+console.log(inventory.hasItem(&#39;backpack&#39;, &#39;quest-scroll&#39;)) // false
+</code></pre>
+<h2>Complete Example</h2>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+
+// Setup containers
+inventory.createContainer(&#39;inventory&#39;, { mode: &#39;unlimited&#39; })
+inventory.createContainer(&#39;equipment&#39;, {
+  mode: &#39;slots&#39;,
+  slots: [&#39;mainhand&#39;, &#39;offhand&#39;, &#39;armor&#39;],
+})
+inventory.createContainer(&#39;questLog&#39;, { mode: &#39;unlimited&#39; })
+
+// Add items
+inventory.addItem(&#39;inventory&#39;, &#39;gold&#39;, 100)
+inventory.addItem(&#39;inventory&#39;, &#39;healing-potion&#39;, 10)
+inventory.setSlot(&#39;equipment&#39;, &#39;mainhand&#39;, &#39;legendary-sword&#39;)
+inventory.addItem(&#39;questLog&#39;, &#39;ancient-map&#39;, 1)
+inventory.addItem(&#39;questLog&#39;, &#39;kings-letter&#39;, 1)
+
+// Lock quest items (can&#39;t be dropped/sold)
+inventory.lockItem(&#39;questLog&#39;, &#39;ancient-map&#39;)
+inventory.lockItem(&#39;questLog&#39;, &#39;kings-letter&#39;)
+
+// Lock equipped weapon (can&#39;t be sold while equipped)
+inventory.lockItem(&#39;equipment&#39;, &#39;legendary-sword&#39;)
+
+// Selling gold works fine
+inventory.removeItem(&#39;inventory&#39;, &#39;gold&#39;, 50)
+console.log(&#39;Sold 50 gold&#39;)
+
+// Selling quest item fails
+try {
+  inventory.removeItem(&#39;questLog&#39;, &#39;ancient-map&#39;, 1)
+} catch (e) {
+  console.log(&#39;Cannot sell quest item!&#39;)
+}
+
+// Selling equipped weapon fails
+try {
+  inventory.removeItem(&#39;equipment&#39;, &#39;legendary-sword&#39;, 1)
+} catch (e) {
+  console.log(&#39;Cannot sell equipped weapon!&#39;)
+}
+
+// Complete quest
+function completeQuest(questItem: string) {
+  inventory.unlockItem(&#39;questLog&#39;, questItem)
+  inventory.removeItem(&#39;questLog&#39;, questItem, 1)
+  console.log(`Quest complete! ${questItem} removed.`)
+}
+
+// Unequip weapon
+function unequip(slot: string) {
+  const item = inventory.getSlot(&#39;equipment&#39;, slot)
+  if (item) {
+    inventory.unlockItem(&#39;equipment&#39;, item)
+    inventory.clearSlot(&#39;equipment&#39;, slot)
+    inventory.addItem(&#39;inventory&#39;, item, 1)
+    console.log(`Unequipped ${item}`)
+  }
+}
+
+completeQuest(&#39;ancient-map&#39;)
+unequip(&#39;mainhand&#39;)
+</code></pre>
+<h2>Variations</h2>
+<h3>Quest Items</h3>
+<p>Lock items that are part of active quests.</p>
+<pre><code class="language-typescript">function startQuest(questId: string, requiredItems: string[]) {
+  for (const item of requiredItems) {
+    // Find the item
+    const locations = inventory.findItem(item)
+    if (locations.length &gt; 0) {
+      // Lock it so player can&#39;t drop/sell it
+      inventory.lockItem(locations[0].containerId, item)
+    }
+  }
+}
+
+function completeQuest(questId: string, requiredItems: string[]) {
+  for (const item of requiredItems) {
+    const locations = inventory.findItem(item)
+    if (locations.length &gt; 0) {
+      inventory.unlockItem(locations[0].containerId, item)
+      // Optionally consume the item
+      inventory.removeItem(locations[0].containerId, item, 1)
+    }
+  }
+}
+</code></pre>
+<h3>Equipment Locking</h3>
+<p>Prevent selling/dropping equipped items.</p>
+<pre><code class="language-typescript">function equip(slot: string, itemId: string) {
+  // Unlock old item
+  const oldItem = inventory.getSlot(&#39;equipment&#39;, slot)
+  if (oldItem) {
+    inventory.unlockItem(&#39;equipment&#39;, oldItem)
+  }
+
+  // Equip and lock new item
+  inventory.setSlot(&#39;equipment&#39;, slot, itemId)
+  inventory.lockItem(&#39;equipment&#39;, itemId)
+}
+
+function unequip(slot: string) {
+  const item = inventory.getSlot(&#39;equipment&#39;, slot)
+  if (item) {
+    inventory.unlockItem(&#39;equipment&#39;, item)
+    inventory.clearSlot(&#39;equipment&#39;, slot)
+  }
+}
+</code></pre>
+<h3>Check If Item Is Locked</h3>
+<p>The library doesn&#39;t expose a direct &quot;isLocked&quot; method, but you can try to remove and catch.</p>
+<pre><code class="language-typescript">function isLocked(containerId: string, itemId: string): boolean {
+  try {
+    inventory.transaction(() =&gt; {
+      inventory.removeItem(containerId, itemId, 1)
+      throw new Error(&#39;rollback&#39;) // Always rollback
+    })
+  } catch (e) {
+    if (e.message.includes(&#39;locked&#39;)) {
+      return true
+    }
+  }
+  return false
+}
+</code></pre>
+<h2>Troubleshooting</h2>
+<h3>Lock Doesn&#39;t Prevent Adding More</h3>
+<p><strong>Symptom:</strong> You can still add more of a locked item.</p>
+<p><strong>Cause:</strong> Locking only prevents removal, not addition.</p>
+<p><strong>Solution:</strong> This is intended behavior. Locks are for removal protection, not add prevention.</p>
+<h3>Unlock Doesn&#39;t Work</h3>
+<p><strong>Symptom:</strong> <code>unlockItem</code> succeeds but item still can&#39;t be removed.</p>
+<p><strong>Cause:</strong> Make sure you&#39;re unlocking in the same container where it&#39;s locked.</p>
+<p><strong>Solution:</strong> Verify container ID matches:</p>
+<pre><code class="language-typescript">// Find where the item is locked
+const locations = inventory.findItem(itemId)
+for (const loc of locations) {
+  inventory.unlockItem(loc.containerId, itemId)
+}
+</code></pre>
+<h3>Serialization and Locks</h3>
+<p>Locks are preserved through serialization. When you <code>serialize()</code> and <code>deserialize()</code>, locked items remain locked.</p>
+<pre><code class="language-typescript">inventory.lockItem(&#39;bag&#39;, &#39;important&#39;)
+const data = inventory.serialize()
+
+const newInventory = createInventoryManager()
+newInventory.deserialize(data)
+
+// Item is still locked in the new manager
+</code></pre>
+<h2>See Also</h2>
+<ul>
+<li><strong><a href="api-locking.html">Locking API</a></strong> - Reference for <code>lockItem</code>, <code>unlockItem</code></li>
+<li><strong><a href="guide-transferring-items.html">Transferring Items</a></strong> - How locks affect transfers</li>
+<li><strong><a href="guide-serialization.html">Serialization</a></strong> - Locks are persisted</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grid Operations API - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Grid Operations API</h1>
+<p>Spatial operations for grid-mode containers.</p>
+<hr>
+<h2><code>getGrid()</code></h2>
+<p>Returns the 2D grid state showing what occupies each cell.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function getGrid(containerId: ContainerId): GridCell[][]
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>containerId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>ID of the grid container</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>GridCell[][]</code> — 2D array indexed by <code>[y][x]</code></p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager({
+  getItemSize: (id) =&gt; {
+    if (id === &#39;shield&#39;) return { width: 2, height: 2 }
+    return { width: 1, height: 1 }
+  },
+})
+
+inventory.createContainer(&#39;stash&#39;, { mode: &#39;grid&#39;, width: 5, height: 5 })
+inventory.addItemAt(&#39;stash&#39;, &#39;shield&#39;, { x: 0, y: 0 })
+inventory.addItemAt(&#39;stash&#39;, &#39;potion&#39;, { x: 3, y: 0 })
+
+const grid = inventory.getGrid(&#39;stash&#39;)
+
+// Check cell (0, 0) - shield origin
+console.log(grid[0][0])
+// { itemId: &#39;shield&#39;, quantity: 1, isOrigin: true }
+
+// Check cell (1, 0) - shield extension
+console.log(grid[0][1])
+// { itemId: &#39;shield&#39;, quantity: 1, isOrigin: false }
+
+// Check cell (3, 0) - potion
+console.log(grid[0][3])
+// { itemId: &#39;potion&#39;, quantity: 1, isOrigin: true }
+
+// Check empty cell
+console.log(grid[3][3])
+// null
+</code></pre>
+<p><strong>Throws:</strong></p>
+<ul>
+<li><code>ValidationError</code> — Container is not in grid mode</li>
+</ul>
+<hr>
+<h2><code>findPlacements()</code></h2>
+<p>Finds all valid positions where an item could be placed.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function findPlacements(
+  containerId: ContainerId,
+  itemId: ItemId
+): FindPlacementResult[]
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>containerId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>ID of the grid container</td>
+</tr>
+<tr>
+<td><code>itemId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>ID of the item to place</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>FindPlacementResult[]</code> — Array of valid positions</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager({
+  getItemSize: (id) =&gt; {
+    if (id === &#39;sword&#39;) return { width: 1, height: 3 }
+    return { width: 1, height: 1 }
+  },
+})
+
+inventory.createContainer(&#39;stash&#39;, {
+  mode: &#39;grid&#39;,
+  width: 5,
+  height: 5,
+  allowRotation: true,
+})
+
+// Find where a sword can go
+const placements = inventory.findPlacements(&#39;stash&#39;, &#39;sword&#39;)
+// [
+//   { x: 0, y: 0, rotated: false },
+//   { x: 1, y: 0, rotated: false },
+//   ...
+//   { x: 0, y: 0, rotated: true },  // rotated: 3x1 instead of 1x3
+//   ...
+// ]
+
+// If no room, returns empty array
+inventory.createContainer(&#39;tiny&#39;, { mode: &#39;grid&#39;, width: 2, height: 2 })
+const none = inventory.findPlacements(&#39;tiny&#39;, &#39;sword&#39;)
+// []
+</code></pre>
+<hr>
+<h2><code>autoArrange()</code></h2>
+<p>Reorganizes all items in a grid container to pack them efficiently from the top-left.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function autoArrange(containerId: ContainerId): void
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>containerId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>ID of the grid container</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>void</code></p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager({
+  getItemSize: () =&gt; ({ width: 1, height: 1 }),
+})
+
+inventory.createContainer(&#39;stash&#39;, { mode: &#39;grid&#39;, width: 5, height: 5 })
+
+// Add items scattered around
+inventory.addItemAt(&#39;stash&#39;, &#39;gem&#39;, { x: 3, y: 3 })
+inventory.addItemAt(&#39;stash&#39;, &#39;potion&#39;, { x: 1, y: 4 })
+inventory.addItemAt(&#39;stash&#39;, &#39;coin&#39;, { x: 4, y: 0 })
+
+// Repack from top-left
+inventory.autoArrange(&#39;stash&#39;)
+
+// Items are now at (0,0), (1,0), (2,0), etc.
+const grid = inventory.getGrid(&#39;stash&#39;)
+console.log(grid[0][0]) // First item
+console.log(grid[0][1]) // Second item
+console.log(grid[0][2]) // Third item
+</code></pre>
+<p><strong>Throws:</strong></p>
+<ul>
+<li><code>ValidationError</code> — Container is not in grid mode</li>
+<li><code>Error</code> — Items cannot fit after rearrangement (rolls back)</li>
+</ul>
+<hr>
+<h2>Types</h2>
+<h3><code>GridCell</code></h3>
+<pre><code class="language-typescript">type GridCell = {
+  itemId: string
+  quantity: number
+  isOrigin: boolean
+} | null
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>itemId</code></td>
+<td><code>string</code></td>
+<td>ID of the item occupying this cell</td>
+</tr>
+<tr>
+<td><code>quantity</code></td>
+<td><code>number</code></td>
+<td>Stack quantity (same for all cells of multi-cell item)</td>
+</tr>
+<tr>
+<td><code>isOrigin</code></td>
+<td><code>boolean</code></td>
+<td>True for top-left cell of the item</td>
+</tr>
+</tbody></table>
+<p>Cells are <code>null</code> when empty.</p>
+<h3><code>FindPlacementResult</code></h3>
+<pre><code class="language-typescript">type FindPlacementResult = {
+  x: number
+  y: number
+  rotated?: boolean
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>x</code></td>
+<td><code>number</code></td>
+<td>Column position (0-indexed)</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td><code>number</code></td>
+<td>Row position (0-indexed)</td>
+</tr>
+<tr>
+<td><code>rotated</code></td>
+<td><code>boolean</code></td>
+<td>If true, place with swapped dimensions</td>
+</tr>
+</tbody></table>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

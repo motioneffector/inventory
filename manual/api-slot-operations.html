@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slot Operations API - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Slot Operations API</h1>
+<p>Equipment slot operations for slots-mode containers.</p>
+<hr>
+<h2><code>setSlot()</code></h2>
+<p>Places an item in a slot, returning the previous item.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function setSlot(
+  containerId: ContainerId,
+  slot: string,
+  itemId: ItemId | null
+): ItemId | null
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>containerId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>ID of the slots container</td>
+</tr>
+<tr>
+<td><code>slot</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Name of the slot</td>
+</tr>
+<tr>
+<td><code>itemId</code></td>
+<td><code>string | null</code></td>
+<td>Yes</td>
+<td>Item to place, or <code>null</code> to clear</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>ItemId | null</code> — Previously equipped item, or <code>null</code></p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+inventory.createContainer(&#39;gear&#39;, {
+  mode: &#39;slots&#39;,
+  slots: [&#39;head&#39;, &#39;chest&#39;, &#39;mainhand&#39;],
+})
+
+// Equip helmet
+const old = inventory.setSlot(&#39;gear&#39;, &#39;head&#39;, &#39;iron-helmet&#39;)
+console.log(old) // null (nothing was there)
+
+// Replace with better helmet
+const replaced = inventory.setSlot(&#39;gear&#39;, &#39;head&#39;, &#39;steel-helmet&#39;)
+console.log(replaced) // &#39;iron-helmet&#39;
+
+// Unequip
+inventory.setSlot(&#39;gear&#39;, &#39;head&#39;, null)
+</code></pre>
+<p><strong>Throws:</strong></p>
+<ul>
+<li><code>ValidationError</code> — Container is not in slots mode</li>
+<li><code>ValidationError</code> — Slot does not exist</li>
+<li><code>ValidationError</code> — Item rejected by slot filter</li>
+</ul>
+<hr>
+<h2><code>getSlot()</code></h2>
+<p>Returns the item currently in a slot.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function getSlot(
+  containerId: ContainerId,
+  slot: string
+): ItemId | null
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>containerId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>ID of the slots container</td>
+</tr>
+<tr>
+<td><code>slot</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Name of the slot</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>ItemId | null</code> — Item in the slot, or <code>null</code> if empty</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+inventory.createContainer(&#39;gear&#39;, { mode: &#39;slots&#39;, slots: [&#39;head&#39;, &#39;chest&#39;] })
+inventory.setSlot(&#39;gear&#39;, &#39;head&#39;, &#39;helmet&#39;)
+
+console.log(inventory.getSlot(&#39;gear&#39;, &#39;head&#39;))  // &#39;helmet&#39;
+console.log(inventory.getSlot(&#39;gear&#39;, &#39;chest&#39;)) // null
+</code></pre>
+<p><strong>Throws:</strong></p>
+<ul>
+<li><code>ValidationError</code> — Container is not in slots mode</li>
+</ul>
+<hr>
+<h2><code>getAllSlots()</code></h2>
+<p>Returns all slots and their current items.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function getAllSlots(containerId: ContainerId): Record&lt;string, ItemId | null&gt;
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>containerId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>ID of the slots container</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>Record&lt;string, ItemId | null&gt;</code> — Object mapping slot names to items</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+inventory.createContainer(&#39;gear&#39;, {
+  mode: &#39;slots&#39;,
+  slots: [&#39;head&#39;, &#39;chest&#39;, &#39;legs&#39;, &#39;feet&#39;],
+})
+
+inventory.setSlot(&#39;gear&#39;, &#39;head&#39;, &#39;helmet&#39;)
+inventory.setSlot(&#39;gear&#39;, &#39;chest&#39;, &#39;armor&#39;)
+
+const slots = inventory.getAllSlots(&#39;gear&#39;)
+console.log(slots)
+// { head: &#39;helmet&#39;, chest: &#39;armor&#39;, legs: null, feet: null }
+</code></pre>
+<p><strong>Throws:</strong></p>
+<ul>
+<li><code>ValidationError</code> — Container is not in slots mode</li>
+</ul>
+<hr>
+<h2><code>clearSlot()</code></h2>
+<p>Removes the item from a slot.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function clearSlot(
+  containerId: ContainerId,
+  slot: string
+): void
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>containerId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>ID of the slots container</td>
+</tr>
+<tr>
+<td><code>slot</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Name of the slot to clear</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>void</code></p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+inventory.createContainer(&#39;gear&#39;, { mode: &#39;slots&#39;, slots: [&#39;head&#39;] })
+inventory.setSlot(&#39;gear&#39;, &#39;head&#39;, &#39;helmet&#39;)
+
+inventory.clearSlot(&#39;gear&#39;, &#39;head&#39;)
+console.log(inventory.getSlot(&#39;gear&#39;, &#39;head&#39;)) // null
+</code></pre>
+<hr>
+<h2><code>canEquip()</code></h2>
+<p>Checks if an item can be placed in a slot.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function canEquip(
+  containerId: ContainerId,
+  slot: string,
+  itemId: ItemId
+): CanAddResult
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>containerId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>ID of the slots container</td>
+</tr>
+<tr>
+<td><code>slot</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Name of the slot</td>
+</tr>
+<tr>
+<td><code>itemId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Item to check</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>CanAddResult</code></p>
+<pre><code class="language-typescript">type CanAddResult = {
+  canAdd: boolean
+  maxAddable: number  // Always 0 or 1 for slots
+  reason?: string
+}
+</code></pre>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+inventory.createContainer(&#39;gear&#39;, {
+  mode: &#39;slots&#39;,
+  slots: [&#39;head&#39;, &#39;mainhand&#39;],
+  slotFilters: {
+    head: (id) =&gt; id.includes(&#39;helmet&#39;),
+    mainhand: (id) =&gt; id.includes(&#39;sword&#39;),
+  },
+})
+
+// Valid equipment
+const valid = inventory.canEquip(&#39;gear&#39;, &#39;head&#39;, &#39;iron-helmet&#39;)
+console.log(valid) // { canAdd: true, maxAddable: 1 }
+
+// Invalid - sword in head slot
+const invalid = inventory.canEquip(&#39;gear&#39;, &#39;head&#39;, &#39;iron-sword&#39;)
+console.log(invalid) // { canAdd: false, maxAddable: 0, reason: &#39;slot_filter_failed&#39; }
+
+// Non-existent slot
+const noSlot = inventory.canEquip(&#39;gear&#39;, &#39;wings&#39;, &#39;feathers&#39;)
+console.log(noSlot) // { canAdd: false, maxAddable: 0, reason: &#39;slot_not_found&#39; }
+</code></pre>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
