@@ -1,0 +1,216 @@
+/* ============================================
+   MANUAL LAYOUT
+   ============================================ */
+
+.manual-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+@media (max-width: 900px) {
+  .manual-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .manual-sidebar {
+    display: none;
+  }
+}
+
+/* ============================================
+   SIDEBAR NAVIGATION
+   ============================================ */
+
+.manual-sidebar {
+  position: sticky;
+  top: 2rem;
+  height: fit-content;
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+}
+
+.sidebar-nav {
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-nav li {
+  margin: 0.25rem 0;
+}
+
+.sidebar-nav a {
+  color: var(--text-secondary, #a0a0a0);
+  text-decoration: none;
+  display: block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.sidebar-nav a:hover {
+  background: var(--bg-hover, rgba(255,255,255,0.1));
+  color: var(--text-primary, #ffffff);
+}
+
+.sidebar-nav strong {
+  display: block;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary, #ffffff);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sidebar-nav strong:first-child {
+  margin-top: 0;
+}
+
+/* ============================================
+   MANUAL CONTENT
+   ============================================ */
+
+.manual-content {
+  min-width: 0;
+}
+
+.manual-article {
+  max-width: 800px;
+}
+
+.manual-article h1 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary, #ffffff);
+  border-bottom: 1px solid var(--border-color, #333);
+  padding-bottom: 0.5rem;
+}
+
+.manual-article h2 {
+  font-size: 1.5rem;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary, #ffffff);
+}
+
+.manual-article h3 {
+  font-size: 1.25rem;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary, #ffffff);
+}
+
+.manual-article p {
+  margin: 1rem 0;
+  line-height: 1.7;
+  color: var(--text-secondary, #c0c0c0);
+}
+
+.manual-article a {
+  color: var(--accent-color, #6c5ce7);
+  text-decoration: none;
+}
+
+.manual-article a:hover {
+  text-decoration: underline;
+}
+
+/* ============================================
+   CODE BLOCKS
+   ============================================ */
+
+.manual-article pre {
+  background: var(--bg-code, #0d0d1a);
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+  border: 1px solid var(--border-color, #333);
+}
+
+.manual-article code {
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.manual-article :not(pre) > code {
+  background: var(--bg-code, #0d0d1a);
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  color: var(--accent-color, #6c5ce7);
+}
+
+/* ============================================
+   TABLES
+   ============================================ */
+
+.manual-article table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.manual-article th,
+.manual-article td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.manual-article th {
+  color: var(--text-primary, #ffffff);
+  font-weight: 600;
+  background: var(--bg-secondary, #1a1a2e);
+}
+
+.manual-article td {
+  color: var(--text-secondary, #c0c0c0);
+}
+
+/* ============================================
+   LISTS
+   ============================================ */
+
+.manual-article ul,
+.manual-article ol {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+  color: var(--text-secondary, #c0c0c0);
+}
+
+.manual-article li {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+/* ============================================
+   BLOCKQUOTES
+   ============================================ */
+
+.manual-article blockquote {
+  border-left: 4px solid var(--accent-color, #6c5ce7);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: var(--text-secondary, #a0a0a0);
+  font-style: italic;
+}
+
+/* ============================================
+   HORIZONTAL RULES
+   ============================================ */
+
+.manual-article hr {
+  border: none;
+  border-top: 1px solid var(--border-color, #333);
+  margin: 2rem 0;
+}

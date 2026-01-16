@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your First Inventory - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Your First Inventory</h1>
+<p>This guide walks you through creating a working inventory system in about 5 minutes.</p>
+<p>By the end of this guide, you&#39;ll have a backpack container that can add, query, and remove items.</p>
+<h2>What We&#39;re Building</h2>
+<p>A simple unlimited-capacity backpack that stores items by name and quantity. You&#39;ll add a sword and some potions, check what&#39;s inside, and remove items.</p>
+<h2>Step 1: Create the Inventory Manager</h2>
+<p>The manager is the central object that holds all your containers. Create one with <code>createInventoryManager()</code>.</p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+</code></pre>
+<p>The manager starts empty with no containers. You&#39;ll create containers next.</p>
+<h2>Step 2: Create a Container</h2>
+<p>Containers are where items live. Create an unlimited container called &quot;backpack&quot;.</p>
+<pre><code class="language-typescript">inventory.createContainer(&#39;backpack&#39;, {
+  mode: &#39;unlimited&#39;,
+})
+</code></pre>
+<p>The <code>mode: &#39;unlimited&#39;</code> configuration means this container accepts any number of items without restrictions.</p>
+<h2>Step 3: Add Items</h2>
+<p>Use <code>addItem()</code> to put items in your container.</p>
+<pre><code class="language-typescript">inventory.addItem(&#39;backpack&#39;, &#39;sword&#39;, 1)
+inventory.addItem(&#39;backpack&#39;, &#39;potion&#39;, 5)
+inventory.addItem(&#39;backpack&#39;, &#39;gold&#39;, 100)
+</code></pre>
+<p>Each call specifies the container ID, item ID, and quantity. The item ID can be any string—it&#39;s up to you how to identify items in your game.</p>
+<h2>Step 4: Query Contents</h2>
+<p>Check what&#39;s in the container with <code>getContents()</code>, or query specific items.</p>
+<pre><code class="language-typescript">// Get everything in the backpack
+const contents = inventory.getContents(&#39;backpack&#39;)
+// [{ itemId: &#39;sword&#39;, quantity: 1 }, { itemId: &#39;potion&#39;, quantity: 5 }, { itemId: &#39;gold&#39;, quantity: 100 }]
+
+// Check for a specific item
+const hasSword = inventory.hasItem(&#39;backpack&#39;, &#39;sword&#39;) // true
+const potionCount = inventory.getQuantity(&#39;backpack&#39;, &#39;potion&#39;) // 5
+</code></pre>
+<h2>Step 5: Remove Items</h2>
+<p>Use <code>removeItem()</code> to take items out.</p>
+<pre><code class="language-typescript">const removed = inventory.removeItem(&#39;backpack&#39;, &#39;potion&#39;, 2)
+// removed = 2
+
+const remaining = inventory.getQuantity(&#39;backpack&#39;, &#39;potion&#39;)
+// remaining = 3
+</code></pre>
+<p>The function returns the actual number removed. If you try to remove more than exists, it removes what&#39;s available.</p>
+<h2>The Complete Code</h2>
+<p>Here&#39;s everything together:</p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+// Create the manager
+const inventory = createInventoryManager()
+
+// Create a container
+inventory.createContainer(&#39;backpack&#39;, {
+  mode: &#39;unlimited&#39;,
+})
+
+// Add items
+inventory.addItem(&#39;backpack&#39;, &#39;sword&#39;, 1)
+inventory.addItem(&#39;backpack&#39;, &#39;potion&#39;, 5)
+inventory.addItem(&#39;backpack&#39;, &#39;gold&#39;, 100)
+
+// Query contents
+const contents = inventory.getContents(&#39;backpack&#39;)
+console.log(contents)
+// [{ itemId: &#39;sword&#39;, quantity: 1 }, { itemId: &#39;potion&#39;, quantity: 5 }, { itemId: &#39;gold&#39;, quantity: 100 }]
+
+// Check specific items
+console.log(inventory.hasItem(&#39;backpack&#39;, &#39;sword&#39;)) // true
+console.log(inventory.getQuantity(&#39;backpack&#39;, &#39;potion&#39;)) // 5
+
+// Remove items
+inventory.removeItem(&#39;backpack&#39;, &#39;potion&#39;, 2)
+console.log(inventory.getQuantity(&#39;backpack&#39;, &#39;potion&#39;)) // 3
+</code></pre>
+<h2>What&#39;s Next?</h2>
+<p>Now that you have the basics:</p>
+<ul>
+<li><strong><a href="concept-containers.html">Understand Containers better</a></strong> - Learn about container lifecycle and configuration</li>
+<li><strong><a href="guide-weight-based-inventories.html">Add capacity limits</a></strong> - Create weight-limited inventories</li>
+<li><strong><a href="guide-grid-placement.html">Build a grid inventory</a></strong> - Tetris-style item placement</li>
+<li><strong><a href="api-container-management.html">Explore the API</a></strong> - Full reference for all methods</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

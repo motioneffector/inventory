@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Serialization API - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Serialization API</h1>
+<p>Persistence operations for saving and restoring inventory state.</p>
+<hr>
+<h2><code>serialize()</code></h2>
+<p>Returns a serializable object representing the entire inventory state.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function serialize(): SerializedData
+</code></pre>
+<p><strong>Parameters:</strong> None</p>
+<p><strong>Returns:</strong> <code>SerializedData</code> — Plain object suitable for JSON conversion</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+inventory.createContainer(&#39;backpack&#39;, { mode: &#39;unlimited&#39; })
+inventory.createContainer(&#39;equipment&#39;, { mode: &#39;slots&#39;, slots: [&#39;head&#39;] })
+
+inventory.addItem(&#39;backpack&#39;, &#39;sword&#39;, 1)
+inventory.addItem(&#39;backpack&#39;, &#39;potion&#39;, 10)
+inventory.setSlot(&#39;equipment&#39;, &#39;head&#39;, &#39;helmet&#39;)
+inventory.lockItem(&#39;backpack&#39;, &#39;sword&#39;)
+
+// Get serializable data
+const data = inventory.serialize()
+
+// Convert to JSON for storage
+const json = JSON.stringify(data)
+localStorage.setItem(&#39;save&#39;, json)
+</code></pre>
+<p><strong>Includes:</strong></p>
+<ul>
+<li>Container configurations (mode, dimensions, etc.)</li>
+<li>All items with quantities</li>
+<li>Grid positions for grid-mode items</li>
+<li>Slot assignments</li>
+<li>Locked item status</li>
+</ul>
+<p><strong>Does NOT include:</strong></p>
+<ul>
+<li>Callbacks (<code>getItemWeight</code>, <code>getItemSize</code>, <code>getItemStackLimit</code>)</li>
+<li>Event subscriptions</li>
+<li>Manager options (<code>defaultStackSize</code>)</li>
+</ul>
+<hr>
+<h2><code>deserialize()</code></h2>
+<p>Restores inventory state from serialized data. Clears existing state first.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function deserialize(data: unknown): void
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>data</code></td>
+<td><code>unknown</code></td>
+<td>Yes</td>
+<td>Previously serialized data</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>void</code></p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+// Load from storage
+const json = localStorage.getItem(&#39;save&#39;)
+const savedData = JSON.parse(json)
+
+// Create manager with SAME callbacks as when saved
+const inventory = createInventoryManager({
+  getItemWeight: (id) =&gt; weights[id] ?? 1,
+  getItemSize: (id) =&gt; sizes[id] ?? { width: 1, height: 1 },
+})
+
+// Restore state
+inventory.deserialize(savedData)
+
+// Inventory is now restored
+console.log(inventory.listContainers())
+console.log(inventory.getContents(&#39;backpack&#39;))
+</code></pre>
+<p><strong>Throws:</strong></p>
+<ul>
+<li><code>ValidationError</code> — Invalid data structure</li>
+<li><code>ValidationError</code> — Invalid container/item IDs</li>
+</ul>
+<p><strong>Important:</strong> Create the manager with the same callbacks before deserializing. Grid items need <code>getItemSize</code> to restore positions correctly.</p>
+<hr>
+<h2><code>serializeContainer()</code></h2>
+<p>Serializes a single container instead of the entire inventory.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function serializeContainer(containerId: ContainerId): unknown
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>containerId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>ID of the container to serialize</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>unknown</code> — Serialized container data</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+inventory.createContainer(&#39;player-bag&#39;, { mode: &#39;unlimited&#39; })
+inventory.createContainer(&#39;world-chest&#39;, { mode: &#39;unlimited&#39; })
+
+inventory.addItem(&#39;player-bag&#39;, &#39;gold&#39;, 100)
+inventory.addItem(&#39;world-chest&#39;, &#39;treasure&#39;, 50)
+
+// Save only the player&#39;s bag
+const playerData = inventory.serializeContainer(&#39;player-bag&#39;)
+localStorage.setItem(&#39;player&#39;, JSON.stringify({ containers: [playerData] }))
+
+// Later, restore just that container
+const saved = JSON.parse(localStorage.getItem(&#39;player&#39;))
+const newInventory = createInventoryManager()
+newInventory.deserialize(saved)
+
+console.log(newInventory.listContainers()) // [&#39;player-bag&#39;]
+</code></pre>
+<p><strong>Throws:</strong></p>
+<ul>
+<li><code>ValidationError</code> — Container does not exist</li>
+</ul>
+<hr>
+<h2>Serialized Data Structure</h2>
+<pre><code class="language-typescript">type SerializedData = {
+  containers: SerializedContainer[]
+}
+
+type SerializedContainer = {
+  id: string
+  config: ContainerConfig
+  items: Array&lt;{
+    itemId: string
+    stacks: Array&lt;{
+      quantity: number
+      position?: GridPosition
+    }&gt;
+  }&gt;
+  lockedItems: string[]
+  slotState?: {
+    slots: Array&lt;[string, string | null]&gt;
+  }
+}
+</code></pre>
+<hr>
+<h2>Complete Save/Load Example</h2>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+// Game&#39;s item data
+const itemData = {
+  sword: { weight: 5, size: { width: 1, height: 3 } },
+  potion: { weight: 0.5, size: { width: 1, height: 1 } },
+}
+
+function createManager() {
+  return createInventoryManager({
+    getItemWeight: (id) =&gt; itemData[id]?.weight ?? 1,
+    getItemSize: (id) =&gt; itemData[id]?.size ?? { width: 1, height: 1 },
+  })
+}
+
+// Save game
+function saveGame(inventory: ReturnType&lt;typeof createManager&gt;) {
+  const data = inventory.serialize()
+  const json = JSON.stringify(data)
+  localStorage.setItem(&#39;game-save&#39;, json)
+  console.log(&#39;Game saved!&#39;)
+}
+
+// Load game
+function loadGame(): ReturnType&lt;typeof createManager&gt; | null {
+  const json = localStorage.getItem(&#39;game-save&#39;)
+  if (!json) return null
+
+  try {
+    const data = JSON.parse(json)
+    const inventory = createManager()
+    inventory.deserialize(data)
+    console.log(&#39;Game loaded!&#39;)
+    return inventory
+  } catch (e) {
+    console.error(&#39;Failed to load:&#39;, e)
+    return null
+  }
+}
+
+// Usage
+let inventory = loadGame() ?? createManager()
+
+// If fresh start, setup initial state
+if (inventory.listContainers().length === 0) {
+  inventory.createContainer(&#39;backpack&#39;, { mode: &#39;weight&#39;, maxWeight: 50 })
+  inventory.addItem(&#39;backpack&#39;, &#39;potion&#39;, 3)
+}
+
+// Play...
+inventory.addItem(&#39;backpack&#39;, &#39;sword&#39;, 1)
+
+// Save when done
+saveGame(inventory)
+</code></pre>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

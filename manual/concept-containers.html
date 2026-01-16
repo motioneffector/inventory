@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Containers - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Containers</h1>
+<p>Containers are named storage units where items live. Every item in your inventory exists inside exactly one container. You create containers with specific rules, add and remove items, query their contents, and destroy them when no longer needed.</p>
+<h2>How It Works</h2>
+<p>Think of containers as labeled boxes with custom rules. Each box has:</p>
+<ul>
+<li>A unique <strong>ID</strong> (string) to identify it</li>
+<li>A <strong>configuration</strong> that determines what goes in and how</li>
+<li><strong>Contents</strong> that you add, remove, and query</li>
+</ul>
+<pre><code>┌─────────────────────────────────┐
+│ Container: &quot;backpack&quot;           │
+│ Mode: weight (max: 50)          │
+├─────────────────────────────────┤
+│ sword (1)      - 5 weight       │
+│ potion (10)    - 10 weight      │
+│ gold (100)     - 1 weight       │
+├─────────────────────────────────┤
+│ Total: 16 / 50 weight           │
+└─────────────────────────────────┘
+</code></pre>
+<p>Containers don&#39;t know anything about your game&#39;s items directly. They store item IDs (strings) and quantities. You teach the manager about item properties through <a href="concept-item-metadata.html">callbacks</a>.</p>
+<h2>Basic Usage</h2>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+
+// Create a container
+inventory.createContainer(&#39;backpack&#39;, {
+  mode: &#39;unlimited&#39;,
+})
+
+// Use the container
+inventory.addItem(&#39;backpack&#39;, &#39;sword&#39;, 1)
+inventory.getContents(&#39;backpack&#39;)
+inventory.removeItem(&#39;backpack&#39;, &#39;sword&#39;, 1)
+
+// Destroy the container
+inventory.removeContainer(&#39;backpack&#39;)
+</code></pre>
+<h2>Key Points</h2>
+<ul>
+<li><strong>Unique IDs</strong> - Each container must have a unique string ID. Creating a container with an existing ID throws an error.</li>
+<li><strong>Mode determines behavior</strong> - The <code>mode</code> property in the config controls how the container accepts items. See <a href="concept-storage-modes.html">Storage Modes</a>.</li>
+<li><strong>Containers can nest</strong> - A container can hold another container as an item, enabling bags-within-bags. See <a href="guide-nested-containers.html">Nested Containers</a>.</li>
+<li><strong>IDs are just strings</strong> - Container IDs and item IDs are arbitrary strings. Use whatever naming makes sense for your game.</li>
+</ul>
+<h2>Examples</h2>
+<h3>Multiple Containers</h3>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+
+// Player inventory
+inventory.createContainer(&#39;player-backpack&#39;, { mode: &#39;unlimited&#39; })
+
+// Bank storage
+inventory.createContainer(&#39;bank-vault&#39;, { mode: &#39;count&#39;, maxCount: 100 })
+
+// Equipped items
+inventory.createContainer(&#39;equipment&#39;, {
+  mode: &#39;slots&#39;,
+  slots: [&#39;head&#39;, &#39;chest&#39;, &#39;legs&#39;, &#39;feet&#39;, &#39;mainhand&#39;, &#39;offhand&#39;],
+})
+
+// List all containers
+const containers = inventory.listContainers()
+// [&#39;player-backpack&#39;, &#39;bank-vault&#39;, &#39;equipment&#39;]
+</code></pre>
+<h3>Checking If Empty</h3>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+inventory.createContainer(&#39;chest&#39;, { mode: &#39;unlimited&#39; })
+
+console.log(inventory.isEmpty(&#39;chest&#39;)) // true
+
+inventory.addItem(&#39;chest&#39;, &#39;gem&#39;, 1)
+console.log(inventory.isEmpty(&#39;chest&#39;)) // false
+</code></pre>
+<h2>Related</h2>
+<ul>
+<li><strong><a href="concept-storage-modes.html">Storage Modes</a></strong> - The six modes that control container behavior</li>
+<li><strong><a href="guide-nested-containers.html">Nested Containers</a></strong> - Using containers as items inside other containers</li>
+<li><strong><a href="api-container-management.html">Container Management API</a></strong> - Full reference for <code>createContainer</code>, <code>removeContainer</code>, <code>listContainers</code></li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

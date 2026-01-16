@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nested Containers - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Nested Containers</h1>
+<p>Create bags that can contain other bags. Nested containers let you organize inventory hierarchically—a backpack containing pouches, each with their own contents.</p>
+<h2>Prerequisites</h2>
+<p>Before starting, you should:</p>
+<ul>
+<li><a href="concept-containers.html">Understand how containers work</a></li>
+</ul>
+<h2>Overview</h2>
+<p>We&#39;ll create nested containers by:</p>
+<ol>
+<li>Creating parent and child containers</li>
+<li>Adding the child container as an item in the parent</li>
+<li>Using <code>{ deep: true }</code> for queries that traverse the hierarchy</li>
+<li>Understanding cycle prevention</li>
+</ol>
+<h2>Step 1: Create Parent and Child Containers</h2>
+<p>Both are regular containers. The &quot;nesting&quot; happens when you add one as an item in another.</p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+
+// Parent container
+inventory.createContainer(&#39;backpack&#39;, { mode: &#39;unlimited&#39; })
+
+// Child container (a pouch that goes inside the backpack)
+inventory.createContainer(&#39;gem-pouch&#39;, { mode: &#39;count&#39;, maxCount: 10 })
+</code></pre>
+<h2>Step 2: Add Child Container as Item</h2>
+<p>Add the child container&#39;s ID as an item in the parent.</p>
+<pre><code class="language-typescript">// Put the gem pouch in the backpack
+inventory.addItem(&#39;backpack&#39;, &#39;gem-pouch&#39;, 1)
+
+// Add items to the pouch directly
+inventory.addItem(&#39;gem-pouch&#39;, &#39;ruby&#39;, 3)
+inventory.addItem(&#39;gem-pouch&#39;, &#39;emerald&#39;, 2)
+
+// Add other items to the backpack
+inventory.addItem(&#39;backpack&#39;, &#39;sword&#39;, 1)
+inventory.addItem(&#39;backpack&#39;, &#39;potion&#39;, 5)
+</code></pre>
+<p>Now the backpack contains: sword, potions, and a gem-pouch. The gem-pouch contains rubies and emeralds.</p>
+<h2>Step 3: Query with Deep Option</h2>
+<p>Use <code>{ deep: true }</code> to search or list contents across the entire hierarchy.</p>
+<pre><code class="language-typescript">// Shallow: only direct contents
+const shallow = inventory.getContents(&#39;backpack&#39;)
+// [{ itemId: &#39;gem-pouch&#39;, quantity: 1 }, { itemId: &#39;sword&#39;, quantity: 1 }, { itemId: &#39;potion&#39;, quantity: 5 }]
+
+// Deep: includes nested container contents
+const deep = inventory.getContents(&#39;backpack&#39;, { deep: true })
+// [{ itemId: &#39;gem-pouch&#39;, quantity: 1 }, { itemId: &#39;sword&#39;, quantity: 1 }, { itemId: &#39;potion&#39;, quantity: 5 },
+//  { itemId: &#39;ruby&#39;, quantity: 3 }, { itemId: &#39;emerald&#39;, quantity: 2 }]
+
+// Find item across all containers
+const found = inventory.findItem(&#39;ruby&#39;, { deep: true })
+// [{ containerId: &#39;gem-pouch&#39;, quantity: 3 }]
+</code></pre>
+<h2>Step 4: Deep Weight Calculation</h2>
+<p>Calculate total weight including nested contents.</p>
+<pre><code class="language-typescript">const inventory = createInventoryManager({
+  getItemWeight: (id) =&gt; {
+    if (id === &#39;gem-pouch&#39;) return 0.5 // Empty pouch weight
+    if (id === &#39;ruby&#39;) return 0.1
+    if (id === &#39;sword&#39;) return 5
+    return 1
+  },
+})
+
+inventory.createContainer(&#39;backpack&#39;, { mode: &#39;weight&#39;, maxWeight: 50 })
+inventory.createContainer(&#39;gem-pouch&#39;, { mode: &#39;unlimited&#39; })
+
+inventory.addItem(&#39;gem-pouch&#39;, &#39;ruby&#39;, 10) // 1.0 weight in gems
+inventory.addItem(&#39;backpack&#39;, &#39;gem-pouch&#39;, 1)
+inventory.addItem(&#39;backpack&#39;, &#39;sword&#39;, 1)
+
+// Shallow weight: pouch (0.5) + sword (5) = 5.5
+const shallow = inventory.getTotalWeight(&#39;backpack&#39;)
+console.log(shallow) // 5.5
+
+// Deep weight: pouch (0.5) + gems (1.0) + sword (5) = 6.5
+const deep = inventory.getTotalWeight(&#39;backpack&#39;, { deep: true })
+console.log(deep) // 6.5
+</code></pre>
+<h2>Cycle Prevention</h2>
+<p>The library prevents circular nesting, which would cause infinite loops.</p>
+<pre><code class="language-typescript">inventory.createContainer(&#39;bag-a&#39;, { mode: &#39;unlimited&#39; })
+inventory.createContainer(&#39;bag-b&#39;, { mode: &#39;unlimited&#39; })
+
+inventory.addItem(&#39;bag-a&#39;, &#39;bag-b&#39;, 1) // OK: bag-b is inside bag-a
+
+// This would create a cycle: bag-a → bag-b → bag-a
+inventory.addItem(&#39;bag-b&#39;, &#39;bag-a&#39;, 1) // Throws: &quot;Cannot create circular nesting&quot;
+
+// Self-nesting is also prevented
+inventory.addItem(&#39;bag-a&#39;, &#39;bag-a&#39;, 1) // Throws: &quot;Cannot nest container in itself&quot;
+</code></pre>
+<h2>Complete Example</h2>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager({
+  getItemWeight: (id) =&gt; {
+    const weights: Record&lt;string, number&gt; = {
+      &#39;backpack&#39;: 2,
+      &#39;coin-purse&#39;: 0.2,
+      &#39;gem-pouch&#39;: 0.3,
+      &#39;gold&#39;: 0.01,
+      &#39;ruby&#39;: 0.1,
+      &#39;sword&#39;: 5,
+      &#39;potion&#39;: 0.5,
+    }
+    return weights[id] ?? 1
+  },
+})
+
+// Main inventory
+inventory.createContainer(&#39;backpack&#39;, { mode: &#39;weight&#39;, maxWeight: 30 })
+
+// Specialized sub-containers
+inventory.createContainer(&#39;coin-purse&#39;, { mode: &#39;unlimited&#39; })
+inventory.createContainer(&#39;gem-pouch&#39;, { mode: &#39;count&#39;, maxCount: 20 })
+
+// Nest them in the backpack
+inventory.addItem(&#39;backpack&#39;, &#39;coin-purse&#39;, 1)
+inventory.addItem(&#39;backpack&#39;, &#39;gem-pouch&#39;, 1)
+
+// Fill the sub-containers
+inventory.addItem(&#39;coin-purse&#39;, &#39;gold&#39;, 500)
+inventory.addItem(&#39;gem-pouch&#39;, &#39;ruby&#39;, 15)
+
+// Add regular items
+inventory.addItem(&#39;backpack&#39;, &#39;sword&#39;, 1)
+inventory.addItem(&#39;backpack&#39;, &#39;potion&#39;, 4)
+
+// Query everything
+console.log(&#39;Backpack contents (shallow):&#39;)
+console.log(inventory.getContents(&#39;backpack&#39;))
+
+console.log(&#39;Backpack contents (deep):&#39;)
+console.log(inventory.getContents(&#39;backpack&#39;, { deep: true }))
+
+console.log(&#39;Total weight (shallow):&#39;, inventory.getTotalWeight(&#39;backpack&#39;))
+console.log(&#39;Total weight (deep):&#39;, inventory.getTotalWeight(&#39;backpack&#39;, { deep: true }))
+
+// Find all gold
+const goldLocations = inventory.findItem(&#39;gold&#39;, { deep: true })
+console.log(&#39;Gold found:&#39;, goldLocations)
+</code></pre>
+<h2>Variations</h2>
+<h3>Multiple Nesting Levels</h3>
+<pre><code class="language-typescript">inventory.createContainer(&#39;vault&#39;, { mode: &#39;unlimited&#39; })
+inventory.createContainer(&#39;chest&#39;, { mode: &#39;unlimited&#39; })
+inventory.createContainer(&#39;box&#39;, { mode: &#39;unlimited&#39; })
+
+// Vault contains chest, chest contains box
+inventory.addItem(&#39;vault&#39;, &#39;chest&#39;, 1)
+inventory.addItem(&#39;chest&#39;, &#39;box&#39;, 1)
+inventory.addItem(&#39;box&#39;, &#39;treasure&#39;, 1)
+
+// Deep query finds treasure
+const found = inventory.findItem(&#39;treasure&#39;, { deep: true })
+// [{ containerId: &#39;box&#39;, quantity: 1 }]
+</code></pre>
+<h3>Checking If Container Is Nested</h3>
+<pre><code class="language-typescript">function isNested(containerId: string): boolean {
+  const locations = inventory.findItem(containerId)
+  return locations.length &gt; 0
+}
+</code></pre>
+<h2>Troubleshooting</h2>
+<h3>Deep Query Returns Duplicates</h3>
+<p><strong>Symptom:</strong> Items appear multiple times in deep query results.</p>
+<p><strong>Cause:</strong> This shouldn&#39;t happen—the library tracks visited containers. If you see duplicates, check if you have multiple containers with similar IDs.</p>
+<p><strong>Solution:</strong> Ensure container IDs are unique.</p>
+<h3>Circular Nesting Error Unexpected</h3>
+<p><strong>Symptom:</strong> Adding a container throws &quot;Cannot create circular nesting&quot; when you don&#39;t expect it.</p>
+<p><strong>Cause:</strong> There&#39;s an existing path from the target container back to the source.</p>
+<p><strong>Solution:</strong> Use <code>findItem</code> to trace where containers are located and identify the cycle.</p>
+<h2>See Also</h2>
+<ul>
+<li><strong><a href="concept-containers.html">Containers</a></strong> - Container basics</li>
+<li><strong><a href="api-querying.html">Querying API</a></strong> - Reference for <code>getContents</code>, <code>findItem</code>, <code>getTotalWeight</code> with deep option</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

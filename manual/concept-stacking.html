@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stacking - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Stacking</h1>
+<p>Stacking lets multiple units of the same item share a single slot or cell. Instead of 99 individual &quot;gold&quot; entries, you have one stack of 99 gold.</p>
+<h2>How It Works</h2>
+<p>By default, containers don&#39;t stack items—each <code>addItem</code> call creates a new entry. Enable stacking with <code>allowStacking: true</code> in the container config.</p>
+<pre><code>Without Stacking:          With Stacking:
+┌─────────────────┐        ┌─────────────────┐
+│ potion (1)      │        │ potion (5)      │
+│ potion (1)      │        └─────────────────┘
+│ potion (1)      │
+│ potion (1)      │
+│ potion (1)      │
+└─────────────────┘
+</code></pre>
+<p>When stacking is enabled:</p>
+<ol>
+<li>Adding items fills existing stacks first</li>
+<li>New stacks are created only when existing ones are full</li>
+<li>Stack size is limited by <code>maxStackSize</code> or <code>getItemStackLimit</code></li>
+</ol>
+<h2>Basic Usage</h2>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager({
+  getItemStackLimit: (id) =&gt; (id === &#39;gold&#39; ? 9999 : 99),
+})
+
+inventory.createContainer(&#39;backpack&#39;, {
+  mode: &#39;unlimited&#39;,
+  allowStacking: true,
+  maxStackSize: 99, // Optional: override per-container
+})
+
+// These all go into one stack
+inventory.addItem(&#39;backpack&#39;, &#39;potion&#39;, 10)
+inventory.addItem(&#39;backpack&#39;, &#39;potion&#39;, 5)
+inventory.addItem(&#39;backpack&#39;, &#39;potion&#39;, 3)
+
+// One entry with quantity 18
+const contents = inventory.getContents(&#39;backpack&#39;)
+// [{ itemId: &#39;potion&#39;, quantity: 18 }]
+</code></pre>
+<h2>Key Points</h2>
+<ul>
+<li><strong>Enable per-container</strong> - Each container decides independently whether to stack. A <code>count</code> mode container might stack; a <code>slots</code> mode container wouldn&#39;t.</li>
+<li><strong>Stack limits apply per stack</strong> - If <code>maxStackSize</code> is 99, adding 150 potions creates two stacks (99 + 51).</li>
+<li><strong>Two ways to set limits</strong> - Container&#39;s <code>maxStackSize</code> and manager&#39;s <code>getItemStackLimit</code>. The lower value wins.</li>
+<li><strong>Grid stacking</strong> - In grid mode with stacking, items stack at the same cell position. Adding to a different position creates a new stack.</li>
+</ul>
+<h2>Stack Manipulation</h2>
+<p>The library provides methods for splitting and merging stacks.</p>
+<h3>Viewing Stacks</h3>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+inventory.createContainer(&#39;bag&#39;, { mode: &#39;unlimited&#39;, allowStacking: true, maxStackSize: 50 })
+
+inventory.addItem(&#39;bag&#39;, &#39;arrow&#39;, 120) // Creates 3 stacks: 50, 50, 20
+
+const stacks = inventory.getStacks(&#39;bag&#39;, &#39;arrow&#39;)
+// [{ itemId: &#39;arrow&#39;, quantity: 50 }, { itemId: &#39;arrow&#39;, quantity: 50 }, { itemId: &#39;arrow&#39;, quantity: 20 }]
+</code></pre>
+<h3>Splitting Stacks</h3>
+<pre><code class="language-typescript">// Split 30 arrows from the first stack into a new stack
+inventory.splitStack(&#39;bag&#39;, &#39;arrow&#39;, 0, 30)
+
+const stacks = inventory.getStacks(&#39;bag&#39;, &#39;arrow&#39;)
+// [{ quantity: 20 }, { quantity: 50 }, { quantity: 20 }, { quantity: 30 }]
+</code></pre>
+<h3>Merging Stacks</h3>
+<pre><code class="language-typescript">// Merge stack at index 3 into stack at index 0
+inventory.mergeStacks(&#39;bag&#39;, &#39;arrow&#39;, 3, 0)
+</code></pre>
+<h3>Consolidating</h3>
+<pre><code class="language-typescript">// Combine all stacks of all items optimally
+inventory.consolidate(&#39;bag&#39;)
+</code></pre>
+<h2>Examples</h2>
+<h3>No Stacking (Equipment)</h3>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+
+inventory.createContainer(&#39;equipment&#39;, {
+  mode: &#39;slots&#39;,
+  slots: [&#39;mainhand&#39;, &#39;offhand&#39;],
+  // Note: no allowStacking - slots don&#39;t stack
+})
+</code></pre>
+<h3>Limited Stacking (Consumables)</h3>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager({
+  getItemStackLimit: (id) =&gt; {
+    if (id.includes(&#39;potion&#39;)) return 20
+    if (id === &#39;arrow&#39;) return 99
+    return 1 // Weapons don&#39;t stack
+  },
+})
+
+inventory.createContainer(&#39;backpack&#39;, {
+  mode: &#39;count&#39;,
+  maxCount: 20,
+  allowStacking: true,
+})
+</code></pre>
+<h3>Grid Stacking</h3>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager({
+  getItemSize: () =&gt; ({ width: 1, height: 1 }),
+})
+
+inventory.createContainer(&#39;stash&#39;, {
+  mode: &#39;grid&#39;,
+  width: 5,
+  height: 5,
+  allowStacking: true,
+  maxStackSize: 99,
+})
+
+// Stack at position (0, 0)
+inventory.addItemAt(&#39;stash&#39;, &#39;gem&#39;, { x: 0, y: 0 }, 50)
+inventory.addItemAt(&#39;stash&#39;, &#39;gem&#39;, { x: 0, y: 0 }, 30) // Adds to same stack
+
+// Separate stack at position (1, 0)
+inventory.addItemAt(&#39;stash&#39;, &#39;gem&#39;, { x: 1, y: 0 }, 25)
+</code></pre>
+<h2>Related</h2>
+<ul>
+<li><strong><a href="concept-item-metadata.html">Item Metadata</a></strong> - Setting per-item stack limits with <code>getItemStackLimit</code></li>
+<li><strong><a href="api-stack-operations.html">Stack Operations API</a></strong> - Full reference for <code>splitStack</code>, <code>mergeStacks</code>, <code>consolidate</code>, <code>sort</code></li>
+<li><strong><a href="guide-grid-placement.html">Grid Placement</a></strong> - Stacking behavior in grid mode</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

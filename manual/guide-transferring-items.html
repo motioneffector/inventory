@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transferring Items - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Transferring Items</h1>
+<p>Move items between containers safely. The library handles capacity checks, partial transfers, and locked item restrictions.</p>
+<h2>Prerequisites</h2>
+<p>Before starting, you should:</p>
+<ul>
+<li><a href="concept-containers.html">Understand how containers work</a></li>
+<li><a href="your-first-inventory.html">Know about basic item operations</a></li>
+</ul>
+<h2>Overview</h2>
+<p>We&#39;ll transfer items by:</p>
+<ol>
+<li>Using <code>transfer(from, to, itemId, quantity)</code></li>
+<li>Handling partial transfers when destination is full</li>
+<li>Understanding locked item restrictions</li>
+</ol>
+<h2>Step 1: Basic Transfer</h2>
+<p>Use <code>transfer</code> to move items from one container to another.</p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+
+inventory.createContainer(&#39;backpack&#39;, { mode: &#39;unlimited&#39; })
+inventory.createContainer(&#39;chest&#39;, { mode: &#39;unlimited&#39; })
+
+// Add items to backpack
+inventory.addItem(&#39;backpack&#39;, &#39;gold&#39;, 100)
+inventory.addItem(&#39;backpack&#39;, &#39;potion&#39;, 10)
+
+// Transfer 50 gold to chest
+const result = inventory.transfer(&#39;backpack&#39;, &#39;chest&#39;, &#39;gold&#39;, 50)
+console.log(result) // { transferred: 50, overflow: 0 }
+
+// Check both containers
+console.log(inventory.getQuantity(&#39;backpack&#39;, &#39;gold&#39;)) // 50
+console.log(inventory.getQuantity(&#39;chest&#39;, &#39;gold&#39;))    // 50
+</code></pre>
+<h2>Step 2: Handle Partial Transfers</h2>
+<p>When the destination can&#39;t hold everything, <code>transfer</code> moves what fits and reports overflow.</p>
+<pre><code class="language-typescript">const inventory = createInventoryManager({
+  getItemWeight: () =&gt; 1,
+})
+
+inventory.createContainer(&#39;backpack&#39;, { mode: &#39;unlimited&#39; })
+inventory.createContainer(&#39;small-pouch&#39;, { mode: &#39;weight&#39;, maxWeight: 10 })
+
+inventory.addItem(&#39;backpack&#39;, &#39;coin&#39;, 100)
+
+// Try to transfer 100 coins to a 10-weight pouch
+const result = inventory.transfer(&#39;backpack&#39;, &#39;small-pouch&#39;, &#39;coin&#39;, 100)
+console.log(result) // { transferred: 10, overflow: 90 }
+
+// 10 moved, 90 stayed in backpack
+console.log(inventory.getQuantity(&#39;backpack&#39;, &#39;coin&#39;))     // 90
+console.log(inventory.getQuantity(&#39;small-pouch&#39;, &#39;coin&#39;)) // 10
+</code></pre>
+<h2>Step 3: Locked Item Restrictions</h2>
+<p>Locked items cannot be transferred. Attempting to do so throws an error.</p>
+<pre><code class="language-typescript">inventory.createContainer(&#39;quest-bag&#39;, { mode: &#39;unlimited&#39; })
+inventory.createContainer(&#39;chest&#39;, { mode: &#39;unlimited&#39; })
+
+inventory.addItem(&#39;quest-bag&#39;, &#39;quest-item&#39;, 1)
+inventory.lockItem(&#39;quest-bag&#39;, &#39;quest-item&#39;)
+
+try {
+  inventory.transfer(&#39;quest-bag&#39;, &#39;chest&#39;, &#39;quest-item&#39;, 1)
+} catch (e) {
+  console.log(&#39;Cannot transfer locked items&#39;)
+}
+
+// Unlock to allow transfer
+inventory.unlockItem(&#39;quest-bag&#39;, &#39;quest-item&#39;)
+inventory.transfer(&#39;quest-bag&#39;, &#39;chest&#39;, &#39;quest-item&#39;, 1) // Now works
+</code></pre>
+<h2>Complete Example</h2>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager({
+  getItemWeight: (id) =&gt; ({ gold: 0.01, potion: 0.5, sword: 5 }[id] ?? 1),
+})
+
+// Player inventory (weight-limited)
+inventory.createContainer(&#39;player&#39;, { mode: &#39;weight&#39;, maxWeight: 50 })
+
+// Storage chest (unlimited)
+inventory.createContainer(&#39;storage&#39;, { mode: &#39;unlimited&#39; })
+
+// Merchant (unlimited)
+inventory.createContainer(&#39;merchant&#39;, { mode: &#39;unlimited&#39; })
+
+// Setup initial items
+inventory.addItem(&#39;player&#39;, &#39;gold&#39;, 500)
+inventory.addItem(&#39;player&#39;, &#39;potion&#39;, 10)
+inventory.addItem(&#39;player&#39;, &#39;sword&#39;, 2)
+inventory.addItem(&#39;merchant&#39;, &#39;rare-sword&#39;, 1)
+
+// Store excess items
+console.log(&#39;Before storage:&#39;, inventory.getTotalWeight(&#39;player&#39;))
+inventory.transfer(&#39;player&#39;, &#39;storage&#39;, &#39;sword&#39;, 1) // Free up 5 weight
+console.log(&#39;After storage:&#39;, inventory.getTotalWeight(&#39;player&#39;))
+
+// Buy from merchant (gold for item)
+function buyItem(itemId: string, price: number): boolean {
+  inventory.transaction(() =&gt; {
+    const paid = inventory.transfer(&#39;player&#39;, &#39;merchant&#39;, &#39;gold&#39;, price)
+    if (paid.transferred &lt; price) {
+      throw new Error(&#39;Not enough gold&#39;)
+    }
+
+    const received = inventory.transfer(&#39;merchant&#39;, &#39;player&#39;, itemId, 1)
+    if (received.transferred === 0) {
+      throw new Error(&#39;Could not receive item&#39;)
+    }
+  })
+  return true
+}
+
+try {
+  buyItem(&#39;rare-sword&#39;, 100)
+  console.log(&#39;Purchase successful!&#39;)
+} catch (e) {
+  console.log(&#39;Purchase failed:&#39;, e.message)
+}
+</code></pre>
+<h2>Variations</h2>
+<h3>Transfer All of an Item</h3>
+<pre><code class="language-typescript">function transferAll(from: string, to: string, itemId: string) {
+  const quantity = inventory.getQuantity(from, itemId)
+  return inventory.transfer(from, to, itemId, quantity)
+}
+</code></pre>
+<h3>Safe Transfer with Rollback</h3>
+<p>Use transactions to ensure both containers stay consistent.</p>
+<pre><code class="language-typescript">function safeTransfer(from: string, to: string, itemId: string, quantity: number) {
+  inventory.transaction(() =&gt; {
+    const result = inventory.transfer(from, to, itemId, quantity)
+    if (result.overflow &gt; 0) {
+      throw new Error(`Could only transfer ${result.transferred} of ${quantity}`)
+    }
+  })
+}
+</code></pre>
+<h3>Cross-Mode Transfers</h3>
+<p>Transfer works between containers of different modes.</p>
+<pre><code class="language-typescript">// From unlimited to grid
+inventory.createContainer(&#39;bag&#39;, { mode: &#39;unlimited&#39; })
+inventory.createContainer(&#39;stash&#39;, { mode: &#39;grid&#39;, width: 5, height: 5 })
+
+inventory.addItem(&#39;bag&#39;, &#39;gem&#39;, 10)
+inventory.transfer(&#39;bag&#39;, &#39;stash&#39;, &#39;gem&#39;, 5) // Works if grid has space
+</code></pre>
+<h2>Troubleshooting</h2>
+<h3>Transfer Returns Zero</h3>
+<p><strong>Symptom:</strong> <code>transfer</code> returns <code>{ transferred: 0, overflow: N }</code>.</p>
+<p><strong>Cause:</strong> Either the source doesn&#39;t have the item, or the destination is full.</p>
+<p><strong>Solution:</strong> Check source quantity and destination capacity:</p>
+<pre><code class="language-typescript">const available = inventory.getQuantity(source, itemId)
+const canFit = inventory.canAdd(destination, itemId, quantity)
+</code></pre>
+<h3>Transfer Throws Error</h3>
+<p><strong>Symptom:</strong> <code>transfer</code> throws instead of returning a result.</p>
+<p><strong>Cause:</strong> The item is locked, or a container doesn&#39;t exist.</p>
+<p><strong>Solution:</strong> Check for locks and valid container IDs:</p>
+<pre><code class="language-typescript">// Ensure containers exist
+const containers = inventory.listContainers()
+if (!containers.includes(source)) {
+  console.log(&#39;Source container missing&#39;)
+}
+</code></pre>
+<h2>See Also</h2>
+<ul>
+<li><strong><a href="api-item-operations.html">Item Operations API</a></strong> - Reference for <code>transfer</code>, <code>addItem</code>, <code>removeItem</code></li>
+<li><strong><a href="guide-locking-items.html">Locking Items</a></strong> - Preventing item removal/transfer</li>
+<li><strong><a href="guide-using-transactions.html">Using Transactions</a></strong> - Atomic operations with rollback</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

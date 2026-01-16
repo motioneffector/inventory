@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Item Metadata - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Item Metadata</h1>
+<p>The library doesn&#39;t know about your game&#39;s items. It stores item IDs (strings) and quantities, but has no idea what a &quot;sword&quot; weighs or how big a &quot;shield&quot; is. You teach it through callback functions.</p>
+<h2>How It Works</h2>
+<p>When you create the inventory manager, you pass callback functions that the library calls whenever it needs item information:</p>
+<pre><code>Your Game                    Inventory Library
+─────────                    ─────────────────
+Item Database                     │
+  sword: { weight: 5 }           │
+  potion: { weight: 1 }    ───►  getItemWeight(&#39;sword&#39;) → 5
+  shield: { w: 2, h: 2 }   ───►  getItemSize(&#39;shield&#39;) → { width: 2, height: 2 }
+</code></pre>
+<p>This design keeps the library decoupled from your game&#39;s data structures. You control how item properties are looked up.</p>
+<h2>Basic Usage</h2>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+// Your game&#39;s item data (however you structure it)
+const items = {
+  sword: { weight: 5, size: { w: 1, h: 3 }, maxStack: 1 },
+  potion: { weight: 1, size: { w: 1, h: 1 }, maxStack: 20 },
+  gold: { weight: 0.01, size: { w: 1, h: 1 }, maxStack: 9999 },
+}
+
+// Create manager with callbacks
+const inventory = createInventoryManager({
+  getItemWeight: (id) =&gt; items[id]?.weight ?? 1,
+  getItemSize: (id) =&gt; items[id]?.size ?? { w: 1, h: 1 },
+  getItemStackLimit: (id) =&gt; items[id]?.maxStack ?? 99,
+})
+</code></pre>
+<h2>The Three Callbacks</h2>
+<h3>getItemWeight</h3>
+<p>Returns the weight of an item. Required for <code>weight</code> mode containers.</p>
+<pre><code class="language-typescript">getItemWeight: (itemId: string) =&gt; number
+</code></pre>
+<p>Must return a positive number. Zero weight is not allowed.</p>
+<h3>getItemSize</h3>
+<p>Returns the dimensions of an item for grid placement. Required for <code>grid</code> mode containers.</p>
+<pre><code class="language-typescript">getItemSize: (itemId: string) =&gt; { width: number; height: number }
+</code></pre>
+<p>Both <code>width</code> and <code>height</code> must be positive integers.</p>
+<h3>getItemStackLimit</h3>
+<p>Returns the maximum stack size for an item. Optional—defaults to <code>defaultStackSize</code> or 99.</p>
+<pre><code class="language-typescript">getItemStackLimit: (itemId: string) =&gt; number
+</code></pre>
+<h2>Key Points</h2>
+<ul>
+<li><strong>Callbacks are called on demand</strong> - The library calls your callbacks whenever it needs the data, not upfront. Keep them fast.</li>
+<li><strong>Return consistent values</strong> - If <code>getItemWeight(&#39;sword&#39;)</code> returns 5 once, it should always return 5. Changing values mid-game can cause inconsistencies.</li>
+<li><strong>Handle unknown items</strong> - Your callbacks receive any string. Return sensible defaults for unknown items.</li>
+<li><strong>defaultStackSize fallback</strong> - If you don&#39;t provide <code>getItemStackLimit</code>, items use <code>defaultStackSize</code> (default: 99).</li>
+</ul>
+<h2>Examples</h2>
+<h3>Using a Database Lookup</h3>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+// Imagine this comes from a JSON file or database
+const itemDatabase = new Map([
+  [&#39;iron-sword&#39;, { weight: 8, width: 1, height: 4 }],
+  [&#39;health-potion&#39;, { weight: 0.5, width: 1, height: 1 }],
+  [&#39;tower-shield&#39;, { weight: 15, width: 2, height: 3 }],
+])
+
+const inventory = createInventoryManager({
+  getItemWeight: (id) =&gt; itemDatabase.get(id)?.weight ?? 1,
+  getItemSize: (id) =&gt; {
+    const item = itemDatabase.get(id)
+    return item ? { width: item.width, height: item.height } : { width: 1, height: 1 }
+  },
+})
+</code></pre>
+<h3>Using Class Instances</h3>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+class Item {
+  constructor(
+    public id: string,
+    public weight: number,
+    public width: number,
+    public height: number
+  ) {}
+}
+
+const itemRegistry = new Map&lt;string, Item&gt;()
+itemRegistry.set(&#39;sword&#39;, new Item(&#39;sword&#39;, 5, 1, 3))
+
+const inventory = createInventoryManager({
+  getItemWeight: (id) =&gt; itemRegistry.get(id)?.weight ?? 1,
+  getItemSize: (id) =&gt; {
+    const item = itemRegistry.get(id)
+    return { width: item?.width ?? 1, height: item?.height ?? 1 }
+  },
+})
+</code></pre>
+<h3>Different Stack Limits Per Item Type</h3>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager({
+  getItemStackLimit: (id) =&gt; {
+    if (id.includes(&#39;weapon&#39;) || id.includes(&#39;armor&#39;)) return 1 // No stacking
+    if (id === &#39;gold&#39;) return 9999
+    if (id.includes(&#39;potion&#39;)) return 20
+    return 99 // Default
+  },
+  defaultStackSize: 99,
+})
+</code></pre>
+<h2>Related</h2>
+<ul>
+<li><strong><a href="concept-storage-modes.html">Storage Modes</a></strong> - Modes that require these callbacks</li>
+<li><strong><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></strong> - Uses <code>getItemWeight</code></li>
+<li><strong><a href="guide-grid-placement.html">Grid Placement</a></strong> - Uses <code>getItemSize</code></li>
+<li><strong><a href="concept-stacking.html">Stacking</a></strong> - Uses <code>getItemStackLimit</code></li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

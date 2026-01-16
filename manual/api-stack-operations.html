@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stack Operations API - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Stack Operations API</h1>
+<p>Stack manipulation and organization operations.</p>
+<hr>
+<h2><code>splitStack()</code></h2>
+<p>Splits a portion of one stack into a new stack.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function splitStack(
+  containerId: ContainerId,
+  itemId: ItemId,
+  fromIndex: number,
+  count: number
+): void
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>containerId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>ID of the container</td>
+</tr>
+<tr>
+<td><code>itemId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>ID of the item</td>
+</tr>
+<tr>
+<td><code>fromIndex</code></td>
+<td><code>number</code></td>
+<td>Yes</td>
+<td>Index of the stack to split from</td>
+</tr>
+<tr>
+<td><code>count</code></td>
+<td><code>number</code></td>
+<td>Yes</td>
+<td>Number of items to split off</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>void</code></p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+inventory.createContainer(&#39;bag&#39;, { mode: &#39;unlimited&#39;, allowStacking: true })
+inventory.addItem(&#39;bag&#39;, &#39;arrow&#39;, 50)
+
+// Before: one stack of 50
+let stacks = inventory.getStacks(&#39;bag&#39;, &#39;arrow&#39;)
+console.log(stacks) // [{ quantity: 50 }]
+
+// Split 20 into a new stack
+inventory.splitStack(&#39;bag&#39;, &#39;arrow&#39;, 0, 20)
+
+// After: two stacks
+stacks = inventory.getStacks(&#39;bag&#39;, &#39;arrow&#39;)
+console.log(stacks) // [{ quantity: 30 }, { quantity: 20 }]
+</code></pre>
+<p><strong>Throws:</strong></p>
+<ul>
+<li><code>ValidationError</code> — Stack not found</li>
+<li><code>ValidationError</code> — Insufficient quantity in stack</li>
+</ul>
+<hr>
+<h2><code>mergeStacks()</code></h2>
+<p>Merges one stack into another, respecting stack limits.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function mergeStacks(
+  containerId: ContainerId,
+  itemId: ItemId,
+  fromIndex: number,
+  toIndex: number
+): void
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>containerId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>ID of the container</td>
+</tr>
+<tr>
+<td><code>itemId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>ID of the item</td>
+</tr>
+<tr>
+<td><code>fromIndex</code></td>
+<td><code>number</code></td>
+<td>Yes</td>
+<td>Index of the source stack</td>
+</tr>
+<tr>
+<td><code>toIndex</code></td>
+<td><code>number</code></td>
+<td>Yes</td>
+<td>Index of the destination stack</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>void</code></p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+inventory.createContainer(&#39;bag&#39;, {
+  mode: &#39;unlimited&#39;,
+  allowStacking: true,
+  maxStackSize: 99,
+})
+
+// Create two stacks
+inventory.addItem(&#39;bag&#39;, &#39;gem&#39;, 30)
+inventory.splitStack(&#39;bag&#39;, &#39;gem&#39;, 0, 10)
+
+let stacks = inventory.getStacks(&#39;bag&#39;, &#39;gem&#39;)
+console.log(stacks) // [{ quantity: 20 }, { quantity: 10 }]
+
+// Merge stack 1 into stack 0
+inventory.mergeStacks(&#39;bag&#39;, &#39;gem&#39;, 1, 0)
+
+stacks = inventory.getStacks(&#39;bag&#39;, &#39;gem&#39;)
+console.log(stacks) // [{ quantity: 30 }]
+</code></pre>
+<p><strong>Throws:</strong></p>
+<ul>
+<li><code>ValidationError</code> — Stack not found</li>
+<li><code>ValidationError</code> — Invalid index</li>
+<li><code>ValidationError</code> — Cannot merge different items</li>
+</ul>
+<hr>
+<h2><code>consolidate()</code></h2>
+<p>Combines all stacks of all items optimally, minimizing the number of stacks.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function consolidate(containerId: ContainerId): void
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>containerId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>ID of the container</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>void</code></p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+inventory.createContainer(&#39;bag&#39;, {
+  mode: &#39;unlimited&#39;,
+  allowStacking: true,
+  maxStackSize: 50,
+})
+
+// Add items in fragments
+inventory.addItem(&#39;bag&#39;, &#39;arrow&#39;, 20)
+inventory.addItem(&#39;bag&#39;, &#39;arrow&#39;, 15)
+inventory.addItem(&#39;bag&#39;, &#39;arrow&#39;, 30)
+inventory.addItem(&#39;bag&#39;, &#39;arrow&#39;, 25)
+
+// Before: 4 stacks (20, 15, 30, 25 = 90 total)
+let stacks = inventory.getStacks(&#39;bag&#39;, &#39;arrow&#39;)
+console.log(stacks.length) // 4
+
+// Consolidate
+inventory.consolidate(&#39;bag&#39;)
+
+// After: 2 stacks (50, 40)
+stacks = inventory.getStacks(&#39;bag&#39;, &#39;arrow&#39;)
+console.log(stacks.length) // 2
+console.log(stacks) // [{ quantity: 50 }, { quantity: 40 }]
+</code></pre>
+<p><strong>Throws:</strong></p>
+<ul>
+<li><code>ValidationError</code> — Use <code>autoArrange()</code> for grid containers</li>
+</ul>
+<hr>
+<h2><code>sort()</code></h2>
+<p>Sorts items in a container using a custom comparison function.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function sort(
+  containerId: ContainerId,
+  compareFn: (a: ItemEntry, b: ItemEntry) =&gt; number
+): void
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>containerId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>ID of the container</td>
+</tr>
+<tr>
+<td><code>compareFn</code></td>
+<td><code>function</code></td>
+<td>Yes</td>
+<td>Comparison function (like <code>Array.sort</code>)</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>void</code></p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+inventory.createContainer(&#39;bag&#39;, { mode: &#39;unlimited&#39; })
+
+inventory.addItem(&#39;bag&#39;, &#39;sword&#39;, 1)
+inventory.addItem(&#39;bag&#39;, &#39;apple&#39;, 5)
+inventory.addItem(&#39;bag&#39;, &#39;gold&#39;, 100)
+
+// Sort alphabetically by item ID
+inventory.sort(&#39;bag&#39;, (a, b) =&gt; a.itemId.localeCompare(b.itemId))
+
+const contents = inventory.getContents(&#39;bag&#39;)
+console.log(contents.map((c) =&gt; c.itemId))
+// [&#39;apple&#39;, &#39;gold&#39;, &#39;sword&#39;]
+
+// Sort by quantity descending
+inventory.sort(&#39;bag&#39;, (a, b) =&gt; b.quantity - a.quantity)
+
+const byQty = inventory.getContents(&#39;bag&#39;)
+console.log(byQty.map((c) =&gt; `${c.itemId}:${c.quantity}`))
+// [&#39;gold:100&#39;, &#39;apple:5&#39;, &#39;sword:1&#39;]
+</code></pre>
+<p><strong>Throws:</strong></p>
+<ul>
+<li><code>ValidationError</code> — Use <code>autoArrange()</code> for grid containers</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

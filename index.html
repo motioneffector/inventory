@@ -14,7 +14,7 @@
       <nav class="header-links">
         <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link" target="_blank">📦 npm</a>
         <a href="https://github.com/motioneffector/inventory" class="header-link" target="_blank">💻 GitHub</a>
-        <a href="https://github.com/motioneffector/inventory/wiki" class="header-link" target="_blank">📖 Manual</a>
+        <a href="manual/index.html" class="header-link">Manual</a>
       </nav>
     </header>
 
@@ -169,14 +169,10 @@
   </div>
 
   <!-- Library (from dist) -->
-  <script type="module">
-    import * as Library from './dist/index.js'
-    window.Library = Library
-  </script>
 
   <!-- Demo scripts (order matters) -->
   <script src="demo-files/test-runner.js"></script>
-  <script src="demo-files/demo.js"></script>
-  <script src="demo-files/tests.js"></script>
+  <script type="module" src="demo-files/demo.js"></script>
+  <script type="module" src="demo-files/tests.js"></script>
 </body>
 </html>

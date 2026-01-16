@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Equipment Slots - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Equipment Slots</h1>
+<p>Create named equipment slots with optional type restrictions. Perfect for character gear, crafting stations, or any UI with specific input positions.</p>
+<h2>Prerequisites</h2>
+<p>Before starting, you should:</p>
+<ul>
+<li><a href="concept-containers.html">Understand how containers work</a></li>
+</ul>
+<h2>Overview</h2>
+<p>We&#39;ll create an equipment system by:</p>
+<ol>
+<li>Creating a container with <code>mode: &#39;slots&#39;</code> and a <code>slots</code> array</li>
+<li>Optionally adding <code>slotFilters</code> for type restrictions</li>
+<li>Using <code>setSlot</code>, <code>getSlot</code>, and <code>clearSlot</code> to manage equipment</li>
+<li>Checking equippability with <code>canEquip</code></li>
+</ol>
+<h2>Step 1: Create a Slots Container</h2>
+<p>Define which slots exist using the <code>slots</code> array.</p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+
+inventory.createContainer(&#39;equipment&#39;, {
+  mode: &#39;slots&#39;,
+  slots: [&#39;head&#39;, &#39;chest&#39;, &#39;legs&#39;, &#39;feet&#39;, &#39;mainhand&#39;, &#39;offhand&#39;],
+})
+</code></pre>
+<p>Slot names are arbitrary strings—use whatever makes sense for your game.</p>
+<h2>Step 2: Add Slot Filters (Optional)</h2>
+<p>Restrict what items can go in each slot using filter functions.</p>
+<pre><code class="language-typescript">inventory.createContainer(&#39;equipment&#39;, {
+  mode: &#39;slots&#39;,
+  slots: [&#39;head&#39;, &#39;chest&#39;, &#39;legs&#39;, &#39;feet&#39;, &#39;mainhand&#39;, &#39;offhand&#39;],
+  slotFilters: {
+    head: (itemId) =&gt; itemId.includes(&#39;helmet&#39;) || itemId.includes(&#39;hat&#39;),
+    chest: (itemId) =&gt; itemId.includes(&#39;armor&#39;) || itemId.includes(&#39;robe&#39;),
+    mainhand: (itemId) =&gt; itemId.includes(&#39;sword&#39;) || itemId.includes(&#39;staff&#39;),
+    offhand: (itemId) =&gt; itemId.includes(&#39;shield&#39;) || itemId.includes(&#39;tome&#39;),
+  },
+})
+</code></pre>
+<p>Slots without filters accept any item.</p>
+<h2>Step 3: Equip Items</h2>
+<p>Use <code>setSlot</code> to equip items. It returns the previously equipped item (or null).</p>
+<pre><code class="language-typescript">// Equip a helmet
+inventory.setSlot(&#39;equipment&#39;, &#39;head&#39;, &#39;iron-helmet&#39;)
+
+// Swap weapons - setSlot returns the old item
+const oldWeapon = inventory.setSlot(&#39;equipment&#39;, &#39;mainhand&#39;, &#39;steel-sword&#39;)
+console.log(oldWeapon) // null (nothing was equipped)
+
+// Replace with a better weapon
+const replaced = inventory.setSlot(&#39;equipment&#39;, &#39;mainhand&#39;, &#39;magic-sword&#39;)
+console.log(replaced) // &#39;steel-sword&#39;
+</code></pre>
+<h2>Step 4: Query and Clear Slots</h2>
+<pre><code class="language-typescript">// Check what&#39;s equipped
+const helmet = inventory.getSlot(&#39;equipment&#39;, &#39;head&#39;)
+console.log(helmet) // &#39;iron-helmet&#39;
+
+// Get all slots at once
+const allSlots = inventory.getAllSlots(&#39;equipment&#39;)
+console.log(allSlots)
+// { head: &#39;iron-helmet&#39;, chest: null, legs: null, feet: null, mainhand: &#39;magic-sword&#39;, offhand: null }
+
+// Unequip an item
+inventory.clearSlot(&#39;equipment&#39;, &#39;head&#39;)
+// Or: inventory.setSlot(&#39;equipment&#39;, &#39;head&#39;, null)
+</code></pre>
+<h2>Step 5: Check Before Equipping</h2>
+<p>Use <code>canEquip</code> to check if an item can go in a slot before trying.</p>
+<pre><code class="language-typescript">// Check if a sword can go in the head slot
+const result = inventory.canEquip(&#39;equipment&#39;, &#39;head&#39;, &#39;steel-sword&#39;)
+console.log(result)
+// { canAdd: false, maxAddable: 0, reason: &#39;slot_filter_failed&#39; }
+
+// Check valid equipment
+const valid = inventory.canEquip(&#39;equipment&#39;, &#39;mainhand&#39;, &#39;steel-sword&#39;)
+console.log(valid)
+// { canAdd: true, maxAddable: 1 }
+</code></pre>
+<h2>Complete Example</h2>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+
+// Character equipment with slot restrictions
+inventory.createContainer(&#39;gear&#39;, {
+  mode: &#39;slots&#39;,
+  slots: [&#39;head&#39;, &#39;chest&#39;, &#39;legs&#39;, &#39;feet&#39;, &#39;mainhand&#39;, &#39;offhand&#39;, &#39;ring1&#39;, &#39;ring2&#39;, &#39;amulet&#39;],
+  slotFilters: {
+    head: (id) =&gt; id.endsWith(&#39;-helmet&#39;) || id.endsWith(&#39;-hat&#39;) || id.endsWith(&#39;-hood&#39;),
+    chest: (id) =&gt; id.endsWith(&#39;-armor&#39;) || id.endsWith(&#39;-robe&#39;),
+    legs: (id) =&gt; id.endsWith(&#39;-pants&#39;) || id.endsWith(&#39;-greaves&#39;),
+    feet: (id) =&gt; id.endsWith(&#39;-boots&#39;),
+    mainhand: (id) =&gt; id.includes(&#39;sword&#39;) || id.includes(&#39;staff&#39;) || id.includes(&#39;axe&#39;),
+    offhand: (id) =&gt; id.includes(&#39;shield&#39;) || id.includes(&#39;tome&#39;) || id.includes(&#39;dagger&#39;),
+    ring1: (id) =&gt; id.startsWith(&#39;ring-&#39;),
+    ring2: (id) =&gt; id.startsWith(&#39;ring-&#39;),
+    amulet: (id) =&gt; id.startsWith(&#39;amulet-&#39;),
+  },
+})
+
+// Equip a full set
+inventory.setSlot(&#39;gear&#39;, &#39;head&#39;, &#39;steel-helmet&#39;)
+inventory.setSlot(&#39;gear&#39;, &#39;chest&#39;, &#39;plate-armor&#39;)
+inventory.setSlot(&#39;gear&#39;, &#39;mainhand&#39;, &#39;longsword&#39;)
+inventory.setSlot(&#39;gear&#39;, &#39;offhand&#39;, &#39;tower-shield&#39;)
+inventory.setSlot(&#39;gear&#39;, &#39;ring1&#39;, &#39;ring-of-strength&#39;)
+inventory.setSlot(&#39;gear&#39;, &#39;amulet&#39;, &#39;amulet-of-protection&#39;)
+
+// Check equipped items
+const equipped = inventory.getAllSlots(&#39;gear&#39;)
+console.log(equipped)
+
+// Try to equip invalid item
+try {
+  inventory.setSlot(&#39;gear&#39;, &#39;head&#39;, &#39;longsword&#39;) // Throws!
+} catch (e) {
+  console.log(&#39;Cannot equip sword as helmet&#39;)
+}
+</code></pre>
+<h2>Variations</h2>
+<h3>Crafting Station Slots</h3>
+<p>Use slots for crafting input/output positions.</p>
+<pre><code class="language-typescript">inventory.createContainer(&#39;forge&#39;, {
+  mode: &#39;slots&#39;,
+  slots: [&#39;input1&#39;, &#39;input2&#39;, &#39;fuel&#39;, &#39;output&#39;],
+  slotFilters: {
+    input1: (id) =&gt; id.includes(&#39;ore&#39;) || id.includes(&#39;ingot&#39;),
+    input2: (id) =&gt; id.includes(&#39;ore&#39;) || id.includes(&#39;ingot&#39;),
+    fuel: (id) =&gt; id === &#39;coal&#39; || id === &#39;wood&#39;,
+    // output has no filter - anything can go there
+  },
+})
+</code></pre>
+<h3>Dynamic Filter Based on Game State</h3>
+<pre><code class="language-typescript">// Filter that checks external game state
+const canEquipTwoHander = (itemId: string) =&gt; {
+  const isTwoHanded = gameData.items[itemId]?.twoHanded
+  const offhandEmpty = inventory.getSlot(&#39;equipment&#39;, &#39;offhand&#39;) === null
+  return !isTwoHanded || offhandEmpty
+}
+
+inventory.createContainer(&#39;equipment&#39;, {
+  mode: &#39;slots&#39;,
+  slots: [&#39;mainhand&#39;, &#39;offhand&#39;],
+  slotFilters: {
+    mainhand: canEquipTwoHander,
+  },
+})
+</code></pre>
+<h3>Swapping Items Between Slots</h3>
+<pre><code class="language-typescript">function swapSlots(container: string, slot1: string, slot2: string) {
+  const item1 = inventory.getSlot(container, slot1)
+  const item2 = inventory.getSlot(container, slot2)
+
+  inventory.transaction(() =&gt; {
+    inventory.setSlot(container, slot1, null)
+    inventory.setSlot(container, slot2, null)
+    if (item1) inventory.setSlot(container, slot2, item1)
+    if (item2) inventory.setSlot(container, slot1, item2)
+  })
+}
+</code></pre>
+<h2>Troubleshooting</h2>
+<h3>setSlot Throws Error</h3>
+<p><strong>Symptom:</strong> <code>setSlot</code> throws <code>ValidationError</code> instead of returning false.</p>
+<p><strong>Cause:</strong> The slot filter rejected the item.</p>
+<p><strong>Solution:</strong> Use <code>canEquip</code> first to check, or wrap in try/catch:</p>
+<pre><code class="language-typescript">if (inventory.canEquip(&#39;equipment&#39;, &#39;head&#39;, itemId).canAdd) {
+  inventory.setSlot(&#39;equipment&#39;, &#39;head&#39;, itemId)
+}
+</code></pre>
+<h3>Slot Not Found</h3>
+<p><strong>Symptom:</strong> <code>getSlot</code> or <code>setSlot</code> throws &quot;slot does not exist&quot;.</p>
+<p><strong>Cause:</strong> The slot name wasn&#39;t included in the <code>slots</code> array when creating the container.</p>
+<p><strong>Solution:</strong> Ensure all slot names are defined in the container config.</p>
+<h2>See Also</h2>
+<ul>
+<li><strong><a href="concept-storage-modes.html">Storage Modes</a></strong> - Overview of all container modes</li>
+<li><strong><a href="api-slot-operations.html">Slot Operations API</a></strong> - Reference for <code>setSlot</code>, <code>getSlot</code>, <code>getAllSlots</code>, <code>clearSlot</code>, <code>canEquip</code></li>
+<li><strong><a href="concept-events-and-transactions.html">Events</a></strong> - The <code>slotChanged</code> event fires on equipment changes</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events API - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Events API</h1>
+<p>Reactive subscription system for inventory changes.</p>
+<hr>
+<h2><code>on()</code></h2>
+<p>Subscribes to an inventory event. Returns an unsubscribe function.</p>
+<p><strong>Signature:</strong></p>
+<pre><code class="language-typescript">function on(event: EventName, callback: EventCallback): () =&gt; void
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>event</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Event name to subscribe to</td>
+</tr>
+<tr>
+<td><code>callback</code></td>
+<td><code>function</code></td>
+<td>Yes</td>
+<td>Function called when event fires</td>
+</tr>
+</tbody></table>
+<p><strong>Returns:</strong> <code>() =&gt; void</code> — Call this function to unsubscribe</p>
+<hr>
+<h2>Event Types</h2>
+<h3><code>itemAdded</code></h3>
+<p>Fires when items are added to a container.</p>
+<pre><code class="language-typescript">inventory.on(&#39;itemAdded&#39;, (event: ItemAddedEvent) =&gt; {
+  console.log(`Added ${event.quantity} ${event.itemId} to ${event.containerId}`)
+  console.log(`New total: ${event.newTotal}`)
+})
+</code></pre>
+<p><strong>Payload:</strong> <code>ItemAddedEvent</code></p>
+<pre><code class="language-typescript">type ItemAddedEvent = {
+  containerId: string
+  itemId: string
+  quantity: number
+  newTotal: number
+}
+</code></pre>
+<hr>
+<h3><code>itemRemoved</code></h3>
+<p>Fires when items are removed from a container.</p>
+<pre><code class="language-typescript">inventory.on(&#39;itemRemoved&#39;, (event: ItemRemovedEvent) =&gt; {
+  console.log(`Removed ${event.quantity} ${event.itemId} from ${event.containerId}`)
+  console.log(`Remaining: ${event.newTotal}`)
+})
+</code></pre>
+<p><strong>Payload:</strong> <code>ItemRemovedEvent</code></p>
+<pre><code class="language-typescript">type ItemRemovedEvent = {
+  containerId: string
+  itemId: string
+  quantity: number
+  newTotal: number
+}
+</code></pre>
+<hr>
+<h3><code>itemTransferred</code></h3>
+<p>Fires when items are transferred between containers.</p>
+<pre><code class="language-typescript">inventory.on(&#39;itemTransferred&#39;, (event: ItemTransferredEvent) =&gt; {
+  console.log(`Moved ${event.quantity} ${event.itemId} from ${event.from} to ${event.to}`)
+})
+</code></pre>
+<p><strong>Payload:</strong> <code>ItemTransferredEvent</code></p>
+<pre><code class="language-typescript">type ItemTransferredEvent = {
+  from: string
+  to: string
+  itemId: string
+  quantity: number
+}
+</code></pre>
+<hr>
+<h3><code>containerFull</code></h3>
+<p>Fires when an add operation fails due to capacity limits.</p>
+<pre><code class="language-typescript">inventory.on(&#39;containerFull&#39;, (event: ContainerFullEvent) =&gt; {
+  showNotification(`Couldn&#39;t fit ${event.overflow} ${event.itemId}!`)
+})
+</code></pre>
+<p><strong>Payload:</strong> <code>ContainerFullEvent</code></p>
+<pre><code class="language-typescript">type ContainerFullEvent = {
+  containerId: string
+  itemId: string
+  overflow: number
+}
+</code></pre>
+<hr>
+<h3><code>slotChanged</code></h3>
+<p>Fires when an equipment slot changes.</p>
+<pre><code class="language-typescript">inventory.on(&#39;slotChanged&#39;, (event: SlotChangedEvent) =&gt; {
+  if (event.newItem) {
+    updateCharacterModel(event.slot, event.newItem)
+  } else {
+    clearCharacterSlot(event.slot)
+  }
+})
+</code></pre>
+<p><strong>Payload:</strong> <code>SlotChangedEvent</code></p>
+<pre><code class="language-typescript">type SlotChangedEvent = {
+  containerId: string
+  slot: string
+  oldItem: string | null
+  newItem: string | null
+}
+</code></pre>
+<hr>
+<h3><code>containerRemoved</code></h3>
+<p>Fires when a container is destroyed.</p>
+<pre><code class="language-typescript">inventory.on(&#39;containerRemoved&#39;, (event: ContainerRemovedEvent) =&gt; {
+  console.log(`Container ${event.containerId} was removed`)
+})
+</code></pre>
+<p><strong>Payload:</strong> <code>ContainerRemovedEvent</code></p>
+<pre><code class="language-typescript">type ContainerRemovedEvent = {
+  containerId: string
+}
+</code></pre>
+<hr>
+<h2>Complete Example</h2>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+
+// Subscribe to multiple events
+const unsubAdd = inventory.on(&#39;itemAdded&#39;, (e) =&gt; {
+  console.log(`+ ${e.quantity} ${e.itemId}`)
+})
+
+const unsubRemove = inventory.on(&#39;itemRemoved&#39;, (e) =&gt; {
+  console.log(`- ${e.quantity} ${e.itemId}`)
+})
+
+const unsubFull = inventory.on(&#39;containerFull&#39;, (e) =&gt; {
+  console.log(`! Container full, ${e.overflow} ${e.itemId} overflow`)
+})
+
+// Use the inventory
+inventory.createContainer(&#39;bag&#39;, { mode: &#39;count&#39;, maxCount: 3 })
+inventory.addItem(&#39;bag&#39;, &#39;apple&#39;, 1)  // Logs: + 1 apple
+inventory.addItem(&#39;bag&#39;, &#39;bread&#39;, 1)  // Logs: + 1 bread
+inventory.addItem(&#39;bag&#39;, &#39;water&#39;, 1)  // Logs: + 1 water
+inventory.addItem(&#39;bag&#39;, &#39;gem&#39;, 1)    // Logs: ! Container full, 1 gem overflow
+inventory.removeItem(&#39;bag&#39;, &#39;apple&#39;, 1) // Logs: - 1 apple
+
+// Later, clean up
+unsubAdd()
+unsubRemove()
+unsubFull()
+</code></pre>
+<hr>
+<h2>Notes</h2>
+<ul>
+<li>Events fire synchronously during the operation.</li>
+<li>Multiple listeners can subscribe to the same event.</li>
+<li>Events are not preserved through serialization—resubscribe after loading.</li>
+<li>Always call the unsubscribe function when done to prevent memory leaks.</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

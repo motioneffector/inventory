@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Serialization - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Serialization</h1>
+<p>Save and restore inventory state for persistence. The library provides built-in serialization that captures containers, items, positions, and locks.</p>
+<h2>Prerequisites</h2>
+<p>Before starting, you should:</p>
+<ul>
+<li><a href="your-first-inventory.html">Have a working inventory setup</a></li>
+</ul>
+<h2>Overview</h2>
+<p>We&#39;ll save and restore inventories by:</p>
+<ol>
+<li>Calling <code>serialize()</code> to get a serializable object</li>
+<li>Storing the data as JSON</li>
+<li>Calling <code>deserialize(data)</code> to restore</li>
+<li>Using <code>serializeContainer()</code> for single-container snapshots</li>
+</ol>
+<h2>Step 1: Serialize the Inventory</h2>
+<p>Call <code>serialize()</code> to get a plain JavaScript object representing the entire inventory state.</p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+
+inventory.createContainer(&#39;backpack&#39;, { mode: &#39;unlimited&#39; })
+inventory.addItem(&#39;backpack&#39;, &#39;sword&#39;, 1)
+inventory.addItem(&#39;backpack&#39;, &#39;potion&#39;, 5)
+
+// Get serializable data
+const data = inventory.serialize()
+console.log(data)
+// { containers: [{ id: &#39;backpack&#39;, config: {...}, items: [...], lockedItems: [] }] }
+</code></pre>
+<h2>Step 2: Store as JSON</h2>
+<p>Convert to JSON for storage in files, localStorage, or databases.</p>
+<pre><code class="language-typescript">// Convert to JSON string
+const jsonString = JSON.stringify(data)
+
+// Store it (examples)
+localStorage.setItem(&#39;inventory&#39;, jsonString)
+// or: fs.writeFileSync(&#39;save.json&#39;, jsonString)
+// or: await db.save(&#39;player_inventory&#39;, jsonString)
+</code></pre>
+<h2>Step 3: Restore the Inventory</h2>
+<p>Parse the JSON and call <code>deserialize()</code> to restore the state.</p>
+<pre><code class="language-typescript">// Load from storage
+const jsonString = localStorage.getItem(&#39;inventory&#39;)
+const savedData = JSON.parse(jsonString)
+
+// Create a fresh manager with the SAME callbacks
+const inventory = createInventoryManager({
+  getItemWeight: (id) =&gt; itemWeights[id] ?? 1,
+  getItemSize: (id) =&gt; itemSizes[id] ?? { width: 1, height: 1 },
+})
+
+// Restore state
+inventory.deserialize(savedData)
+
+// Continue using the inventory
+console.log(inventory.getContents(&#39;backpack&#39;))
+</code></pre>
+<h2>Step 4: Serialize Single Container</h2>
+<p>Use <code>serializeContainer()</code> when you only need one container&#39;s data.</p>
+<pre><code class="language-typescript">// Serialize just the backpack
+const backpackData = inventory.serializeContainer(&#39;backpack&#39;)
+
+// Later, restore using deserialize with containers array
+const newManager = createInventoryManager()
+newManager.deserialize({ containers: [backpackData] })
+</code></pre>
+<h2>Complete Example</h2>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+// Item data (would come from your game&#39;s database)
+const itemData = {
+  sword: { weight: 5, size: { width: 1, height: 3 } },
+  shield: { weight: 8, size: { width: 2, height: 2 } },
+  potion: { weight: 0.5, size: { width: 1, height: 1 } },
+}
+
+function createManager() {
+  return createInventoryManager({
+    getItemWeight: (id) =&gt; itemData[id]?.weight ?? 1,
+    getItemSize: (id) =&gt; itemData[id]?.size ?? { width: 1, height: 1 },
+  })
+}
+
+// --- SAVE ---
+function saveGame() {
+  const data = inventory.serialize()
+  localStorage.setItem(&#39;save&#39;, JSON.stringify(data))
+  console.log(&#39;Game saved!&#39;)
+}
+
+// --- LOAD ---
+function loadGame(): boolean {
+  const saved = localStorage.getItem(&#39;save&#39;)
+  if (!saved) return false
+
+  const data = JSON.parse(saved)
+  inventory = createManager()
+  inventory.deserialize(data)
+  console.log(&#39;Game loaded!&#39;)
+  return true
+}
+
+// --- USAGE ---
+let inventory = createManager()
+
+// Try to load, or start fresh
+if (!loadGame()) {
+  // New game setup
+  inventory.createContainer(&#39;backpack&#39;, { mode: &#39;weight&#39;, maxWeight: 50 })
+  inventory.createContainer(&#39;equipment&#39;, {
+    mode: &#39;slots&#39;,
+    slots: [&#39;head&#39;, &#39;chest&#39;, &#39;mainhand&#39;],
+  })
+}
+
+// Play the game...
+inventory.addItem(&#39;backpack&#39;, &#39;potion&#39;, 3)
+inventory.setSlot(&#39;equipment&#39;, &#39;mainhand&#39;, &#39;sword&#39;)
+
+// Save progress
+saveGame()
+</code></pre>
+<h2>What Gets Serialized</h2>
+<p>The serialized data includes:</p>
+<ul>
+<li><strong>Container configs</strong> - Mode, dimensions, slots, max values</li>
+<li><strong>Items</strong> - Item IDs, quantities, stack positions</li>
+<li><strong>Grid positions</strong> - Where items are placed in grid containers</li>
+<li><strong>Slot assignments</strong> - Which items are in which slots</li>
+<li><strong>Locked items</strong> - Which items are locked</li>
+</ul>
+<h2>What Doesn&#39;t Get Serialized</h2>
+<ul>
+<li><strong>Callbacks</strong> - <code>getItemWeight</code>, <code>getItemSize</code>, <code>getItemStackLimit</code> are not stored</li>
+<li><strong>Event listeners</strong> - Subscriptions must be re-attached after load</li>
+<li><strong>Manager options</strong> - <code>defaultStackSize</code> and other options must be re-provided</li>
+</ul>
+<h2>Variations</h2>
+<h3>Selective Restoration</h3>
+<p>Load specific containers without clearing others.</p>
+<pre><code class="language-typescript">// This clears all existing containers before restoring
+inventory.deserialize(savedData)
+
+// To preserve existing containers, manually recreate only what you need
+const saved = JSON.parse(localStorage.getItem(&#39;character-inventory&#39;))
+for (const containerData of saved.containers) {
+  if (containerData.id.startsWith(&#39;character-&#39;)) {
+    // Remove old version if exists
+    try { inventory.removeContainer(containerData.id) } catch {}
+    // Restore from save
+    inventory.deserialize({ containers: [containerData] })
+  }
+}
+</code></pre>
+<h3>Version Migration</h3>
+<p>Handle save format changes between game versions.</p>
+<pre><code class="language-typescript">function deserializeWithMigration(data: any) {
+  // Check version
+  if (!data.version || data.version &lt; 2) {
+    // Migrate old format
+    data = migrateV1ToV2(data)
+  }
+
+  inventory.deserialize(data)
+}
+
+function migrateV1ToV2(oldData: any) {
+  // Transform old format to new format
+  return {
+    containers: oldData.containers.map((c) =&gt; ({
+      ...c,
+      // Add new required fields
+      lockedItems: c.lockedItems ?? [],
+    })),
+  }
+}
+</code></pre>
+<h2>Troubleshooting</h2>
+<h3>Deserialization Fails</h3>
+<p><strong>Symptom:</strong> <code>deserialize</code> throws an error about invalid data.</p>
+<p><strong>Cause:</strong> The data structure doesn&#39;t match expected format, or contains invalid values.</p>
+<p><strong>Solution:</strong> Validate the data before deserializing:</p>
+<pre><code class="language-typescript">try {
+  inventory.deserialize(data)
+} catch (e) {
+  console.error(&#39;Failed to load save:&#39;, e.message)
+  // Fall back to fresh inventory
+}
+</code></pre>
+<h3>Items Missing After Load</h3>
+<p><strong>Symptom:</strong> Containers exist but items are missing or have wrong quantities.</p>
+<p><strong>Cause:</strong> Grid items need <code>getItemSize</code> callback to restore positions correctly.</p>
+<p><strong>Solution:</strong> Ensure the manager is created with the same callbacks before deserializing:</p>
+<pre><code class="language-typescript">// WRONG: deserialize first, add callbacks later
+const inventory = createInventoryManager()
+inventory.deserialize(data) // Grid items may fail
+
+// RIGHT: callbacks before deserialize
+const inventory = createInventoryManager({
+  getItemSize: (id) =&gt; sizes[id],
+})
+inventory.deserialize(data) // Works correctly
+</code></pre>
+<h2>See Also</h2>
+<ul>
+<li><strong><a href="api-serialization.html">Serialization API</a></strong> - Reference for <code>serialize</code>, <code>deserialize</code>, <code>serializeContainer</code></li>
+<li><strong><a href="concept-events-and-transactions.html">Events</a></strong> - Re-attaching listeners after load</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

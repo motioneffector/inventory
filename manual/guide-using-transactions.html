@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Using Transactions - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>Using Transactions</h1>
+<p>Perform atomic operations that roll back on failure. Transactions ensure multiple inventory changes either all succeed or all fail together.</p>
+<h2>Prerequisites</h2>
+<p>Before starting, you should:</p>
+<ul>
+<li><a href="your-first-inventory.html">Know basic inventory operations</a></li>
+<li><a href="concept-events-and-transactions.html">Understand events and transactions concept</a></li>
+</ul>
+<h2>Overview</h2>
+<p>We&#39;ll use transactions by:</p>
+<ol>
+<li>Wrapping operations in <code>transaction(() =&gt; { ... })</code></li>
+<li>Throwing errors to trigger rollback</li>
+<li>Understanding what gets rolled back</li>
+</ol>
+<h2>Step 1: Wrap Operations in Transaction</h2>
+<p>Any operations inside the callback run atomically.</p>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager()
+
+inventory.createContainer(&#39;player&#39;, { mode: &#39;unlimited&#39; })
+inventory.createContainer(&#39;shop&#39;, { mode: &#39;unlimited&#39; })
+inventory.addItem(&#39;player&#39;, &#39;gold&#39;, 100)
+inventory.addItem(&#39;shop&#39;, &#39;sword&#39;, 1)
+
+// All operations succeed or fail together
+inventory.transaction(() =&gt; {
+  inventory.removeItem(&#39;player&#39;, &#39;gold&#39;, 50)
+  inventory.addItem(&#39;player&#39;, &#39;sword&#39;, 1)
+  inventory.removeItem(&#39;shop&#39;, &#39;sword&#39;, 1)
+  inventory.addItem(&#39;shop&#39;, &#39;gold&#39;, 50)
+})
+
+console.log(inventory.getQuantity(&#39;player&#39;, &#39;gold&#39;))  // 50
+console.log(inventory.getQuantity(&#39;player&#39;, &#39;sword&#39;)) // 1
+</code></pre>
+<h2>Step 2: Trigger Rollback with Errors</h2>
+<p>Throw any error inside the transaction to roll back all changes.</p>
+<pre><code class="language-typescript">inventory.createContainer(&#39;bag&#39;, { mode: &#39;unlimited&#39; })
+inventory.addItem(&#39;bag&#39;, &#39;gem&#39;, 10)
+
+try {
+  inventory.transaction(() =&gt; {
+    inventory.removeItem(&#39;bag&#39;, &#39;gem&#39;, 5)
+    // Some condition fails
+    if (true) {
+      throw new Error(&#39;Transaction cancelled&#39;)
+    }
+    inventory.addItem(&#39;bag&#39;, &#39;processed-gem&#39;, 5)
+  })
+} catch (e) {
+  console.log(&#39;Transaction failed:&#39;, e.message)
+}
+
+// Rollback occurred - still have 10 gems
+console.log(inventory.getQuantity(&#39;bag&#39;, &#39;gem&#39;)) // 10
+</code></pre>
+<h2>Step 3: Check Results Before Committing</h2>
+<p>Validate operation results and throw if something went wrong.</p>
+<pre><code class="language-typescript">function safePurchase(itemId: string, price: number) {
+  inventory.transaction(() =&gt; {
+    // Remove gold
+    const goldRemoved = inventory.removeItem(&#39;player&#39;, &#39;gold&#39;, price)
+    if (goldRemoved &lt; price) {
+      throw new Error(`Need ${price} gold, only have ${goldRemoved}`)
+    }
+
+    // Add item
+    const result = inventory.addItem(&#39;player&#39;, itemId, 1)
+    if (!result.success) {
+      throw new Error(`Cannot add ${itemId}: ${result.reason}`)
+    }
+
+    // Remove from shop
+    const shopRemoved = inventory.removeItem(&#39;shop&#39;, itemId, 1)
+    if (shopRemoved === 0) {
+      throw new Error(`${itemId} not in stock`)
+    }
+  })
+}
+</code></pre>
+<h2>Complete Example</h2>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+const inventory = createInventoryManager({
+  getItemWeight: (id) =&gt; {
+    if (id === &#39;gold&#39;) return 0.01
+    if (id.includes(&#39;potion&#39;)) return 0.5
+    if (id.includes(&#39;sword&#39;)) return 5
+    return 1
+  },
+})
+
+// Setup game state
+inventory.createContainer(&#39;player&#39;, { mode: &#39;weight&#39;, maxWeight: 30 })
+inventory.createContainer(&#39;merchant&#39;, { mode: &#39;unlimited&#39; })
+inventory.createContainer(&#39;craftingTable&#39;, { mode: &#39;unlimited&#39; })
+
+inventory.addItem(&#39;player&#39;, &#39;gold&#39;, 200)
+inventory.addItem(&#39;player&#39;, &#39;iron-ore&#39;, 5)
+inventory.addItem(&#39;merchant&#39;, &#39;health-potion&#39;, 20)
+inventory.addItem(&#39;merchant&#39;, &#39;steel-sword&#39;, 1)
+
+// --- BUYING ---
+function buy(item: string, price: number): boolean {
+  try {
+    inventory.transaction(() =&gt; {
+      const paid = inventory.removeItem(&#39;player&#39;, &#39;gold&#39;, price)
+      if (paid &lt; price) throw new Error(&#39;Not enough gold&#39;)
+
+      const result = inventory.addItem(&#39;player&#39;, item, 1)
+      if (!result.success) throw new Error(&#39;Inventory full&#39;)
+
+      inventory.removeItem(&#39;merchant&#39;, item, 1)
+    })
+    console.log(`Bought ${item} for ${price} gold`)
+    return true
+  } catch (e) {
+    console.log(`Failed to buy ${item}: ${e.message}`)
+    return false
+  }
+}
+
+// --- CRAFTING ---
+function craft(materials: Record&lt;string, number&gt;, result: string): boolean {
+  try {
+    inventory.transaction(() =&gt; {
+      // Remove all materials
+      for (const [material, count] of Object.entries(materials)) {
+        const removed = inventory.removeItem(&#39;player&#39;, material, count)
+        if (removed &lt; count) {
+          throw new Error(`Need ${count} ${material}, only have ${removed}`)
+        }
+      }
+
+      // Add crafted item
+      const addResult = inventory.addItem(&#39;player&#39;, result, 1)
+      if (!addResult.success) {
+        throw new Error(&#39;No room for crafted item&#39;)
+      }
+    })
+    console.log(`Crafted ${result}`)
+    return true
+  } catch (e) {
+    console.log(`Crafting failed: ${e.message}`)
+    return false
+  }
+}
+
+// Test purchases
+buy(&#39;health-potion&#39;, 10) // Success
+buy(&#39;steel-sword&#39;, 50)   // Success if weight allows
+
+// Test crafting
+craft({ &#39;iron-ore&#39;: 3 }, &#39;iron-ingot&#39;)
+</code></pre>
+<h2>Variations</h2>
+<h3>Nested Transactions</h3>
+<p>Transactions can&#39;t be nested—the outer transaction encompasses everything.</p>
+<pre><code class="language-typescript">inventory.transaction(() =&gt; {
+  inventory.addItem(&#39;bag&#39;, &#39;item1&#39;, 1)
+
+  // This is NOT a separate transaction
+  // It&#39;s part of the outer transaction
+  inventory.transaction(() =&gt; {
+    inventory.addItem(&#39;bag&#39;, &#39;item2&#39;, 1)
+    throw new Error(&#39;Inner error&#39;)
+  })
+
+  // This line never runs - outer transaction rolls back too
+  inventory.addItem(&#39;bag&#39;, &#39;item3&#39;, 1)
+})
+// Both item1 and item2 are rolled back
+</code></pre>
+<h3>Conditional Commits</h3>
+<pre><code class="language-typescript">function tradeIfProfitable(selling: string, buying: string, ratio: number) {
+  inventory.transaction(() =&gt; {
+    const sellCount = inventory.getQuantity(&#39;player&#39;, selling)
+    const sellPrice = sellCount * getPrice(selling)
+    const buyPrice = getPrice(buying)
+
+    if (sellPrice &lt; buyPrice * ratio) {
+      throw new Error(&#39;Not profitable enough&#39;)
+    }
+
+    inventory.removeItem(&#39;player&#39;, selling, sellCount)
+    inventory.addItem(&#39;player&#39;, buying, Math.floor(sellPrice / buyPrice))
+  })
+}
+</code></pre>
+<h3>Logging Within Transactions</h3>
+<p>Logs still execute even if transaction rolls back.</p>
+<pre><code class="language-typescript">inventory.transaction(() =&gt; {
+  console.log(&#39;Starting transaction&#39;) // Always logs
+
+  inventory.addItem(&#39;bag&#39;, &#39;item&#39;, 1)
+  console.log(&#39;Added item&#39;) // Logs even if rolled back
+
+  throw new Error(&#39;Oops&#39;)
+})
+// Console shows both log messages, but item wasn&#39;t added
+</code></pre>
+<h2>Troubleshooting</h2>
+<h3>Changes Persist After Error</h3>
+<p><strong>Symptom:</strong> Operations outside the transaction callback aren&#39;t rolled back.</p>
+<p><strong>Cause:</strong> Only operations inside <code>transaction(() =&gt; { ... })</code> are atomic.</p>
+<p><strong>Solution:</strong> Move all related operations inside the transaction:</p>
+<pre><code class="language-typescript">// WRONG: preparation outside transaction
+inventory.addItem(&#39;temp&#39;, &#39;item&#39;, 1) // Not rolled back
+inventory.transaction(() =&gt; {
+  throw new Error(&#39;fail&#39;)
+})
+
+// RIGHT: everything inside
+inventory.transaction(() =&gt; {
+  inventory.addItem(&#39;temp&#39;, &#39;item&#39;, 1) // Rolled back on error
+  throw new Error(&#39;fail&#39;)
+})
+</code></pre>
+<h3>Async Operations Don&#39;t Roll Back</h3>
+<p><strong>Symptom:</strong> Operations in async callbacks aren&#39;t rolled back.</p>
+<p><strong>Cause:</strong> Transactions are synchronous. Async operations complete after the transaction.</p>
+<p><strong>Solution:</strong> Don&#39;t use async/await inside transactions:</p>
+<pre><code class="language-typescript">// WRONG: async inside transaction
+inventory.transaction(async () =&gt; {
+  await someAsyncOperation() // Transaction completes before this
+  inventory.addItem(&#39;bag&#39;, &#39;item&#39;, 1)
+})
+
+// RIGHT: prepare data first, then use transaction
+const data = await someAsyncOperation()
+inventory.transaction(() =&gt; {
+  inventory.addItem(&#39;bag&#39;, data.itemId, 1)
+})
+</code></pre>
+<h2>See Also</h2>
+<ul>
+<li><strong><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></strong> - Conceptual overview</li>
+<li><strong><a href="api-transactions.html">Transactions API</a></strong> - Reference for <code>transaction()</code></li>
+<li><strong><a href="guide-transferring-items.html">Transferring Items</a></strong> - Common use case for transactions</li>
+</ul>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

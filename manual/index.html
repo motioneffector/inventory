@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>@motioneffector/inventory - @motioneffector/inventory</title>
+  <link rel="stylesheet" href="../demo-files/demo.css">
+  <link rel="stylesheet" href="manual.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">@motioneffector/inventory</h1>
+      <p class="header-description">Documentation</p>
+      <nav class="header-links">
+        <a href="../index.html" class="header-link">Demo</a>
+        <a href="https://www.npmjs.com/package/@motioneffector/inventory" class="header-link">npm</a>
+        <a href="https://github.com/motioneffector/inventory" class="header-link">GitHub</a>
+      </nav>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-sidebar">
+        <nav class="sidebar-nav">
+<p><strong><a href="index.html">@motioneffector/inventory</a></strong></p>
+<p><strong>Getting Started</strong></p>
+<ul>
+<li><a href="installation.html">Installation</a></li>
+<li><a href="your-first-inventory.html">Your First Inventory</a></li>
+</ul>
+<p><strong>Core Concepts</strong></p>
+<ul>
+<li><a href="concept-containers.html">Containers</a></li>
+<li><a href="concept-storage-modes.html">Storage Modes</a></li>
+<li><a href="concept-item-metadata.html">Item Metadata</a></li>
+<li><a href="concept-stacking.html">Stacking</a></li>
+<li><a href="concept-events-and-transactions.html">Events &amp; Transactions</a></li>
+</ul>
+<p><strong>Guides</strong></p>
+<ul>
+<li><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></li>
+<li><a href="guide-grid-placement.html">Grid Placement</a></li>
+<li><a href="guide-equipment-slots.html">Equipment Slots</a></li>
+<li><a href="guide-nested-containers.html">Nested Containers</a></li>
+<li><a href="guide-transferring-items.html">Transferring Items</a></li>
+<li><a href="guide-serialization.html">Serialization</a></li>
+<li><a href="guide-using-transactions.html">Using Transactions</a></li>
+<li><a href="guide-locking-items.html">Locking Items</a></li>
+</ul>
+<p><strong>API Reference</strong></p>
+<ul>
+<li><a href="api-container-management.html">Container Management</a></li>
+<li><a href="api-item-operations.html">Item Operations</a></li>
+<li><a href="api-querying.html">Querying</a></li>
+<li><a href="api-grid-operations.html">Grid Operations</a></li>
+<li><a href="api-slot-operations.html">Slot Operations</a></li>
+<li><a href="api-stack-operations.html">Stack Operations</a></li>
+<li><a href="api-locking.html">Locking</a></li>
+<li><a href="api-events.html">Events</a></li>
+<li><a href="api-transactions.html">Transactions</a></li>
+<li><a href="api-serialization.html">Serialization</a></li>
+</ul>
+
+        </nav>
+      </aside>
+
+      <main class="manual-content">
+        <article class="manual-article">
+<h1>@motioneffector/inventory</h1>
+<p>An inventory is a collection of containers, each with rules about what goes in and how. You define the rules—capacity limits, item sizes, equipment restrictions—and the library enforces them. Whether you need a simple backpack, a weight-limited carry system, a Tetris-style grid, or named equipment slots, this library provides the building blocks.</p>
+<h2>I want to...</h2>
+<table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>Where to go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Get up and running quickly</td>
+<td><a href="your-first-inventory.html">Your First Inventory</a></td>
+</tr>
+<tr>
+<td>Understand how containers work</td>
+<td><a href="concept-containers.html">Containers</a></td>
+</tr>
+<tr>
+<td>Create a weight-limited inventory</td>
+<td><a href="guide-weight-based-inventories.html">Weight-Based Inventories</a></td>
+</tr>
+<tr>
+<td>Build a Tetris-style grid</td>
+<td><a href="guide-grid-placement.html">Grid Placement</a></td>
+</tr>
+<tr>
+<td>Set up equipment slots</td>
+<td><a href="guide-equipment-slots.html">Equipment Slots</a></td>
+</tr>
+<tr>
+<td>Save/load inventory state</td>
+<td><a href="guide-serialization.html">Serialization</a></td>
+</tr>
+<tr>
+<td>Look up a specific method</td>
+<td><a href="api-container-management.html">API Reference</a></td>
+</tr>
+</tbody></table>
+<h2>Key Concepts</h2>
+<h3>Containers</h3>
+<p>Containers are named storage units where items live. Each container has a unique ID and a configuration that determines its storage mode and capacity. You create containers, add items to them, query their contents, and optionally nest them inside each other.</p>
+<h3>Storage Modes</h3>
+<p>Every container has a mode that controls how it accepts items. The six modes are: <code>unlimited</code> (no limits), <code>count</code> (max stacks), <code>weight</code> (max weight), <code>grid</code> (2D Tetris-style), <code>slots</code> (named equipment slots), and <code>combined</code> (multiple rules).</p>
+<h3>Item Metadata</h3>
+<p>The library doesn&#39;t know your game&#39;s items. You teach it through callback functions: <code>getItemWeight</code> for weight calculations, <code>getItemSize</code> for grid dimensions, and <code>getItemStackLimit</code> for per-item stack limits.</p>
+<h2>Quick Example</h2>
+<pre><code class="language-typescript">import { createInventoryManager } from &#39;@motioneffector/inventory&#39;
+
+// Create a manager with item metadata callbacks
+const inventory = createInventoryManager({
+  getItemWeight: (id) =&gt; ({ sword: 5, potion: 1, gold: 0.01 }[id] ?? 1),
+  getItemSize: (id) =&gt; ({ sword: { width: 1, height: 3 } }[id] ?? { width: 1, height: 1 }),
+})
+
+// Create a weight-limited backpack
+inventory.createContainer(&#39;backpack&#39;, {
+  mode: &#39;weight&#39;,
+  maxWeight: 50,
+})
+
+// Add items
+inventory.addItem(&#39;backpack&#39;, &#39;sword&#39;, 1)   // 5 weight
+inventory.addItem(&#39;backpack&#39;, &#39;potion&#39;, 10) // 10 weight
+
+// Query inventory
+const contents = inventory.getContents(&#39;backpack&#39;)
+const remaining = inventory.getRemainingCapacity(&#39;backpack&#39;) // { type: &#39;weight&#39;, remaining: 35 }
+const canFit = inventory.canAdd(&#39;backpack&#39;, &#39;potion&#39;, 100)   // { canAdd: true, maxAddable: 35 }
+</code></pre>
+<hr>
+<p><strong><a href="api-container-management.html">Full API Reference →</a></strong></p>
+
+        </article>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
