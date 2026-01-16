@@ -8,7 +8,8 @@ coverage/
 .claude/
 *.patch
 
-# Ignore all root markdown files except README and CHANGELOG
+# Ignore all root markdown files except README, CHANGELOG, and AGENTS
 /*.md
 !README.md
 !CHANGELOG.md
+!AGENTS.md
