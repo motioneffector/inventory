@@ -169,14 +169,10 @@
   </div>
 
   <!-- Library (from dist) -->
-  <script type="module">
-    import * as Library from './dist/index.js'
-    window.Library = Library
-  </script>
 
   <!-- Demo scripts (order matters) -->
   <script src="demo-files/test-runner.js"></script>
-  <script src="demo-files/demo.js"></script>
-  <script src="demo-files/tests.js"></script>
+  <script type="module" src="demo-files/demo.js"></script>
+  <script type="module" src="demo-files/tests.js"></script>
 </body>
 </html>

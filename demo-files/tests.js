@@ -1,3 +1,7 @@
+// Import library to ensure it is available (also set by demo.js)
+import * as Library from '../dist/index.js'
+if (!window.Library) window.Library = Library
+
 // ============================================
 // DEMO INTEGRITY TESTS
 // These tests verify the demo itself is correctly structured.
