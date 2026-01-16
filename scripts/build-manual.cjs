@@ -6,7 +6,7 @@ const path = require('path');
 // CONFIGURATION
 // ============================================
 
-const WIKI_DIR = './wiki';
+const SRC_DIR = './manual/src';
 const MANUAL_DIR = './manual';
 const TEMPLATE_PATH = './scripts/manual-template.html';
 const CSS_SOURCE = './scripts/manual.css';
@@ -30,14 +30,14 @@ template = template.replace(/%%LIBRARY_NAME%%/g, LIBRARY_NAME);
 // SIDEBAR PROCESSING
 // ============================================
 
-const sidebarMd = fs.readFileSync(path.join(WIKI_DIR, '_Sidebar.md'), 'utf-8');
+const sidebarMd = fs.readFileSync(path.join(SRC_DIR, '_Sidebar.md'), 'utf-8');
 const sidebarHtml = transformLinks(marked.parse(sidebarMd));
 
 // ============================================
 // PAGE PROCESSING
 // ============================================
 
-const files = fs.readdirSync(WIKI_DIR).filter(f =>
+const files = fs.readdirSync(SRC_DIR).filter(f =>
   f.endsWith('.md') && f !== '_Sidebar.md'
 );
 
@@ -46,7 +46,7 @@ fs.mkdirSync(MANUAL_DIR, { recursive: true });
 
 // Process each markdown file
 for (const file of files) {
-  const content = fs.readFileSync(path.join(WIKI_DIR, file), 'utf-8');
+  const content = fs.readFileSync(path.join(SRC_DIR, file), 'utf-8');
 
   // Extract title from first heading or filename
   const titleMatch = content.match(/^#\s+(.+)$/m);
