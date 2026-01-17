@@ -232,6 +232,9 @@ const testRunner = {
   }
 }
 
+// Export testRunner globally for Playwright tests
+window.testRunner = testRunner
+
 // Register button handlers
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('run-all-tests').addEventListener('click', () => testRunner.runAll())
