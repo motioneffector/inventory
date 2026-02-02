@@ -46,7 +46,7 @@
     "build": "tsc && vite build && npm run build:manual",
     "build:manual": "node scripts/build-manual.cjs",
     "test": "vitest",
-    "test:run": "vitest run",
+    "test:run": "vitest run --exclude src/fuzz.test.ts",
     "test:fuzz": "NODE_OPTIONS='--max-old-space-size=8192' vitest run src/fuzz.test.ts",
     "fuzz:thorough": "NODE_OPTIONS='--max-old-space-size=8192' FUZZ_THOROUGH=1 vitest run src/fuzz.test.ts --testTimeout=120000",
     "lint": "eslint src",
