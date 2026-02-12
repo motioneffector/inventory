@@ -40,6 +40,10 @@ describe('Sorting', () => {
       manager.sort('c1', (a, b) => a.quantity - b.quantity)
       const contents = manager.getContents('c1')
       expect(contents).toHaveLength(3)
+      // Verify all items still present
+      expect(contents[0]?.itemId).toBe('item-a')
+      expect(contents[1]?.itemId).toBe('item-b')
+      expect(contents[2]?.itemId).toBe('item-c')
     })
   })
 
@@ -51,6 +55,8 @@ describe('Sorting', () => {
       manager.autoArrange('c1')
       const grid = manager.getGrid('c1')
       expect(grid).toBeDefined()
+      expect(grid).toHaveLength(5)
+      expect(grid[0]).toHaveLength(5)
     })
 
     it('minimizes empty space', () => {

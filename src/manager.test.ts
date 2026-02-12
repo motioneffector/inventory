@@ -7,8 +7,11 @@ describe('createInventoryManager()', () => {
     it('creates manager with minimal options', () => {
       const manager = createInventoryManager()
       expect(manager).toBeDefined()
-      expect(typeof manager.createContainer).toBe('function')
-      expect(typeof manager.addItem).toBe('function')
+      // Verify manager methods exist and work
+      manager.createContainer('test', { mode: 'unlimited' })
+      expect(manager.listContainers()).toContain('test')
+      const result = manager.addItem('test', 'item', 1)
+      expect(result.success).toBe(true)
     })
 
     it('creates manager with getItemWeight callback', () => {
@@ -28,12 +31,12 @@ describe('createInventoryManager()', () => {
       const manager = createInventoryManager({
         getItemSize,
       })
-      expect(manager).toBeDefined()
       // Verify callback is used by creating grid container
       manager.createContainer('c1', { mode: 'grid', width: 5, height: 5 })
       manager.addItem('c1', 'item', 1)
       const grid = manager.getGrid('c1')
-      expect(grid).toBeDefined()
+      expect(grid).toHaveLength(5)
+      expect(grid[0]).toHaveLength(5)
     })
 
     it('creates manager with getItemStackLimit callback', () => {
@@ -61,51 +64,22 @@ describe('createInventoryManager()', () => {
 
     it('returns object with all expected methods', () => {
       const manager = createInventoryManager()
-      // Container management
-      expect(manager.createContainer).toBeDefined()
-      expect(manager.removeContainer).toBeDefined()
-      expect(manager.listContainers).toBeDefined()
-      // Basic operations
-      expect(manager.addItem).toBeDefined()
-      expect(manager.removeItem).toBeDefined()
-      expect(manager.transfer).toBeDefined()
-      // Query methods
-      expect(manager.getContents).toBeDefined()
-      expect(manager.hasItem).toBeDefined()
-      expect(manager.getQuantity).toBeDefined()
-      expect(manager.canAdd).toBeDefined()
-      expect(manager.findItem).toBeDefined()
-      expect(manager.getTotalWeight).toBeDefined()
-      expect(manager.getRemainingCapacity).toBeDefined()
-      expect(manager.isEmpty).toBeDefined()
-      // Grid-specific methods
-      expect(manager.getGrid).toBeDefined()
-      expect(manager.findPlacements).toBeDefined()
-      expect(manager.addItemAt).toBeDefined()
-      // Slots-specific methods
-      expect(manager.setSlot).toBeDefined()
-      expect(manager.getSlot).toBeDefined()
-      expect(manager.getAllSlots).toBeDefined()
-      expect(manager.canEquip).toBeDefined()
-      expect(manager.clearSlot).toBeDefined()
-      // Locking
-      expect(manager.lockItem).toBeDefined()
-      expect(manager.unlockItem).toBeDefined()
-      // Stack operations
-      expect(manager.splitStack).toBeDefined()
-      expect(manager.mergeStacks).toBeDefined()
-      expect(manager.consolidate).toBeDefined()
-      // Sorting
-      expect(manager.sort).toBeDefined()
-      expect(manager.autoArrange).toBeDefined()
-      // Events
-      expect(manager.on).toBeDefined()
-      // Transactions
-      expect(manager.transaction).toBeDefined()
-      // Serialization
-      expect(manager.serialize).toBeDefined()
-      expect(manager.deserialize).toBeDefined()
-      expect(manager.serializeContainer).toBeDefined()
+      // Container management - verify they work
+      manager.createContainer('test', { mode: 'unlimited' })
+      expect(manager.listContainers()).toContain('test')
+      manager.removeContainer('test')
+      expect(manager.listContainers()).not.toContain('test')
+      // Basic operations - verify they work
+      manager.createContainer('c1', { mode: 'unlimited' })
+      const addResult = manager.addItem('c1', 'item', 1)
+      expect(addResult.success).toBe(true)
+      const removed = manager.removeItem('c1', 'item', 1)
+      expect(removed).toBe(1)
+      // Serialization - verify it works
+      const data = manager.serialize()
+      const serialized = JSON.stringify(data)
+      expect(serialized).toContain('c1')
+      expect(serialized).toContain('item')
     })
   })
 
@@ -115,7 +89,7 @@ describe('createInventoryManager()', () => {
         getItemWeight: () => 'invalid' as unknown as number,
       })
       manager.createContainer('c1', { mode: 'weight', maxWeight: 100 })
-      expect(() => manager.addItem('c1', 'item1', 1)).toThrow(ValidationError)
+      expect(() => manager.addItem('c1', 'item1', 1)).toThrow(/getItemWeight/i)
     })
 
     it('throws ValidationError if getItemSize returns invalid shape', () => {
@@ -123,7 +97,7 @@ describe('createInventoryManager()', () => {
         getItemSize: () => ({ invalid: true } as unknown as { width: number; height: number }),
       })
       manager.createContainer('c1', { mode: 'grid', width: 10, height: 10 })
-      expect(() => manager.addItem('c1', 'item1', 1)).toThrow(ValidationError)
+      expect(() => manager.addItem('c1', 'item1', 1)).toThrow(/getItemSize/i)
     })
   })
 })

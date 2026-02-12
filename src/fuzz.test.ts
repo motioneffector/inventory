@@ -413,6 +413,10 @@ describe('Fuzz: createContainer', () => {
       expect(manager.listContainers()).toContain(id)
     })
 
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
+    expect(result.durationMs).toBeGreaterThan(0)
+
     if (THOROUGH_MODE) {
       console.log(`Completed ${result.iterations} iterations in ${result.durationMs}ms`)
     }
@@ -421,7 +425,7 @@ describe('Fuzz: createContainer', () => {
   it('rejects all malformed configs gracefully', () => {
     const manager = createInventoryManager()
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const badConfig = generateMalformedContainerConfig(random)
       const id = `container-${i % 50}`
 
@@ -436,18 +440,22 @@ describe('Fuzz: createContainer', () => {
         manager.createContainer(id, badConfig as any)
         // If we get here, check if it's actually a valid config
       } catch (e) {
-        // Verify error message is non-empty
-        if (e instanceof Error && e.message.length === 0) {
-          throw new Error('Empty error message')
+        // Verify error is defined and has a non-empty message
+        expect(e).toBeDefined()
+        if (e instanceof Error) {
+          expect(e.message.length).toBeGreaterThan(0)
         }
       }
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 
   it('rejects duplicate container IDs consistently', () => {
     const manager = createInventoryManager()
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const id = `container-dup-${Math.floor(random() * 10)}`
       const config = generateContainerConfig(random)
 
@@ -465,19 +473,23 @@ describe('Fuzz: createContainer', () => {
           manager.createContainer(id, config)
           throw new Error(`Duplicate container ID not rejected: ${id}`)
         } catch (e) {
-          // Expected to throw
+          // Expected to throw - verify it's a proper error
           expect(e).toBeDefined()
+          expect(e).toBeInstanceOf(Error)
         }
       } catch (e) {
         // First creation failed, that's OK for malformed configs
       }
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 
   it('handles malicious container IDs safely', () => {
     const manager = createInventoryManager()
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const id = generateContainerId(random)
       const config: ContainerConfig = { mode: 'unlimited' }
 
@@ -495,10 +507,14 @@ describe('Fuzz: createContainer', () => {
           expect(manager.listContainers()).toContain(id)
         }
       } catch (e) {
-        // Empty or invalid IDs should be rejected
+        // Empty or invalid IDs should be rejected with a proper error
         expect(e).toBeDefined()
+        expect(e).toBeInstanceOf(Error)
       }
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 })
 
@@ -506,19 +522,23 @@ describe('Fuzz: addItem', () => {
   it('handles invalid container IDs gracefully', () => {
     const manager = createInventoryManager()
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const containerId = generateContainerId(random)
       const itemId = `item-${i}`
       const quantity = 1
 
       try {
-        const result = manager.addItem(containerId, itemId, quantity)
+        manager.addItem(containerId, itemId, quantity)
         throw new Error(`Should throw for non-existent container: ${containerId}`)
       } catch (e) {
-        // Expected to throw
+        // Expected to throw with a proper error
         expect(e).toBeDefined()
+        expect(e).toBeInstanceOf(Error)
       }
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 
   it('handles invalid quantities gracefully', () => {
@@ -526,7 +546,7 @@ describe('Fuzz: addItem', () => {
     const containerId = 'test-container'
     manager.createContainer(containerId, { mode: 'unlimited' })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const itemId = `item-${i % 20}`
       const quantity = generateQuantity(random)
 
@@ -565,6 +585,9 @@ describe('Fuzz: addItem', () => {
         }
       }
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 
   it('never corrupts state on invalid input', () => {
@@ -572,7 +595,7 @@ describe('Fuzz: addItem', () => {
     const containerId = 'test-container'
     manager.createContainer(containerId, { mode: 'count', maxCount: 10 })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const itemId = `test-item-${i % 5}`
       const quantity = generateQuantity(random)
 
@@ -589,6 +612,9 @@ describe('Fuzz: addItem', () => {
       // Quantity should never decrease from addItem
       expect(afterQty).toBeGreaterThanOrEqual(beforeQty)
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 
   it('completes in reasonable time', () => {
@@ -596,7 +622,7 @@ describe('Fuzz: addItem', () => {
     const containerId = 'test-container'
     manager.createContainer(containerId, { mode: 'unlimited' })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const itemId = `item-${i % 10}`
       const quantity = Math.floor(random() * 1000) + 1
 
@@ -607,6 +633,9 @@ describe('Fuzz: addItem', () => {
       // Should complete in < 100ms
       expect(elapsed).toBeLessThan(100)
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 })
 
@@ -616,7 +645,7 @@ describe('Fuzz: removeItem', () => {
     const containerId = 'test-container'
     manager.createContainer(containerId, { mode: 'unlimited' })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const itemId = `item-${i % 10}`
 
       // Clear item before each iteration to avoid accumulation
@@ -632,6 +661,9 @@ describe('Fuzz: removeItem', () => {
       expect(removed).toBeLessThanOrEqual(addQty)
       expect(removed).toBeGreaterThanOrEqual(0)
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 
   it('returns 0 for non-existent items', () => {
@@ -639,13 +671,16 @@ describe('Fuzz: removeItem', () => {
     const containerId = 'test-container'
     manager.createContainer(containerId, { mode: 'unlimited' })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const itemId = `nonexist-${i % 10}`
       const quantity = generateQuantity(random)
 
       const removed = manager.removeItem(containerId, itemId, quantity)
       expect(removed).toBe(0)
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 
   it('handles invalid quantities gracefully', () => {
@@ -653,7 +688,7 @@ describe('Fuzz: removeItem', () => {
     const containerId = 'test-container'
     manager.createContainer(containerId, { mode: 'unlimited' })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const itemId = `item-${i % 5}`
 
       // Ensure item exists with 10 quantity
@@ -667,6 +702,9 @@ describe('Fuzz: removeItem', () => {
       expect(removed).toBeGreaterThanOrEqual(0)
       expect(removed).toBeLessThanOrEqual(10)
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 })
 
@@ -679,7 +717,7 @@ describe('Fuzz: transfer', () => {
     manager.createContainer(fromId, { mode: 'unlimited' })
     manager.createContainer(toId, { mode: 'unlimited' })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const itemId = `item-${i % 10}`
       const initialQty = Math.floor(random() * 100) + 10
 
@@ -693,7 +731,7 @@ describe('Fuzz: transfer', () => {
       const beforeTotal =
         manager.getQuantity(fromId, itemId) + manager.getQuantity(toId, itemId)
 
-      const result = manager.transfer(fromId, toId, itemId, transferQty)
+      const transferResult = manager.transfer(fromId, toId, itemId, transferQty)
 
       const afterTotal =
         manager.getQuantity(fromId, itemId) + manager.getQuantity(toId, itemId)
@@ -702,14 +740,17 @@ describe('Fuzz: transfer', () => {
       expect(afterTotal).toBe(beforeTotal)
 
       // Verify result
-      expect(result.transferred + result.overflow).toBe(transferQty)
+      expect(transferResult.transferred + transferResult.overflow).toBe(transferQty)
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 
   it('handles non-existent containers gracefully', () => {
     const manager = createInventoryManager()
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const fromId = generateContainerId(random)
       const toId = generateContainerId(random)
       const itemId = `item-${i % 10}`
@@ -720,8 +761,12 @@ describe('Fuzz: transfer', () => {
         throw new Error('Should throw for non-existent containers')
       } catch (e) {
         expect(e).toBeDefined()
+        expect(e).toBeInstanceOf(Error)
       }
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 
   it('handles self-transfer consistently', () => {
@@ -729,7 +774,7 @@ describe('Fuzz: transfer', () => {
     const containerId = 'self-transfer-container'
     manager.createContainer(containerId, { mode: 'unlimited' })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const itemId = `item-${i % 10}`
       const qty = Math.floor(random() * 100) + 1
 
@@ -740,13 +785,16 @@ describe('Fuzz: transfer', () => {
       const beforeQty = manager.getQuantity(containerId, itemId)
 
       // Self-transfer
-      const result = manager.transfer(containerId, containerId, itemId, qty)
+      const transferResult = manager.transfer(containerId, containerId, itemId, qty)
 
       const afterQty = manager.getQuantity(containerId, itemId)
 
       // Quantity should not change
       expect(afterQty).toBe(beforeQty)
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 })
 
@@ -761,7 +809,7 @@ describe('Fuzz: canAdd', () => {
       maxWeight: 100,
     })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const itemId = `item-${i % 10}`
       const quantity = Math.floor(random() * 50) + 1
 
@@ -782,6 +830,9 @@ describe('Fuzz: canAdd', () => {
       expect(canAddResult.maxAddable).toBeGreaterThanOrEqual(0)
       expect(addResult.added).toBeLessThanOrEqual(canAddResult.maxAddable)
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 
   it('maxAddable never exceeds capacity', () => {
@@ -789,7 +840,7 @@ describe('Fuzz: canAdd', () => {
       getItemStackLimit: () => 10, // Fixed stack limit
     })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const containerId = `container-${i % 5}`
       const maxCount = Math.floor(random() * 100) + 10
 
@@ -810,14 +861,17 @@ describe('Fuzz: canAdd', () => {
       const itemId = `item-${i % 10}`
       const quantity = Math.floor(random() * 200) + 1
 
-      const result = manager.canAdd(containerId, itemId, quantity)
+      const canAddResult = manager.canAdd(containerId, itemId, quantity)
 
       // maxAddable should be finite and non-negative
-      expect(Number.isFinite(result.maxAddable)).toBe(true)
-      expect(result.maxAddable).toBeGreaterThanOrEqual(0)
+      expect(Number.isFinite(canAddResult.maxAddable)).toBe(true)
+      expect(canAddResult.maxAddable).toBeGreaterThanOrEqual(0)
       // maxAddable should not exceed maxCount × maxStackSize
-      expect(result.maxAddable).toBeLessThanOrEqual(maxCount * 10)
+      expect(canAddResult.maxAddable).toBeLessThanOrEqual(maxCount * 10)
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 })
 
@@ -830,7 +884,7 @@ describe('Fuzz: setSlot (slots mode)', () => {
       slots: ['slot1', 'slot2', 'slot3'],
     })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const invalidSlot = generateString(random, 50)
       const itemId = `item-${i % 10}`
 
@@ -842,8 +896,12 @@ describe('Fuzz: setSlot (slots mode)', () => {
         }
       } catch (e) {
         expect(e).toBeDefined()
+        expect(e).toBeInstanceOf(Error)
       }
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 
   it('returns previous item correctly', () => {
@@ -854,7 +912,7 @@ describe('Fuzz: setSlot (slots mode)', () => {
       slots: ['weapon', 'armor'],
     })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const slots = ['weapon', 'armor']
       const slot = slots[Math.floor(random() * slots.length)]
 
@@ -872,6 +930,9 @@ describe('Fuzz: setSlot (slots mode)', () => {
       const prev2 = manager.setSlot(containerId, slot, item2)
       expect(prev2).toBe(item1)
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 })
 
@@ -881,7 +942,7 @@ describe('Fuzz: transaction', () => {
     const containerId = 'test-container'
     manager.createContainer(containerId, { mode: 'unlimited' })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const itemId = `item-${i % 10}`
 
       // Clear before each iteration
@@ -903,16 +964,20 @@ describe('Fuzz: transaction', () => {
           manager.removeItem(containerId, itemId, 5)
         })
       } catch (e) {
-        // Expected to fail sometimes
+        // Expected to fail sometimes - verify it's a proper error
+        expect(e).toBeInstanceOf(Error)
       }
 
       const afterQty = manager.getQuantity(containerId, itemId)
 
       // If transaction failed, state should be unchanged
       // If it succeeded, changes should be applied
-      // This verifies atomicity
-      expect(typeof afterQty).toBe('number')
+      // This verifies atomicity: either all changes or no changes
+      expect(afterQty === beforeQty || afterQty === beforeQty + 25).toBe(true)
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 
   it('state identical after rollback', () => {
@@ -920,7 +985,7 @@ describe('Fuzz: transaction', () => {
     const containerId = 'test-container'
     manager.createContainer(containerId, { mode: 'unlimited' })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const itemId = `item-${i % 10}`
       const otherId = `other-${i % 10}`
 
@@ -939,7 +1004,8 @@ describe('Fuzz: transaction', () => {
           throw new Error('Force rollback')
         })
       } catch (e) {
-        // Expected
+        // Expected - verify it's a proper error
+        expect(e).toBeInstanceOf(Error)
       }
 
       const afterQty = manager.getQuantity(containerId, itemId)
@@ -948,6 +1014,9 @@ describe('Fuzz: transaction', () => {
       expect(afterQty).toBe(beforeQty)
       expect(afterEmpty).toBe(beforeEmpty)
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 })
 
@@ -964,7 +1033,7 @@ describe('Fuzz: serialize/deserialize', () => {
       getItemSize: () => ({ width: 2, height: 2 }),
     })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       // Clear all containers from previous iteration
       for (const cid of manager.listContainers()) {
         manager.removeContainer(cid)
@@ -1009,15 +1078,19 @@ describe('Fuzz: serialize/deserialize', () => {
           expect(contents2.length).toBe(contents1.length)
         }
       } catch (e) {
-        // Some serialization might fail for complex states
+        // Some serialization might fail for complex states - that's acceptable
+        expect(e).toBeInstanceOf(Error)
       }
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 
   it('rejects malformed data gracefully', () => {
     const manager = createInventoryManager()
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const badData = generateObject(random, 0, 2)
 
       try {
@@ -1026,8 +1099,9 @@ describe('Fuzz: serialize/deserialize', () => {
         const containers = manager.listContainers()
         expect(Array.isArray(containers)).toBe(true)
       } catch (e) {
-        // Expected to throw for invalid data
+        // Expected to throw for invalid data - verify it's a proper error
         expect(e).toBeDefined()
+        expect(e).toBeInstanceOf(Error)
       }
 
       // Clear state after each test
@@ -1039,6 +1113,9 @@ describe('Fuzz: serialize/deserialize', () => {
         }
       }
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 })
 
@@ -1052,7 +1129,7 @@ describe('Property: Add/Remove Inverse', () => {
     const containerId = 'test-container'
     manager.createContainer(containerId, { mode: 'unlimited' })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const itemId = `item-${i % 10}`
       const quantity = Math.floor(random() * 100) + 1
 
@@ -1067,6 +1144,9 @@ describe('Property: Add/Remove Inverse', () => {
 
       expect(afterQty).toBe(beforeQty)
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 })
 
@@ -1079,7 +1159,7 @@ describe('Property: Transfer Conservation', () => {
     manager.createContainer(container1, { mode: 'unlimited' })
     manager.createContainer(container2, { mode: 'unlimited' })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const itemId = `item-${i % 10}`
       const initialQty = Math.floor(random() * 100) + 10
 
@@ -1100,6 +1180,9 @@ describe('Property: Transfer Conservation', () => {
 
       expect(afterTotal).toBe(beforeTotal)
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 })
 
@@ -1109,7 +1192,7 @@ describe('Property: Consolidate Preserves Quantity', () => {
     const containerId = 'test-container'
     manager.createContainer(containerId, { mode: 'unlimited', maxStackSize: 10 })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       const items = new Map<string, number>()
 
       // Clear container before each iteration
@@ -1129,7 +1212,8 @@ describe('Property: Consolidate Preserves Quantity', () => {
       try {
         manager.consolidate(containerId)
       } catch (e) {
-        // Some modes don't support consolidate
+        // Some modes don't support consolidate - that's acceptable
+        expect(e).toBeInstanceOf(Error)
       }
 
       // Verify quantities unchanged
@@ -1138,6 +1222,9 @@ describe('Property: Consolidate Preserves Quantity', () => {
         expect(actualQty).toBe(expectedQty)
       }
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 })
 
@@ -1147,7 +1234,7 @@ describe('Property: Transaction Atomicity', () => {
     const containerId = 'test-container'
     manager.createContainer(containerId, { mode: 'unlimited' })
 
-    fuzzLoop((random, i) => {
+    const result = fuzzLoop((random, i) => {
       // Clear container before each iteration
       for (const item of manager.getContents(containerId)) {
         manager.removeItem(containerId, item.itemId, 1000)
@@ -1176,7 +1263,8 @@ describe('Property: Transaction Atomicity', () => {
           throw new Error('Forced failure')
         })
       } catch (e) {
-        // Expected
+        // Expected - verify it's a proper error
+        expect(e).toBeInstanceOf(Error)
       }
 
       // Verify state unchanged
@@ -1185,6 +1273,9 @@ describe('Property: Transaction Atomicity', () => {
         expect(actualQty).toBe(expectedQty)
       }
     })
+
+    // Verify the fuzz loop actually ran
+    expect(result.iterations).toBeGreaterThan(0)
   })
 })
 

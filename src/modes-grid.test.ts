@@ -139,9 +139,11 @@ describe('Grid Mode', () => {
     it('getGrid returns 2D array', () => {
       manager.createContainer('c1', { mode: 'grid', width: 3, height: 4 })
       const grid = manager.getGrid('c1')
-      expect(Array.isArray(grid)).toBe(true)
       expect(grid).toHaveLength(4)
       expect(grid[0]).toHaveLength(3)
+      // Verify cells are initially null
+      expect(grid[0]?.[0]).toBe(null)
+      expect(grid[3]?.[2]).toBe(null)
     })
 
     it('empty cells are null', () => {
@@ -215,7 +217,9 @@ describe('Grid Mode', () => {
     it('findPlacements returns valid positions', () => {
       manager.createContainer('c1', { mode: 'grid', width: 5, height: 5 })
       const placements = manager.findPlacements('c1', 'small')
-      expect(placements.length).toBeGreaterThan(0)
+      expect(placements).toHaveLength(25) // 5x5 grid, 1x1 item = 25 placements
+      expect(placements[0]?.x).toBe(0)
+      expect(placements[0]?.y).toBe(0)
     })
 
     it('includes rotation variants', () => {
@@ -227,9 +231,24 @@ describe('Grid Mode', () => {
 
     it('returns empty array if no fit', () => {
       manager.createContainer('c1', { mode: 'grid', width: 2, height: 2 })
+      // First verify we can find placements when empty
+      const emptyPlacements = manager.findPlacements('c1', 'large')
+      expect(emptyPlacements).toHaveLength(1)
+      expect(emptyPlacements[0]?.x).toBe(0)
+      expect(emptyPlacements[0]?.y).toBe(0)
+      // Fill grid with a large item
       manager.addItem('c1', 'large', 1)
+      expect(manager.hasItem('c1', 'large')).toBe(true)
+      // Verify every grid cell is occupied — no room for any placement
+      const grid = manager.getGrid('c1')
+      for (const row of grid) {
+        for (const cell of row) {
+          expect(cell).not.toBe(null)
+          expect(cell?.itemId).toBe('large')
+        }
+      }
       const placements = manager.findPlacements('c1', 'small')
-      expect(placements).toEqual([])
+      expect(placements.every(() => false)).toBe(true)
     })
   })
 
