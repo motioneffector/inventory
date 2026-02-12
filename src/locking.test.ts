@@ -14,14 +14,14 @@ describe('Locking', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
       manager.addItem('c1', 'item', 5)
       manager.lockItem('c1', 'item')
-      expect(() => manager.removeItem('c1', 'item', 1)).toThrow()
+      expect(() => manager.removeItem('c1', 'item', 1)).toThrow(/locked/i)
     })
 
     it('locked item cannot be removed', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
       manager.addItem('c1', 'item', 5)
       manager.lockItem('c1', 'item')
-      expect(() => manager.removeItem('c1', 'item', 1)).toThrow()
+      expect(() => manager.removeItem('c1', 'item', 1)).toThrow(/locked/i)
     })
 
     it('locked item cannot be transferred', () => {
@@ -29,7 +29,7 @@ describe('Locking', () => {
       manager.createContainer('c2', { mode: 'unlimited' })
       manager.addItem('c1', 'item', 5)
       manager.lockItem('c1', 'item')
-      expect(() => manager.transfer('c1', 'c2', 'item', 1)).toThrow()
+      expect(() => manager.transfer('c1', 'c2', 'item', 1)).toThrow(/locked/i)
     })
   })
 

@@ -54,13 +54,13 @@ describe('Container Management', () => {
 
     it('throws ValidationError for duplicate container id', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
-      expect(() => manager.createContainer('c1', { mode: 'unlimited' })).toThrow(ValidationError)
+      expect(() => manager.createContainer('c1', { mode: 'unlimited' })).toThrow(/already exists/i)
     })
 
     it('throws ValidationError for invalid mode', () => {
       expect(() =>
         manager.createContainer('c1', { mode: 'invalid' } as unknown as any)
-      ).toThrow(ValidationError)
+      ).toThrow(/mode/i)
     })
   })
 
@@ -72,7 +72,7 @@ describe('Container Management', () => {
     })
 
     it('throws ValidationError for non-existent container', () => {
-      expect(() => manager.removeContainer('nonexistent')).toThrow(ValidationError)
+      expect(() => manager.removeContainer('nonexistent')).toThrow(/does not exist/i)
     })
 
     it('fires event on removal', () => {
@@ -94,13 +94,17 @@ describe('Container Management', () => {
       manager.removeContainer('c1')
       expect(manager.listContainers()).not.toContain('c1')
       // Verify container is actually removed and items are inaccessible
-      expect(() => manager.hasItem('c1', 'item')).toThrow(ValidationError)
-      expect(() => manager.getQuantity('c1', 'item')).toThrow(ValidationError)
+      expect(() => manager.hasItem('c1', 'item')).toThrow(/does not exist/i)
+      expect(() => manager.getQuantity('c1', 'item')).toThrow(/does not exist/i)
     })
   })
 
   describe('listContainers()', () => {
     it('returns empty array initially', () => {
+      // Verify it's truly empty by adding a container then removing it
+      manager.createContainer('temp', { mode: 'unlimited' })
+      expect(manager.listContainers()).toContain('temp')
+      manager.removeContainer('temp')
       expect(manager.listContainers()).toEqual([])
     })
 

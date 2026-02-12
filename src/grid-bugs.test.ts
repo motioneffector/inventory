@@ -46,7 +46,9 @@ describe('Grid Inventory Bug Fixes', () => {
       // Verify no zero-quantity stacks
       const stacks = manager.getStacks('c1', 'item')
       expect(stacks.every((s) => s.quantity > 0)).toBe(true)
-      expect(stacks.length).toBeGreaterThan(0)
+      expect(stacks).toHaveLength(2) // 5 + 1 in two stacks with maxStackSize 5
+      expect(stacks[0]?.quantity).toBe(5)
+      expect(stacks[1]?.quantity).toBe(1)
     })
 
     it('removes itemId from map when all stacks are zero', () => {
@@ -56,7 +58,13 @@ describe('Grid Inventory Bug Fixes', () => {
         maxStackSize: 10,
       })
 
+      // First verify the item exists
       manager.addItem('c1', 'item', 5)
+      const beforeContents = manager.getContents('c1')
+      expect(beforeContents.find((e) => e.itemId === 'item')).toBeDefined()
+      expect(beforeContents.find((e) => e.itemId === 'item')?.quantity).toBe(5)
+
+      // Remove all items and consolidate
       manager.removeItem('c1', 'item', 5)
       manager.consolidate('c1')
 
@@ -155,7 +163,7 @@ describe('Grid Inventory Bug Fixes', () => {
         const afterContents = manager.getContents('grid')
         const afterQty = afterContents.reduce((sum, e) => sum + e.quantity, 0)
         expect(afterQty).toBe(beforeQty)
-        expect(error).toBeInstanceOf(Error)
+        expect((error as Error).message).toMatch(/autoArrange failed/)
       }
     })
 

@@ -12,8 +12,12 @@ describe('Security: prototype pollution prevention', () => {
 
     const slots = manager.getAllSlots('equipment')
 
-    // __proto__ should be filtered out
-    expect(slots).not.toHaveProperty('__proto__')
+    // __proto__ should be filtered out - verify only valid slots exist
+    const keys = Object.keys(slots)
+    expect(keys).toHaveLength(2)
+    expect(keys).toContain('head')
+    expect(keys).toContain('chest')
+    expect(keys).not.toContain('__proto__')
     expect(slots.head).toBe(null)
     expect(slots.chest).toBe(null)
   })
@@ -27,7 +31,10 @@ describe('Security: prototype pollution prevention', () => {
 
     const slots = manager.getAllSlots('equipment')
 
-    expect(slots).not.toHaveProperty('constructor')
+    const keys = Object.keys(slots)
+    expect(keys).toHaveLength(1)
+    expect(keys[0]).toBe('head')
+    expect(keys).not.toContain('constructor')
     expect(slots.head).toBe(null)
   })
 
@@ -40,7 +47,10 @@ describe('Security: prototype pollution prevention', () => {
 
     const slots = manager.getAllSlots('equipment')
 
-    expect(slots).not.toHaveProperty('prototype')
+    const keys = Object.keys(slots)
+    expect(keys).toHaveLength(1)
+    expect(keys[0]).toBe('head')
+    expect(keys).not.toContain('prototype')
     expect(slots.head).toBe(null)
   })
 

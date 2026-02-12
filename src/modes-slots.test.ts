@@ -72,7 +72,7 @@ describe('Slots Mode', () => {
           head: (itemId) => itemId.includes('helmet'),
         },
       })
-      expect(() => manager.setSlot('c1', 'head', 'sword')).toThrow()
+      expect(() => manager.setSlot('c1', 'head', 'sword')).toThrow(/filter|slot/i)
     })
 
     it('reports reason "slot_filter_failed"', () => {
@@ -111,6 +111,9 @@ describe('Slots Mode', () => {
     it('clearSlot removes item', () => {
       manager.createContainer('c1', { mode: 'slots', slots: ['head'] })
       manager.setSlot('c1', 'head', 'helmet')
+      // Verify it was set
+      expect(manager.getSlot('c1', 'head')).toBe('helmet')
+      // Clear it
       manager.clearSlot('c1', 'head')
       expect(manager.getSlot('c1', 'head')).toBe(null)
     })

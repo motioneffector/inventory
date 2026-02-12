@@ -144,7 +144,10 @@ describe('Events', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
       const callback = vi.fn()
       const unsubscribe = manager.on('itemAdded', callback)
-      expect(typeof unsubscribe).toBe('function')
+      // Verify it works by calling it
+      unsubscribe()
+      manager.addItem('c1', 'item', 1)
+      expect(callback).not.toHaveBeenCalled()
     })
 
     it('unsubscribe stops events', () => {

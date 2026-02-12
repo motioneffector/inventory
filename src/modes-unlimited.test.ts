@@ -68,13 +68,14 @@ describe('Unlimited Mode', () => {
       manager.addItem('c1', 'item1', 5)
       // Verify total quantity is correct (main requirement)
       expect(manager.getQuantity('c1', 'item1')).toBe(15)
-      // Verify items are stored correctly
-      const contents = manager.getContents('c1')
-      const item1Stacks = contents.filter((c) => c.itemId === 'item1')
-      expect(item1Stacks.length).toBeGreaterThan(0)
-      // Total across all stacks should equal 15
-      const total = item1Stacks.reduce((sum, s) => sum + s.quantity, 0)
+      const stacks = manager.getStacks('c1', 'item1')
+      expect(stacks.length).toBeGreaterThanOrEqual(2)
+      const total = stacks.reduce((sum, s) => sum + s.quantity, 0)
       expect(total).toBe(15)
+      // Each stack should not exceed maxStackSize
+      for (const stack of stacks) {
+        expect(stack.quantity).toBeLessThanOrEqual(10)
+      }
     })
 
     it('creates new stack when max reached', () => {

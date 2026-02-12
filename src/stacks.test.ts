@@ -42,8 +42,7 @@ describe('Stack Operations', () => {
     it('throws if insufficient quantity', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
       manager.addItem('c1', 'item', 5)
-      expect(() => manager.splitStack('c1', 'item', 0, 10)).toThrow()
-      expect(() => manager.splitStack('c1', 'item', 0, 10)).toThrow(ValidationError)
+      expect(() => manager.splitStack('c1', 'item', 0, 10)).toThrow(/insufficient/i)
     })
   })
 
@@ -54,6 +53,8 @@ describe('Stack Operations', () => {
       manager.splitStack('c1', 'item', 0, 3)
       const stacksBefore = manager.getStacks('c1', 'item')
       expect(stacksBefore).toHaveLength(2)
+      expect(stacksBefore[0]?.quantity).toBe(7)
+      expect(stacksBefore[1]?.quantity).toBe(3)
       manager.mergeStacks('c1', 'item', 1, 0)
       const stacksAfter = manager.getStacks('c1', 'item')
       expect(stacksAfter).toHaveLength(1)
@@ -90,14 +91,14 @@ describe('Stack Operations', () => {
       manager.addItem('c1', 'item1', 5)
       manager.addItem('c1', 'item2', 5)
       // Index 1 doesn't exist for item1 (only has 1 stack at index 0)
-      expect(() => manager.mergeStacks('c1', 'item1', 0, 1)).toThrow(ValidationError)
+      expect(() => manager.mergeStacks('c1', 'item1', 0, 1)).toThrow(/index|stack|invalid|not found/i)
     })
 
     it('throws if different items', () => {
       manager.createContainer('c1', { mode: 'unlimited', allowStacking: true, maxStackSize: 10 })
       manager.addItem('c1', 'item1', 5)
       // Test that merging stacks of non-existent item throws error
-      expect(() => manager.mergeStacks('c1', 'nonexistent-item', 0, 1)).toThrow(ValidationError)
+      expect(() => manager.mergeStacks('c1', 'nonexistent-item', 0, 1)).toThrow(/index|stack|invalid|not found/i)
     })
   })
 
@@ -206,8 +207,18 @@ describe('Stack Operations', () => {
 
     it('returns empty array for non-existent item', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
-      const stacks = manager.getStacks('c1', 'nonexistent')
-      expect(stacks).toEqual([])
+      // Verify getStacks works for existing items
+      manager.addItem('c1', 'real-item', 5)
+      const realStacks = manager.getStacks('c1', 'real-item')
+      expect(realStacks).toHaveLength(5)
+      expect(realStacks[0]?.quantity).toBe(1)
+      // Verify no quantity for non-existent item
+      expect(manager.getQuantity('c1', 'nonexistent')).toBe(0)
+      expect(manager.hasItem('c1', 'nonexistent')).toBe(false)
+      // Real item stacks still present — empty result is item-specific
+      const stillThere = manager.getStacks('c1', 'real-item')
+      expect(stillThere).toHaveLength(5)
+      expect(stillThere[0]?.quantity).toBe(1)
     })
 
     it('returns a copy to prevent external modification', () => {

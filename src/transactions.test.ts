@@ -33,13 +33,15 @@ describe('Transactions', () => {
     it('rolls back on error', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
       manager.addItem('c1', 'item', 5)
+      const thrownError = new Error('test error')
       try {
         manager.transaction(() => {
           manager.addItem('c1', 'item', 3)
-          throw new Error('test error')
+          throw thrownError
         })
       } catch (e) {
-        // Expected
+        expect(e).toBe(thrownError)
+        expect((e as Error).message).toBe('test error')
       }
       expect(manager.getQuantity('c1', 'item')).toBe(5)
     })
@@ -47,14 +49,16 @@ describe('Transactions', () => {
     it('no partial state on rollback', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
       const initialQty = manager.getQuantity('c1', 'item')
+      const thrownError = new Error('rollback')
       try {
         manager.transaction(() => {
           manager.addItem('c1', 'item1', 10)
           manager.addItem('c1', 'item2', 20)
-          throw new Error('rollback')
+          throw thrownError
         })
       } catch (e) {
-        // Expected
+        expect(e).toBe(thrownError)
+        expect((e as Error).message).toBe('rollback')
       }
       expect(manager.getQuantity('c1', 'item1')).toBe(0)
       expect(manager.getQuantity('c1', 'item2')).toBe(0)

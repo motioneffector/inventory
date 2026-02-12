@@ -16,21 +16,22 @@ describe('Serialization', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
       manager.addItem('c1', 'item', 5)
       const data = manager.serialize()
-      expect(data).toBeDefined()
-      expect(Array.isArray(data.containers)).toBe(true)
-      expect(data.containers.length).toBe(1)
+      expect(data.containers).toHaveLength(1)
       expect(data.containers[0]?.id).toBe('c1')
+      expect(data.containers[0]?.items).toHaveLength(1)
+      expect(data.containers[0]?.items[0]?.itemId).toBe('item')
     })
 
     it('includes all containers with correct count', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
       manager.createContainer('c2', { mode: 'count', maxCount: 5 })
       const data = manager.serialize()
-      expect(data.containers).toBeDefined()
-      expect(data.containers.length).toBe(2)
+      expect(data.containers).toHaveLength(2)
       const containerIds = data.containers.map(c => c.id)
       expect(containerIds).toContain('c1')
       expect(containerIds).toContain('c2')
+      expect(data.containers[0]?.id).toBe('c1')
+      expect(data.containers[1]?.id).toBe('c2')
     })
 
     it('includes all items with exact count', () => {
@@ -38,11 +39,10 @@ describe('Serialization', () => {
       manager.addItem('c1', 'item1', 5)
       manager.addItem('c1', 'item2', 3)
       const data = manager.serialize()
-      expect(data.containers).toBeDefined()
+      expect(data.containers).toHaveLength(1)
       const c1Data = data.containers.find(c => c.id === 'c1')
-      expect(c1Data).toBeDefined()
-      expect(c1Data?.items).toBeDefined()
-      expect(Array.isArray(c1Data?.items)).toBe(true)
+      expect(c1Data?.id).toBe('c1')
+      expect(c1Data?.items).toHaveLength(2)
       const itemIds = c1Data?.items.map((item: any) => item.itemId)
       expect(itemIds).toContain('item1')
       expect(itemIds).toContain('item2')
@@ -52,9 +52,9 @@ describe('Serialization', () => {
       manager.createContainer('c1', { mode: 'grid', width: 5, height: 5 })
       manager.addItemAt('c1', 'item', { x: 2, y: 3 })
       const data = manager.serialize()
-      expect(data).toBeDefined()
+      expect(data.containers).toHaveLength(1)
       const c1Data = data.containers.find((c: any) => c.id === 'c1')
-      expect(c1Data).toBeDefined()
+      expect(c1Data.id).toBe('c1')
       // Grid data should be serialized - verify it can be restored
       const newManager = createInventoryManager({
         getItemSize: () => ({ width: 1, height: 1 }),
@@ -67,9 +67,9 @@ describe('Serialization', () => {
       manager.createContainer('c1', { mode: 'slots', slots: ['head', 'chest'] })
       manager.setSlot('c1', 'head', 'helmet')
       const data = manager.serialize()
-      expect(data).toBeDefined()
+      expect(data.containers).toHaveLength(1)
       const c1Data = data.containers.find((c: any) => c.id === 'c1')
-      expect(c1Data).toBeDefined()
+      expect(c1Data.id).toBe('c1')
       // Slots should be serialized - verify it can be restored
       const newManager = createInventoryManager()
       newManager.deserialize(data)
@@ -81,14 +81,14 @@ describe('Serialization', () => {
       manager.addItem('c1', 'item', 5)
       manager.lockItem('c1', 'item')
       const data = manager.serialize()
-      expect(data).toBeDefined()
+      expect(data.containers).toHaveLength(1)
       const c1Data = data.containers.find((c: any) => c.id === 'c1')
-      expect(c1Data).toBeDefined()
+      expect(c1Data.id).toBe('c1')
       // Locked items should be preserved through serialization
       // Verify by deserializing and checking lock state
       const newManager = createInventoryManager()
       newManager.deserialize(data)
-      expect(() => newManager.removeItem('c1', 'item', 1)).toThrow()
+      expect(() => newManager.removeItem('c1', 'item', 1)).toThrow(/locked/i)
     })
   })
 
@@ -133,7 +133,7 @@ describe('Serialization', () => {
       const data = manager.serialize()
       const newManager = createInventoryManager()
       newManager.deserialize(data)
-      expect(() => newManager.removeItem('c1', 'item', 1)).toThrow()
+      expect(() => newManager.removeItem('c1', 'item', 1)).toThrow(/locked/i)
     })
   })
 
@@ -142,9 +142,9 @@ describe('Serialization', () => {
       manager.createContainer('c1', { mode: 'unlimited' })
       manager.addItem('c1', 'item', 5)
       const data = manager.serializeContainer('c1')
-      expect(data).toBeDefined()
       expect(data.id).toBe('c1')
-      expect(data.items).toBeDefined()
+      expect(data.items).toHaveLength(1)
+      expect(data.items[0]?.itemId).toBe('item')
     })
 
     it('can restore with deserialize', () => {
